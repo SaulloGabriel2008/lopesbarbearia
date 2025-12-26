@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -394,4 +395,402 @@
         }
     </script>
 </body>
+=======
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lopes Barbearia</title>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #1e90ff;
+            --bg-dark: #0a0a0a;
+            --card-bg: #141414;
+            --text-main: #ffffff;
+            --text-muted: #a0a0a0;
+            --border: #222222;
+        }
+
+        body { 
+            margin: 0; font-family: 'Inter', sans-serif; 
+            background-color: var(--bg-dark); color: var(--text-main); line-height: 1.6;
+        }
+
+        header { 
+            padding: 40px 20px; max-width: 1200px; margin: 0 auto;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .logo-area { display: flex; align-items: center; gap: 15px; }
+        .logo-area img { height: 50px; border-radius: 50%; border: 2px solid var(--primary); }
+        .logo-area h1 { font-size: 1.4rem; letter-spacing: 2px; margin: 0; text-transform: uppercase; }
+
+        .nav-buttons { display: flex; gap: 10px; }
+        .nav-btn { 
+            background: transparent; border: 1px solid var(--border); color: #fff;
+            padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.8rem;
+        }
+        .nav-btn.active { background: var(--primary); border-color: var(--primary); color: #000; }
+
+        .main-layout {
+            display: grid; grid-template-columns: 1fr 380px; gap: 40px;
+            max-width: 1200px; margin: 0 auto; padding: 0 20px 60px 20px;
+        }
+
+        .section-title { font-size: 1.4rem; font-weight: 700; margin: 30px 0 20px 0; display: flex; align-items: center; gap: 12px; }
+        .section-num { color: var(--primary); font-style: italic; opacity: 0.6; }
+
+        .services-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+        .service-card {
+            background: var(--card-bg); border: 1px solid var(--border);
+            padding: 20px; border-radius: 12px; cursor: pointer; transition: 0.3s;
+        }
+        .service-card:hover { border-color: var(--primary); }
+        .service-card.selected { border-color: var(--primary); box-shadow: 0 0 15px rgba(30,144,255,0.2); }
+        .service-card h3 { margin: 0 0 8px 0; font-size: 1rem; }
+        .service-card p { font-size: 0.8rem; color: var(--text-muted); margin: 0 0 15px 0; min-height: 40px; }
+        .service-meta { display: flex; justify-content: space-between; align-items: center; }
+        .service-price { font-weight: 700; color: #fff; }
+
+        .date-picker {
+            background: var(--card-bg); border: 1px solid var(--border);
+            padding: 15px; border-radius: 8px; color: #fff; width: 100%; max-width: 300px; margin-bottom: 25px;
+        }
+        .horarios-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); gap: 10px; }
+        .time-btn {
+            background: transparent; border: 1px solid var(--border); color: #fff;
+            padding: 12px; border-radius: 6px; cursor: pointer; transition: 0.2s;
+        }
+        .time-btn.selected { background: var(--primary); color: #000; font-weight: 700; border-color: var(--primary); }
+        .time-btn.blocked { opacity: 0.2; cursor: not-allowed; text-decoration: line-through; }
+
+        .summary-card {
+            background: var(--card-bg); border: 1px solid var(--border);
+            padding: 30px; border-radius: 15px; position: sticky; top: 20px;
+        }
+        .summary-row { margin-bottom: 20px; }
+        .summary-label { font-size: 0.7rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px; display: block; }
+        .summary-value { font-size: 1rem; font-weight: 600; display: block; margin-top: 5px; }
+        .total-price { font-size: 2.2rem; font-weight: 700; margin: 20px 0; display: block; }
+        
+        .btn-confirm {
+            width: 100%; padding: 18px; border-radius: 8px; border: 1px solid var(--border);
+            background: #222; color: #555; font-weight: 700; cursor: pointer; transition: 0.3s;
+        }
+        .btn-confirm.ready { background: #fff; color: #000; border-color: #fff; }
+
+        .auth-container {
+            background: var(--card-bg); padding: 30px; border-radius: 12px;
+            max-width: 400px; margin: 40px auto; border: 1px solid var(--border);
+            display: none;
+        }
+        .auth-container input {
+            width: 100%; padding: 12px; margin: 10px 0; background: #000;
+            border: 1px solid var(--border); color: #fff; border-radius: 6px; box-sizing: border-box;
+        }
+        .social-btn { width: 100%; padding: 12px; margin-top: 10px; border-radius: 6px; cursor: pointer; border: none; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .google-btn { background: #fff; color: #000; }
+        .google-btn img { height: 20px; }
+        .toggle-auth { color: var(--primary); cursor: pointer; font-size: 0.85rem; text-align: center; display: block; margin-top: 15px; }
+
+        footer { border-top: 1px solid var(--border); padding: 40px; text-align: center; color: var(--text-muted); font-size: 0.85rem; }
+        .map-link { 
+            color: var(--primary); text-decoration: none; font-weight: 700; 
+            display: inline-block; margin-top: 10px; border: 1px solid var(--primary);
+            padding: 8px 15px; border-radius: 5px; transition: 0.3s;
+        }
+        .map-link:hover { background: var(--primary); color: #000; }
+
+        @media (max-width: 900px) {
+            .main-layout { grid-template-columns: 1fr; }
+            .summary-card { position: static; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-area">
+            <img src="https://media.istockphoto.com/id/1446474893/pt/vetorial/barbershop-logo-vector-salon-logo.jpg?s=612x612&w=0&k=20&c=Ctt2bw9V05sMx0iOmlhbgXiGQxRgsBxxxZ3k7UWj7YA=" alt="Logo">
+            <h1>LOPES BARBEARIA</h1>
+        </div>
+        <div class="nav-buttons">
+            <button class="nav-btn active" id="btn-nav-agendamento" onclick="showSection('agendamento')">Agendamento</button>
+            <button class="nav-btn" id="btn-nav-cliente" onclick="showSection('cliente')">Minha Conta</button>
+        </div>
+    </header>
+
+    <div id="section-agendamento" class="main-layout">
+        <div class="content-side">
+            <div class="section-title"><span class="section-num">1</span> Escolha o Serviço</div>
+            <div class="services-grid">
+                <div class="service-card" onclick="selectService(this, 'Corte de Cabelo', 40, 40)">
+                    <h3>Corte de Cabelo</h3>
+                    <p>Corte tradicional com acabamento premium e lavagem.</p>
+                    <div class="service-meta">
+                        <span class="service-time">⏱ 40 MIN</span>
+                        <span class="service-price">R$ 40</span>
+                    </div>
+                </div>
+                <div class="service-card" onclick="selectService(this, 'Barba', 40, 40)">
+                    <h3>Barba</h3>
+                    <p>Design de barba com toalha quente e terapia de óleos.</p>
+                    <div class="service-meta">
+                        <span class="service-time">⏱ 40 MIN</span>
+                        <span class="service-price">R$ 40</span>
+                    </div>
+                </div>
+                <div class="service-card" onclick="selectService(this, 'Combo Completo', 80, 75)">
+                    <h3>Combo Cabelo e Barba</h3>
+                    <p>O pacote completo para o cavalheiro moderno.</p>
+                    <div class="service-meta">
+                        <span class="service-time">⏱ 80 MIN</span>
+                        <span class="service-price">R$ 75</span>
+                    </div>
+                </div>
+                <div class="service-card" onclick="selectService(this, 'Corte Infantil (Autismo)', 80, 60)">
+                    <h3>Corte Infantil (Autismo)</h3>
+                    <p>Atendimento humanizado e paciente para crianças.</p>
+                    <div class="service-meta">
+                        <span class="service-time">⏱ 80 MIN</span>
+                        <span class="service-price">R$ 60</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="dateTimeArea" style="opacity: 0.3; pointer-events: none; transition: 0.5s;">
+                <div class="section-title"><span class="section-num">2</span> Data & Horário</div>
+                <input type="date" id="dataAgendamento" class="date-picker">
+                <div id="gridHorarios" class="horarios-grid"></div>
+            </div>
+        </div>
+
+        <div class="summary-side">
+            <div class="summary-card">
+                <div class="summary-row">
+                    <span class="summary-label">Serviço</span>
+                    <span class="summary-value" id="resumoServico">---</span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-label">Data e Hora</span>
+                    <span class="summary-value" id="resumoDataHora">---</span>
+                </div>
+                <span class="summary-label">Total a pagar</span>
+                <span class="total-price" id="resumoPreco">R$ 0</span>
+                
+                <div id="userNameLogged" style="margin-bottom: 15px; font-size: 0.8rem; color: var(--primary); font-weight: 600;"></div>
+                
+                <button id="btnConfirmar" class="btn-confirm" disabled onclick="finalizarAgendamento()">
+                    CONFIRMAR AGENDAMENTO
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="section-cliente" class="auth-container">
+        <div id="auth-login">
+            <h2 style="text-align: center;">Acessar</h2>
+            <input type="email" id="login-email" placeholder="E-mail">
+            <input type="password" id="login-senha" placeholder="Senha">
+            <button class="nav-btn active" style="width: 100%; margin-top: 10px;" onclick="handleLogin()">Entrar</button>
+            <span class="toggle-auth" onclick="toggleAuthMode('signup')">Ainda não tem conta? Criar conta</span>
+        </div>
+
+        <div id="auth-signup" style="display: none;">
+            <h2 style="text-align: center;">Nova Conta</h2>
+            <input type="text" id="signup-nome" placeholder="Nome Completo">
+            <input type="email" id="signup-email" placeholder="E-mail">
+            <input type="password" id="signup-senha" placeholder="Senha (mín. 6 dígitos)">
+            <button class="nav-btn active" style="width: 100%; margin-top: 10px;" onclick="handleSignUp()">Cadastrar</button>
+            <span class="toggle-auth" onclick="toggleAuthMode('login')">Já tem conta? Entrar</span>
+        </div>
+
+        <button class="social-btn google-btn" onclick="handleGoogleLogin()">
+            <img src="https://br.advfn.com/favicon.ico" alt="Google"> Entrar com Google
+        </button>
+
+        <div id="user-logged-info" style="display: none; text-align: center;">
+            <p>Olá, <span id="clientName" style="color: var(--primary); font-weight: 700;"></span>!</p>
+            <button class="nav-btn" onclick="handleLogout()">Sair da conta</button>
+            <hr border-color="#222" style="margin: 20px 0;">
+            <h3 style="font-size: 0.9rem;">Meus Agendamentos</h3>
+            <div id="listaAgendamentos" style="font-size: 0.8rem; text-align: left;"></div>
+        </div>
+    </div>
+
+    <footer>
+        <p>📍 Av. Central, 149-21 - Alto Lagoa Funda, Marataízes - ES, 29345-000</p>
+        <a href="https://www.google.com/maps/search/?api=1&query=Av.+Central,+149-21+-+Alto+Lagoa+Funda,+Marataízes+-+ES,+29345-000" target="_blank" class="map-link">
+            🗺️ VER NO GOOGLE MAPS
+        </a>
+        <p style="margin-top: 20px; opacity: 0.5;">© 2025 LOPES BARBEARIA</p>
+    </footer>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup, signInWithRedirect } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBLBFTLC7sqM9VUhlsypPugQ-LhcX7-0Rw",
+            authDomain: "barbearia-do-rei.firebaseapp.com",
+            projectId: "barbearia-do-rei",
+            storageBucket: "barbearia-do-rei.firebasestorage.app",
+            messagingSenderId: "546744214164",
+            appId: "1:546744214164:web:5bd367381afbef253d0a81",
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
+
+        let state = { servico: null, data: null, hora: null, user: null };
+        const horariosBase = ["09:00", "09:40", "10:20", "11:00", "11:40", "13:00", "13:40", "14:20", "15:00", "15:40", "16:20", "17:00", "17:40"];
+
+        window.showSection = (name) => {
+            document.getElementById('section-agendamento').style.display = name === 'agendamento' ? 'grid' : 'none';
+            document.getElementById('section-cliente').style.display = name === 'cliente' ? 'block' : 'none';
+            document.getElementById('btn-nav-agendamento').classList.toggle('active', name === 'agendamento');
+            document.getElementById('btn-nav-cliente').classList.toggle('active', name === 'cliente');
+        };
+
+        window.toggleAuthMode = (mode) => {
+            document.getElementById('auth-login').style.display = mode === 'login' ? 'block' : 'none';
+            document.getElementById('auth-signup').style.display = mode === 'signup' ? 'block' : 'none';
+        };
+
+        window.selectService = (el, nome, duracao, preco) => {
+            document.querySelectorAll('.service-card').forEach(c => c.classList.remove('selected'));
+            el.classList.add('selected');
+            state.servico = { nome, duracao, preco };
+            document.getElementById('resumoServico').innerText = nome;
+            document.getElementById('resumoPreco').innerText = `R$ ${preco}`;
+            document.getElementById('dateTimeArea').style.opacity = "1";
+            document.getElementById('dateTimeArea').style.pointerEvents = "all";
+            updateUI();
+        };
+
+        document.getElementById('dataAgendamento').addEventListener('change', async (e) => {
+            state.data = e.target.value;
+            state.hora = null;
+            document.getElementById('resumoDataHora').innerText = "---";
+            renderHorarios();
+            updateUI();
+        });
+
+        async function renderHorarios() {
+            const grid = document.getElementById('gridHorarios');
+            grid.innerHTML = "Verificando horários...";
+            const q = query(collection(db, "agendamentos"), where("data", "==", state.data));
+            const snap = await getDocs(q);
+            const ocupados = snap.docs.map(d => d.data().hora);
+
+            grid.innerHTML = "";
+            horariosBase.forEach(h => {
+                const btn = document.createElement('button');
+                btn.className = 'time-btn';
+                btn.innerText = h;
+                if (ocupados.includes(h)) btn.classList.add('blocked');
+                else {
+                    btn.onclick = () => {
+                        document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('selected'));
+                        btn.classList.add('selected');
+                        state.hora = h;
+                        document.getElementById('resumoDataHora').innerText = `${state.data.split('-').reverse().join('/')} às ${h}h`;
+                        updateUI();
+                    };
+                }
+                grid.appendChild(btn);
+            });
+        }
+
+        window.handleSignUp = async () => {
+            const nome = document.getElementById('signup-nome').value;
+            const email = document.getElementById('signup-email').value;
+            const senha = document.getElementById('signup-senha').value;
+            try {
+                const res = await createUserWithEmailAndPassword(auth, email, senha);
+                await updateProfile(res.user, { displayName: nome });
+                alert("Conta criada!");
+            } catch (e) { alert(e.message); }
+        };
+
+        window.handleLogin = async () => {
+            const email = document.getElementById('login-email').value;
+            const senha = document.getElementById('login-senha').value;
+            try { await signInWithEmailAndPassword(auth, email, senha); } 
+            catch (e) { alert("Erro no login"); }
+        };
+
+        window.handleGoogleLogin = async () => {
+            try { await signInWithPopup(auth, provider); } catch (e) { await signInWithRedirect(auth, provider); }
+        };
+
+        window.handleLogout = () => signOut(auth);
+
+        onAuthStateChanged(auth, (user) => {
+            state.user = user;
+            if (user) {
+                document.getElementById('user-logged-info').style.display = "block";
+                document.getElementById('auth-login').style.display = "none";
+                document.getElementById('auth-signup').style.display = "none";
+                document.querySelector('.google-btn').style.display = "none";
+                document.getElementById('clientName').innerText = user.displayName || user.email;
+                document.getElementById('userNameLogged').innerText = `Agendando para: ${user.displayName || user.email}`;
+                loadUserAppointments(user.uid);
+            } else {
+                document.getElementById('user-logged-info').style.display = "none";
+                document.getElementById('auth-login').style.display = "block";
+                document.querySelector('.google-btn').style.display = "flex";
+                document.getElementById('userNameLogged').innerText = "";
+            }
+            updateUI();
+        });
+
+        window.finalizarAgendamento = async () => {
+            if (!state.user) { showSection('cliente'); return; }
+            const btn = document.getElementById('btnConfirmar');
+            btn.innerText = "SALVANDO..."; btn.disabled = true;
+
+            try {
+                await addDoc(collection(db, "agendamentos"), {
+                    userId: state.user.uid,
+                    cliente: state.user.displayName || state.user.email,
+                    servico: state.servico.nome,
+                    data: state.data,
+                    hora: state.hora,
+                    preco: state.servico.preco,
+                    timestamp: new Date()
+                });
+                const msg = encodeURIComponent(`💈 *LOPES BARBEARIA*\n\n👤 Cliente: ${state.user.displayName || state.user.email}\n✂️ Serviço: ${state.servico.nome}\n📅 Data: ${state.data.split('-').reverse().join('/')}\n⏰ Hora: ${state.hora}h`);
+                window.open(`https://api.whatsapp.com/send?phone=5528999082741&text=${msg}`);
+                location.reload();
+            } catch (e) { alert(e.message); btn.innerText = "CONFIRMAR"; btn.disabled = false; }
+        };
+
+        function updateUI() {
+            const btn = document.getElementById('btnConfirmar');
+            btn.disabled = !(state.servico && state.data && state.hora);
+            btn.classList.toggle('ready', !btn.disabled);
+        }
+
+        async function loadUserAppointments(uid) {
+            const q = query(collection(db, "agendamentos"), where("userId", "==", uid));
+            const snap = await getDocs(q);
+            const lista = document.getElementById('listaAgendamentos');
+            lista.innerHTML = snap.empty ? "Sem agendamentos ativos." : "";
+            snap.forEach(d => {
+                const data = d.data();
+                lista.innerHTML += `<div style="border-bottom: 1px solid #222; padding: 10px 0;">
+                    <b>${data.servico}</b><br>${data.data.split('-').reverse().join('/')} às ${data.hora}h
+                </div>`;
+            });
+        }
+    </script>
+</body>
+>>>>>>> 36740019e009fbf3fe7657f7bf44c02fb064595c
 </html>
