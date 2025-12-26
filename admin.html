@@ -1,405 +1,275 @@
 <!DOCTYPE html>
-<html lang="pt-pt">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin | Lopes Barbearia</title>
     
-    <!-- Chart.js para os gráficos -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
     <style>
         :root {
-            --primary: #d4af37;
-            --primary-hover: #b8962d;
+            --primary: #1e90ff; 
+            --primary-hover: #1c86ee;
             --bg-dark: #0a0a0a;
             --bg-card: #141414;
             --text-main: #ffffff;
             --text-muted: #a0a0a0;
-            --border: #262626;
+            --border: #222222;
             --success: #10b981;
             --danger: #ef4444;
             --accent: #3b82f6;
+            --whatsapp: #25d366;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-dark); color: var(--text-main); line-height: 1.5; overflow-x: hidden; }
+
+        /* Login */
+        #login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: radial-gradient(circle at center, #1a1a1a 0%, #000 100%); }
+        .login-card { background: var(--bg-card); padding: 2.5rem; border-radius: 1rem; width: 100%; max-width: 400px; border: 1px solid var(--border); }
+
+        /* Layout */
+        #admin-panel { display: none; grid-template-columns: 260px 1fr; min-height: 100vh; }
+        aside { background: var(--bg-card); border-right: 1px solid var(--border); padding: 1.5rem; display: flex; flex-direction: column; gap: 1.5rem; position: sticky; top: 0; height: 100vh; }
+        .nav-brand { color: var(--primary); font-weight: 900; font-size: 1.2rem; text-align: center; margin-bottom: 1rem; letter-spacing: 2px; text-transform: uppercase; }
+        .nav-menu { display: flex; flex-direction: column; gap: 0.5rem; }
+        .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 0.5rem; color: var(--text-muted); cursor: pointer; transition: 0.2s; }
+        .nav-item:hover, .nav-item.active { background: #1a1a1a; color: var(--primary); }
+
+        main { padding: 2rem; max-width: 1400px; margin: 0 auto; width: 100%; }
+
+        /* Stats */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .stat-card { background: var(--bg-card); padding: 1.5rem; border-radius: 0.75rem; border: 1px solid var(--border); }
+        .stat-value { font-size: 1.8rem; font-weight: 700; color: var(--text-main); margin-top: 0.5rem; }
+
+        /* Agenda */
+        .calendar-wrapper { display: grid; grid-template-columns: 1fr 400px; gap: 1.5rem; align-items: start; }
+        @media (max-width: 900px) { .calendar-wrapper { grid-template-columns: 1fr; } }
+        
+        .calendar-card { background: var(--bg-card); border-radius: 0.75rem; border: 1px solid var(--border); overflow: hidden; }
+        .calendar-header { display: flex; justify-content: space-between; align-items: center; padding: 1.2rem; background: #0d0d0d; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: var(--border); }
+        .calendar-day { background: var(--bg-card); min-height: 90px; padding: 0.5rem; cursor: pointer; transition: 0.2s; position: relative; }
+        .calendar-day:hover { background: #1a1a1a; }
+        .calendar-day.selected { border: 2px solid var(--primary); z-index: 10; }
+        .calendar-day.closed { opacity: 0.4; background: #000; pointer-events: none; }
+        .day-number { font-weight: bold; font-size: 0.9rem; margin-bottom: 4px; }
+        
+        .slots-container { background: var(--bg-card); border-radius: 0.75rem; border: 1px solid var(--border); padding: 1.5rem; }
+        .slots-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 1rem; }
+        
+        .slot-btn { 
+            padding: 12px; border: 1px solid var(--border); background: #0d0d0d; color: white; border-radius: 8px; 
+            cursor: pointer; text-align: center; font-size: 0.85rem; transition: 0.2s;
+            position: relative;
+        }
+        .slot-btn.occupied { border-color: var(--primary); color: var(--primary); font-weight: bold; }
+        .slot-btn.blocked { background: #2a1010; color: var(--danger); border-color: var(--danger); opacity: 0.7; }
+        .slot-btn.part-of-long { border-style: dashed; opacity: 0.9; }
+        
+        /* CORREÇÃO 1: Feedback visual de seleção do slot */
+        .slot-btn.active-editing {
+            border: 2px solid var(--primary);
+            box-shadow: 0 0 10px rgba(30, 144, 255, 0.4);
+            transform: translateY(-2px);
         }
 
-        body {
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            line-height: 1.5;
-        }
+        /* Form Estilizado */
+        .admin-section { background: var(--bg-card); padding: 1.5rem; border-radius: 0.75rem; border: 1px solid var(--border); margin-bottom: 2rem; }
+        .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem; align-items: end; }
+        input, select { background: #000; border: 1px solid var(--border); padding: 0.8rem; color: white; border-radius: 0.5rem; width: 100%; outline: none; }
+        input:focus, select:focus { border-color: var(--primary); }
+        label { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem; display: block; }
+        
+        .btn-action { background: var(--primary); color: white; border: none; padding: 0.8rem 1.2rem; border-radius: 0.5rem; font-weight: 700; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-action:hover { background: var(--primary-hover); opacity: 0.9; }
 
-        /* Login Screen */
-        #login-screen {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            padding: 20px;
-        }
+        .btn-whatsapp { background: var(--whatsapp); color: white; border: none; width: 42px; height: 42px; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .btn-whatsapp:hover { opacity: 0.8; }
 
-        .login-card {
-            background: var(--bg-card);
-            padding: 2.5rem;
-            border-radius: 1rem;
-            width: 100%;
-            max-width: 400px;
-            border: 1px solid var(--border);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-        }
+        /* Tabelas */
+        .table-wrapper { width: 100%; overflow-x: auto; background: var(--bg-card); border-radius: 0.75rem; border: 1px solid var(--border); }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th { padding: 1.2rem; background: #0d0d0d; color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; }
+        td { padding: 1.2rem; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+        tr:last-child td { border: none; }
 
-        .login-card h2 {
-            text-align: center;
-            color: var(--primary);
-            margin-bottom: 2rem;
-            font-size: 1.5rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
 
-        .form-group {
-            margin-bottom: 1.25rem;
-        }
-
-        .form-group label {
-            display: block;
-            font-size: 0.875rem;
-            color: var(--text-muted);
-            margin-bottom: 0.5rem;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 0.75rem 1rem;
-            background: #000;
-            border: 1px solid var(--border);
-            border-radius: 0.5rem;
-            color: white;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-
-        .form-group input:focus {
-            border-color: var(--primary);
-        }
-
-        .btn-login {
-            width: 100%;
-            padding: 0.75rem;
-            background: var(--primary);
-            color: black;
-            border: none;
-            border-radius: 0.5rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: transform 0.1s, background 0.2s;
-        }
-
-        .btn-login:active {
-            transform: scale(0.98);
-        }
-
-        /* Admin Layout */
-        #admin-panel {
-            display: none;
-        }
-
-        header {
-            background: var(--bg-card);
-            border-bottom: 1px solid var(--border);
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: sticky;
-            top: 0;
-            z-index: 50;
-        }
-
-        .logo-section h1 {
-            font-size: 1.25rem;
-            color: var(--primary);
-            font-weight: 800;
-        }
-
-        .user-nav {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .btn-logout {
-            background: transparent;
-            color: var(--danger);
-            border: 1px solid var(--danger);
-            padding: 0.4rem 0.8rem;
-            border-radius: 0.4rem;
-            cursor: pointer;
-            font-size: 0.8rem;
-            transition: all 0.2s;
-        }
-
-        .btn-logout:hover {
-            background: var(--danger);
-            color: white;
-        }
-
-        .main-content {
-            padding: 2rem;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        /* Stats Grid */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .stat-card {
-            background: var(--bg-card);
-            padding: 1.5rem;
-            border-radius: 0.75rem;
-            border: 1px solid var(--border);
-        }
-
-        .stat-header {
-            display: flex;
-            justify-content: space-between;
-            color: var(--text-muted);
-            font-size: 0.875rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .stat-value {
-            font-size: 1.75rem;
-            font-weight: 700;
-            color: var(--text-main);
-        }
-
-        .stat-trend {
-            font-size: 0.75rem;
-            margin-top: 0.5rem;
-        }
-
-        .trend-up { color: var(--success); }
-
-        /* Charts Section */
-        .charts-container {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        @media (max-width: 900px) {
-            .charts-container { grid-template-columns: 1fr; }
-        }
-
-        .chart-card {
-            background: var(--bg-card);
-            padding: 1.5rem;
-            border-radius: 0.75rem;
-            border: 1px solid var(--border);
-        }
-
-        .chart-card h3 {
-            margin-bottom: 1.5rem;
-            font-size: 1rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        /* Appointment Table */
-        .appointments-section {
-            background: var(--bg-card);
-            border-radius: 0.75rem;
-            border: 1px solid var(--border);
-            overflow: hidden;
-        }
-
-        .table-header {
-            padding: 1.5rem;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .table-responsive {
-            overflow-x: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: left;
-        }
-
-        th {
-            background: #1a1a1a;
-            padding: 1rem;
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-        }
-
-        td {
-            padding: 1rem;
-            border-bottom: 1px solid var(--border);
-            font-size: 0.9rem;
-        }
-
-        .status-pill {
-            padding: 0.25rem 0.6rem;
-            border-radius: 99px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-
-        .status-pending { background: rgba(212, 175, 55, 0.1); color: var(--primary); }
-        .status-confirmed { background: rgba(16, 185, 129, 0.1); color: var(--success); }
-
-        .action-btns {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .btn-icon {
-            background: #262626;
-            border: none;
-            color: white;
-            padding: 0.4rem;
-            border-radius: 0.3rem;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .btn-icon:hover { background: #333; }
-        .btn-icon.confirm:hover { background: var(--success); }
-        .btn-icon.delete:hover { background: var(--danger); }
-
+        .charts-container { display: grid; grid-template-columns: 1.5fr 1fr; gap: 1.5rem; margin-top: 2rem; }
+        @media (max-width: 900px) { .charts-container { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
 
-    <!-- TELA DE LOGIN -->
     <div id="login-screen">
         <div class="login-card">
-            <h2>Lopes Admin</h2>
-            <div class="form-group">
-                <label>Email</label>
-                <input type="email" id="admin-email" placeholder="admin@lopesbarbearia.com">
-            </div>
-            <div class="form-group">
-                <label>Palavra-passe</label>
-                <input type="password" id="admin-password" placeholder="••••••••">
-            </div>
-            <button class="btn-login" id="btn-login-submit">ACEDER AO PAINEL</button>
+            <h2 style="color: var(--primary); text-align: center; margin-bottom: 2rem;">LOPES ADMIN</h2>
+            <div style="margin-bottom: 1rem;"><label>Email</label><input type="email" id="login-email" autocomplete="email"></div>
+            <div style="margin-bottom: 1.5rem;"><label>Senha</label><input type="password" id="login-password" autocomplete="current-password"></div>
+            <button class="btn-action" id="btn-login" style="width: 100%;">ENTRAR</button>
+            <p id="login-error" style="color: var(--danger); font-size: 0.8rem; margin-top: 10px; text-align: center; display: none;"></p>
         </div>
     </div>
 
-    <!-- PAINEL ADMINISTRATIVO -->
     <div id="admin-panel">
-        <header>
-            <div class="logo-section">
-                <h1>LOPES BARBEARIA <span style="font-weight: 300; color: var(--text-muted);">| Dashboard</span></h1>
-            </div>
-            <div class="user-nav">
-                <span id="user-display-email" style="font-size: 0.8rem; color: var(--text-muted);"></span>
-                <button class="btn-logout" id="admin-logout-btn">SAIR</button>
-            </div>
-        </header>
+        <aside>
+            <div class="nav-brand">Lopes Barbearia</div>
+            <nav class="nav-menu">
+                <div class="nav-item active" onclick="switchTab('dashboard')"><i data-lucide="layout-dashboard"></i> Dashboard</div>
+                <div class="nav-item" onclick="switchTab('agendamentos')"><i data-lucide="calendar"></i> Agenda</div>
+                <div class="nav-item" onclick="switchTab('clientes')"><i data-lucide="users"></i> Clientes</div>
+                <div class="nav-item" onclick="switchTab('financas')"><i data-lucide="wallet"></i> Finanças</div>
+            </nav>
+            <button class="btn-action" onclick="logout()" style="margin-top: auto; background: var(--danger); color: white; border: none;"><i data-lucide="log-out"></i> SAIR</button>
+        </aside>
 
-        <main class="main-content">
-            <!-- Estatísticas -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <span>Receita Estimada (Mês)</span>
-                        <i data-lucide="dollar-sign" size="16"></i>
+        <main>
+            <h2 id="view-title" style="margin-bottom: 1.5rem;">Dashboard</h2>
+
+            <!-- DASHBOARD -->
+            <div id="tab-dashboard" class="tab-content active">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span style="color:var(--text-muted)">Receita Bruta</span>
+                        <div class="stat-value" id="dash-revenue" style="color: var(--primary)">R$ 0,00</div>
                     </div>
-                    <div class="stat-value" id="stat-revenue">€ 0,00</div>
-                    <div class="stat-trend trend-up">
-                        <i data-lucide="trending-up" size="12"></i> +12% vs mês anterior
+                    <div class="stat-card">
+                        <span style="color:var(--text-muted)">Despesas</span>
+                        <div class="stat-value" id="dash-expense" style="color: var(--danger)">R$ 0,00</div>
+                    </div>
+                    <div class="stat-card">
+                        <span style="color:var(--text-muted)">Saldo</span>
+                        <div class="stat-value" id="dash-profit" style="color: var(--success)">R$ 0,00</div>
                     </div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <span>Agendamentos Hoje</span>
-                        <i data-lucide="calendar" size="16"></i>
-                    </div>
-                    <div class="stat-value" id="stat-today-count">0</div>
-                    <div class="stat-trend" style="color: var(--text-muted)">Próximo às 14:00</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <span>Total de Registos</span>
-                        <i data-lucide="users" size="16"></i>
-                    </div>
-                    <div class="stat-value" id="stat-clients">0</div>
-                    <div class="stat-trend trend-up">
-                        <i data-lucide="user-plus" size="12"></i> Atualizado agora
-                    </div>
+                <div class="charts-container">
+                    <div class="stat-card"><canvas id="mainChart"></canvas></div>
+                    <div class="stat-card"><canvas id="pieChart"></canvas></div>
                 </div>
             </div>
 
-            <!-- Gráficos -->
-            <div class="charts-container">
-                <div class="chart-card">
-                    <h3>Fluxo de Clientes (Semanal)</h3>
-                    <canvas id="mainChart" height="200"></canvas>
-                </div>
-                <div class="chart-card">
-                    <h3>Serviços Populares</h3>
-                    <canvas id="pieChart" height="250"></canvas>
+            <!-- AGENDAMENTOS -->
+            <div id="tab-agendamentos" class="tab-content">
+                <div class="calendar-wrapper">
+                    <div class="calendar-card">
+                        <div class="calendar-header">
+                            <button class="btn-action" style="padding: 5px 10px;" onclick="changeMonth(-1)"><i data-lucide="chevron-left"></i></button>
+                            <h3 id="calendar-month-year">...</h3>
+                            <button class="btn-action" style="padding: 5px 10px;" onclick="changeMonth(1)"><i data-lucide="chevron-right"></i></button>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; background: #0d0d0d; padding: 10px 0; font-size: 0.7rem; color: var(--text-muted); font-weight: bold;">
+                            <div>DOM</div><div>SEG</div><div>TER</div><div>QUA</div><div>QUI</div><div>SEX</div><div>SAB</div>
+                        </div>
+                        <div class="calendar-grid" id="calendar-body"></div>
+                        
+                        <div style="padding: 1.5rem; background: #0d0d0d; border-top: 1px solid var(--border); display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button class="btn-action" style="background: var(--danger); color: white;" onclick="toggleDayStatus('closed')">FECHAR DIA</button>
+                            <button class="btn-action" style="background: var(--success); color: white;" onclick="toggleDayStatus('open')">ABRIR DIA EXTRA</button>
+                            <button class="btn-action" style="background: var(--primary); color: white;" onclick="addExtraSlot()">+ HORÁRIO EXTRA</button>
+                        </div>
+                    </div>
+
+                    <div class="slots-container">
+                        <h4 id="selected-date-label">Data</h4>
+                        <div class="slots-grid" id="slots-grid"></div>
+                        
+                        <div id="slot-editor" style="display: none; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                                <h5 id="editor-title" style="color: var(--primary);">Horário</h5>
+                                <!-- CORREÇÃO 2: Botão de WhatsApp -->
+                                <button id="btn-whatsapp-client" class="btn-whatsapp" title="Enviar Mensagem no WhatsApp" style="display: none;">
+                                    <i data-lucide="message-circle"></i>
+                                </button>
+                            </div>
+                            
+                            <div style="display: flex; flex-direction: column; gap: 12px;">
+                                <div>
+                                    <label>Nome do Cliente</label>
+                                    <input type="text" id="edit-client" placeholder="Nome do Cliente">
+                                </div>
+                                <div>
+                                    <label>Telemóvel (Opcional)</label>
+                                    <input type="tel" id="edit-phone" placeholder="28999999999">
+                                </div>
+                                <div>
+                                    <label>Serviço</label>
+                                    <select id="edit-service">
+                                        <option value="Corte Masculino|40|1">Corte Masculino (R$ 40 - 40min)</option>
+                                        <option value="Barba Completa|40|1">Barba (R$ 40 - 40min)</option>
+                                        <option value="Combo Corte + Barba|75|2">Combo (R$ 75 - 80min)</option>
+                                        <option value="Corte Infantil|40|1">Corte Infantil (R$ 40 - 40min)</option>
+                                        <option value="Corte Autismo|60|2">Corte Autismo (R$ 60 - 80min)</option>
+                                    </select>
+                                </div>
+                                <div id="warning-double" style="display:none; color: var(--danger); font-size: 0.75rem; font-weight: bold;">
+                                    ⚠️ Este serviço requer 2 horários seguidos.
+                                </div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                    <button class="btn-action" onclick="saveBooking()">SALVAR</button>
+                                    <button class="btn-action" style="background: #333; color: white;" onclick="toggleBlockSlot()">BLOQUEAR</button>
+                                </div>
+                                <button id="btn-cancel-booking" style="background: var(--danger); color: white; border: none; padding: 0.8rem; border-radius: 0.5rem; font-weight: 700; cursor: pointer; display: none;" onclick="cancelBooking()">CANCELAR AGENDAMENTO</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Tabela de Agendamentos -->
-            <div class="appointments-section">
-                <div class="table-header">
-                    <h3>Próximos Agendamentos</h3>
-                </div>
-                <div class="table-responsive">
+            <!-- CLIENTES -->
+            <div id="tab-clientes" class="tab-content">
+                <div class="table-wrapper">
                     <table>
                         <thead>
                             <tr>
-                                <th>Horário</th>
                                 <th>Cliente</th>
-                                <th>Serviço</th>
-                                <th>Preço</th>
-                                <th>Status</th>
-                                <th>Ações</th>
+                                <th>Última Visita</th>
+                                <th>Total Gasto</th>
+                                <th>Frequência</th>
                             </tr>
                         </thead>
-                        <tbody id="appointments-list">
+                        <tbody id="list-clients"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- FINANÇAS -->
+            <div id="tab-financas" class="tab-content">
+                <div class="admin-section">
+                    <h4 style="margin-bottom: 1rem;">Lançar Nova Despesa</h4>
+                    <div class="form-row">
+                        <div><label>Descrição</label><input type="text" id="exp-desc" placeholder="Ex: Energia"></div>
+                        <div><label>Valor (R$)</label><input type="number" id="exp-val" step="0.01"></div>
+                        <div><label>Data</label><input type="date" id="exp-date"></div>
+                        <button class="btn-action" style="background: var(--danger); color: white;" onclick="addExpense()">ADICIONAR</button>
+                    </div>
+                </div>
+                
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
                             <tr>
-                                <td colspan="6" style="text-align:center; padding: 2rem; color: var(--text-muted);">A carregar dados...</td>
+                                <th>Data</th>
+                                <th>Descrição</th>
+                                <th>Valor</th>
+                                <th style="text-align: right;">Ações</th>
                             </tr>
-                        </tbody>
+                        </thead>
+                        <tbody id="list-expenses"></tbody>
                     </table>
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- Firebase e Lógica -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
         import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc, updateDoc, addDoc, getDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
         // Configuração do Firebase
         const firebaseConfig = {
@@ -415,205 +285,353 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // UI Elements
-        const loginScreen = document.getElementById('login-screen');
-        const adminPanel = document.getElementById('admin-panel');
-        const appointmentsList = document.getElementById('appointments-list');
-        const loginBtn = document.getElementById('btn-login-submit');
-        const logoutBtn = document.getElementById('admin-logout-btn');
+        let agendamentosData = [];
+        let configDiasData = {};
+        let despesasData = [];
+        let currentCalendarDate = new Date();
+        let selectedDateISO = new Date().toISOString().split('T')[0];
+        let selectedSlot = null;
 
-        lucide.createIcons();
+        const baseSlots = ["09:00", "09:40", "10:20", "11:00", "11:40", "13:00", "13:40", "14:20", "15:00", "15:40", "16:20", "17:00", "17:40", "18:20"];
 
-        // Lista de Emails Autorizados
-        const allowedAdmins = [
-            'lopesbarbearia@admin.com',
-            'admin@lopesbarbearia.com',
-            'saullinho2008@gmail.com'
-        ];
+        // UI Helpers
+        window.switchTab = (tab) => {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            document.getElementById('tab-' + tab).classList.add('active');
+            document.getElementById('view-title').innerText = tab.charAt(0).toUpperCase() + tab.slice(1);
+            if(event && event.currentTarget) event.currentTarget.classList.add('active');
+            if(tab === 'agendamentos') renderCalendar();
+        };
 
-        // Variável para guardar o listener e poder cancelar se necessário
-        let unsubscribeAppointments = null;
-
-        // --- Monitor de Autenticação ---
-        onAuthStateChanged(auth, (user) => {
+        onAuthStateChanged(auth, user => {
             if (user) {
-                const email = user.email ? user.email.toLowerCase() : '';
-                if (allowedAdmins.includes(email) || email.includes('admin')) {
-                    loginScreen.style.display = 'none';
-                    adminPanel.style.display = 'block';
-                    document.getElementById('user-display-email').innerText = user.email;
-                    
-                    // Iniciar carregamento de dados APÓS a confirmação de login
-                    loadData(user);
-                    initCharts();
-                } else {
-                    alert('Acesso negado. Apenas administradores autorizados.');
-                    signOut(auth);
-                }
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('admin-panel').style.display = 'grid';
+                initListeners();
             } else {
-                loginScreen.style.display = 'flex';
-                adminPanel.style.display = 'none';
-                // Parar de ouvir alterações se o utilizador sair
-                if (unsubscribeAppointments) {
-                    unsubscribeAppointments();
-                    unsubscribeAppointments = null;
-                }
+                document.getElementById('login-screen').style.display = 'flex';
+                document.getElementById('admin-panel').style.display = 'none';
             }
         });
 
-        loginBtn.addEventListener('click', async () => {
-            const email = document.getElementById('admin-email').value;
-            const pass = document.getElementById('admin-password').value;
+        const loginError = document.getElementById('login-error');
+        document.getElementById('btn-login').onclick = async () => {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            const btn = document.getElementById('btn-login');
             
-            if(!email || !pass) return alert('Por favor, preencha todos os campos.');
+            if (!email || !password) {
+                loginError.innerText = "Por favor, preencha todos os campos.";
+                loginError.style.display = 'block';
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerText = "AUTENTICANDO...";
+            loginError.style.display = 'none';
 
             try {
-                await signInWithEmailAndPassword(auth, email, pass);
-            } catch (err) {
-                console.error("Erro no login:", err);
-                alert('Erro: Credenciais inválidas ou problema de conexão.');
+                await signInWithEmailAndPassword(auth, email, password);
+            } catch (error) {
+                btn.disabled = false;
+                btn.innerText = "ENTRAR";
+                loginError.style.display = 'block';
+                if (error.code === 'auth/invalid-credential') loginError.innerText = "Credenciais inválidas.";
+                else loginError.innerText = "Erro: " + error.message;
             }
-        });
+        };
 
-        logoutBtn.addEventListener('click', () => signOut(auth));
+        window.logout = () => signOut(auth);
 
-        // --- Gestão de Dados (Firestore) ---
-        function loadData(user) {
-            if (!user) return;
+        function initListeners() {
+            onSnapshot(collection(db, "agendamentos"), snap => {
+                agendamentosData = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                updateDashboard();
+                renderClients();
+                renderCalendar();
+                renderSlots();
+            });
 
-            // Se as regras do Firestore estiverem bloqueando, o onSnapshot retornará erro imediatamente
-            const q = query(collection(db, 'appointments'), orderBy('timestamp', 'desc'));
+            onSnapshot(collection(db, "config_dias"), snap => {
+                configDiasData = {};
+                snap.forEach(d => configDiasData[d.id] = d.data());
+                renderCalendar();
+                renderSlots();
+            });
 
-            unsubscribeAppointments = onSnapshot(q, (snapshot) => {
-                appointmentsList.innerHTML = '';
-                let revenue = 0;
-                let todayCount = 0;
-                const nowStr = new Date().toLocaleDateString('pt-PT');
-
-                if (snapshot.empty) {
-                    appointmentsList.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:2rem; color:#666;">Nenhum agendamento encontrado na coleção "appointments".</td></tr>';
-                    return;
-                }
-
-                snapshot.forEach(docSnap => {
-                    const data = docSnap.data();
-                    const id = docSnap.id;
-                    
-                    if (data.status === 'confirmed') revenue += parseFloat(data.price || 0);
-                    if (data.date === nowStr) todayCount++;
-
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>
-                            <div style="font-weight:700;">${data.time || '--:--'}</div>
-                            <div style="font-size:0.75rem; color:#666;">${data.date || '--/--'}</div>
-                        </td>
-                        <td>
-                            <div>${data.userName || 'Cliente'}</div>
-                            <div style="font-size:0.75rem; color:#666;">${data.userPhone || ''}</div>
-                        </td>
-                        <td>${data.service || 'Serviço'}</td>
-                        <td>€ ${data.price || '0.00'}</td>
-                        <td>
-                            <span class="status-pill status-${data.status || 'pending'}">
-                                ${data.status === 'confirmed' ? 'Confirmado' : 'Pendente'}
-                            </span>
-                        </td>
-                        <td>
-                            <div class="action-btns">
-                                ${data.status !== 'confirmed' ? `
-                                    <button class="btn-icon confirm" onclick="updateStatus('${id}', 'confirmed')" title="Confirmar">
-                                        <i data-lucide="check" size="14"></i>
-                                    </button>
-                                ` : ''}
-                                <button class="btn-icon delete" onclick="deleteAppointment('${id}')" title="Eliminar">
-                                    <i data-lucide="trash-2" size="14"></i>
-                                </button>
-                            </div>
-                        </td>
-                    `;
-                    appointmentsList.appendChild(tr);
-                });
-
-                document.getElementById('stat-revenue').innerText = `€ ${revenue.toFixed(2)}`;
-                document.getElementById('stat-today-count').innerText = todayCount;
-                document.getElementById('stat-clients').innerText = snapshot.size;
-
-                lucide.createIcons();
-            }, (error) => {
-                console.error("Erro Firestore:", error);
-                if (error.code === 'permission-denied') {
-                    appointmentsList.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:2rem; color:var(--danger);">
-                        <b>Erro de Permissão:</b><br>
-                        Aceda ao Firebase Console > Firestore > Rules e garanta que a leitura/escrita está permitida para utilizadores autenticados.<br>
-                        <small>Regra sugerida: allow read, write: if request.auth != null;</small>
-                    </td></tr>`;
-                }
+            onSnapshot(collection(db, "despesas"), snap => {
+                despesasData = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                renderExpenses();
+                updateDashboard();
             });
         }
 
-        // Funções Globais
-        window.updateStatus = async (id, status) => {
-            try {
-                const docRef = doc(db, 'appointments', id);
-                await updateDoc(docRef, { status: status });
-            } catch (e) { console.error("Erro ao atualizar status:", e); }
-        };
+        window.changeMonth = (v) => { currentCalendarDate.setMonth(currentCalendarDate.getMonth() + v); renderCalendar(); };
 
-        window.deleteAppointment = async (id) => {
-            if (confirm('Deseja eliminar este agendamento permanentemente?')) {
-                try {
-                    const docRef = doc(db, 'appointments', id);
-                    await deleteDoc(docRef);
-                } catch (e) { console.error("Erro ao eliminar agendamento:", e); }
+        function renderCalendar() {
+            const grid = document.getElementById('calendar-body');
+            const label = document.getElementById('calendar-month-year');
+            if(!grid || !label) return;
+            
+            grid.innerHTML = '';
+            const year = currentCalendarDate.getFullYear();
+            const month = currentCalendarDate.getMonth();
+            label.innerText = new Intl.DateTimeFormat('pt-BR', {month:'long', year:'numeric'}).format(currentCalendarDate).toUpperCase();
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            for(let i=0; i<firstDay; i++) grid.innerHTML += `<div class="calendar-day" style="opacity:0"></div>`;
+
+            for(let d=1; d<=daysInMonth; d++) {
+                const iso = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                const config = configDiasData[iso] || { status: (new Date(iso).getDay() === 0 ? 'closed' : 'open') };
+                const dayAgends = agendamentosData.filter(a => a.data === iso);
+
+                const div = document.createElement('div');
+                div.className = `calendar-day ${iso === selectedDateISO ? 'selected' : ''} ${config.status === 'closed' ? 'closed' : ''}`;
+                div.onclick = () => { selectedDateISO = iso; renderCalendar(); renderSlots(); };
+                div.innerHTML = `<div class="day-number">${d}</div>`;
+                
+                dayAgends.forEach(a => {
+                    const color = a.status === 'blocked' ? 'var(--danger)' : 'var(--primary)';
+                    div.innerHTML += `<span style="width:5px;height:5px;background:${color};display:inline-block;margin:1px;border-radius:2px"></span>`;
+                });
+                grid.appendChild(div);
             }
-        };
+        }
 
-        // --- Gráficos ---
-        function initCharts() {
-            const ctxMain = document.getElementById('mainChart').getContext('2d');
-            new Chart(ctxMain, {
-                type: 'line',
-                data: {
-                    labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
-                    datasets: [{
-                        label: 'Agendamentos',
-                        data: [5, 12, 8, 15, 20, 35, 10],
-                        borderColor: '#d4af37',
-                        backgroundColor: 'rgba(212, 175, 55, 0.1)',
-                        fill: true,
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { grid: { color: '#222' }, ticks: { color: '#666' } },
-                        x: { grid: { display: false }, ticks: { color: '#666' } }
+        function renderSlots() {
+            const grid = document.getElementById('slots-grid');
+            if(!grid) return;
+            document.getElementById('selected-date-label').innerText = selectedDateISO.split('-').reverse().join('/');
+            document.getElementById('slot-editor').style.display = 'none';
+            grid.innerHTML = '';
+
+            const config = configDiasData[selectedDateISO] || {};
+            const slots = config.extraSlots ? [...baseSlots, ...config.extraSlots].sort() : baseSlots;
+
+            slots.forEach((time, index) => {
+                const agend = agendamentosData.find(a => a.data === selectedDateISO && a.hora === time);
+                const btn = document.createElement('div');
+                
+                let isPartOfLong = false;
+                if (index > 0) {
+                    const prevTime = slots[index - 1];
+                    const prevAgend = agendamentosData.find(a => a.data === selectedDateISO && a.hora === prevTime);
+                    if (prevAgend && prevAgend.slots === 2) isPartOfLong = true;
+                }
+
+                // CORREÇÃO 1: Classe active-editing para feedback visual
+                const isEditing = selectedSlot && selectedSlot.time === time;
+                btn.className = `slot-btn ${agend ? (agend.status === 'blocked' ? 'blocked' : 'occupied') : ''} ${isPartOfLong ? 'part-of-long' : ''} ${isEditing ? 'active-editing' : ''}`;
+                
+                if (agend) {
+                    btn.innerText = `${time} - ${agend.status === 'blocked' ? 'BLOQUEADO' : agend.nome}`;
+                } else if (isPartOfLong) {
+                    const owner = agendamentosData.find(a => a.data === selectedDateISO && a.hora === slots[index-1]);
+                    btn.innerText = `${time} - (Reservado: ${owner ? owner.nome : '...' })`;
+                    btn.style.opacity = "0.5";
+                } else {
+                    btn.innerText = time;
+                }
+
+                btn.onclick = () => {
+                    if (isPartOfLong) return;
+                    openSlotEditor(time, agend, slots, index);
+                };
+                grid.appendChild(btn);
+            });
+            lucide.createIcons();
+        }
+
+        function openSlotEditor(time, agend, allSlots, index) {
+            selectedSlot = { time, agend, allSlots, index };
+            renderSlots(); // Atualiza bordas de seleção
+            
+            document.getElementById('slot-editor').style.display = 'block';
+            document.getElementById('editor-title').innerText = `Horário: ${time}`;
+            document.getElementById('edit-client').value = agend ? (agend.nome === 'BLOQUEADO' ? '' : agend.nome) : '';
+            document.getElementById('edit-phone').value = agend?.telefone || '';
+            
+            const serviceSelect = document.getElementById('edit-service');
+            if (agend && agend.servico) {
+                for (let i = 0; i < serviceSelect.options.length; i++) {
+                    if (serviceSelect.options[i].value.startsWith(agend.servico)) {
+                        serviceSelect.selectedIndex = i;
+                        break;
                     }
                 }
-            });
+            }
 
-            const ctxPie = document.getElementById('pieChart').getContext('2d');
-            new Chart(ctxPie, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Cabelo', 'Barba', 'Combo', 'Outros'],
-                    datasets: [{
-                        data: [60, 20, 15, 5],
-                        backgroundColor: ['#d4af37', '#b8962d', '#8e7421', '#333'],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    cutout: '70%',
-                    plugins: { legend: { position: 'bottom', labels: { color: '#aaa', padding: 20 } } }
+            document.getElementById('btn-cancel-booking').style.display = agend ? 'block' : 'none';
+            
+            // CORREÇÃO 2: Configurar botão de WhatsApp
+            const btnWhatsapp = document.getElementById('btn-whatsapp-client');
+            if (agend && agend.status !== 'blocked') {
+                btnWhatsapp.style.display = 'flex';
+                btnWhatsapp.onclick = () => {
+                    const telefone = agend.telefone || prompt("Insira o número de WhatsApp do cliente (com DDD):", "28999082741");
+                    if(!telefone) return;
+                    
+                    const cleanPhone = telefone.replace(/\D/g, "");
+                    const fullPhone = cleanPhone.startsWith("55") ? cleanPhone : "55" + cleanPhone;
+                    const msg = encodeURIComponent(`Olá, ${agend.nome}! 👋\n\nEstou passando para confirmar o seu agendamento na *Lopes Barbearia*.\n\n📅 Data: ${agend.data.split('-').reverse().join('/')}\n⏰ Hora: ${agend.hora}h\n✂️ Serviço: ${agend.servico}\n\nPodemos confirmar? 😉`);
+                    window.open(`https://api.whatsapp.com/send?phone=${fullPhone}&text=${msg}`);
+                };
+            } else {
+                btnWhatsapp.style.display = 'none';
+            }
+
+            updateWarning();
+        }
+
+        function updateWarning() {
+            const servRaw = document.getElementById('edit-service').value.split('|');
+            const slotsNeeded = parseInt(servRaw[2]);
+            document.getElementById('warning-double').style.display = (slotsNeeded > 1) ? 'block' : 'none';
+        }
+        document.getElementById('edit-service').onchange = updateWarning;
+
+        window.saveBooking = async () => {
+            const nome = document.getElementById('edit-client').value;
+            const telefone = document.getElementById('edit-phone').value;
+            const servRaw = document.getElementById('edit-service').value.split('|');
+            const slotsNeeded = parseInt(servRaw[2]);
+
+            if(!nome) return alert('Insira o nome do cliente');
+
+            if (slotsNeeded > 1) {
+                const nextTime = selectedSlot.allSlots[selectedSlot.index + 1];
+                if (!nextTime) return alert("Não há horário seguinte disponível.");
+                const nextBusy = agendamentosData.find(a => a.data === selectedDateISO && a.hora === nextTime);
+                if (nextBusy && (!selectedSlot.agend || nextBusy.id !== selectedSlot.agend.id)) {
+                    return alert("O próximo horário está ocupado.");
                 }
+            }
+
+            const data = {
+                nome, telefone, data: selectedDateISO, hora: selectedSlot.time,
+                servico: servRaw[0], preco: parseFloat(servRaw[1]),
+                slots: slotsNeeded,
+                status: 'confirmed', timestamp: new Date()
+            };
+
+            try {
+                if(selectedSlot.agend) await updateDoc(doc(db, "agendamentos", selectedSlot.agend.id), data);
+                else await addDoc(collection(db, "agendamentos"), data);
+                document.getElementById('slot-editor').style.display = 'none';
+                selectedSlot = null;
+                renderSlots();
+            } catch(e) { alert("Erro ao salvar: " + e.message); }
+        };
+
+        window.toggleBlockSlot = async () => {
+            const data = {
+                nome: "BLOQUEADO", data: selectedDateISO, hora: selectedSlot.time,
+                servico: "Bloqueio", preco: 0, status: 'blocked', slots: 1, timestamp: new Date()
+            };
+            if(selectedSlot.agend) await updateDoc(doc(db, "agendamentos", selectedSlot.agend.id), data);
+            else await addDoc(collection(db, "agendamentos"), data);
+            document.getElementById('slot-editor').style.display = 'none';
+            selectedSlot = null;
+            renderSlots();
+        };
+
+        window.cancelBooking = async () => {
+            if(confirm('Cancelar agendamento?')) {
+                await deleteDoc(doc(db, "agendamentos", selectedSlot.agend.id));
+                document.getElementById('slot-editor').style.display = 'none';
+                selectedSlot = null;
+                renderSlots();
+            }
+        };
+
+        window.toggleDayStatus = async (status) => {
+            await setDoc(doc(db, "config_dias", selectedDateISO), { status }, { merge: true });
+        };
+
+        window.addExtraSlot = async () => {
+            const configRef = doc(db, "config_dias", selectedDateISO);
+            const snap = await getDoc(configRef);
+            const config = snap.exists() ? snap.data() : {};
+            const currentSlots = config.extraSlots ? [...baseSlots, ...config.extraSlots].sort() : [...baseSlots].sort();
+            
+            const lastTime = currentSlots[currentSlots.length - 1];
+            const [h, m] = lastTime.split(':').map(Number);
+            let nextM = m + 40;
+            let nextH = h;
+            if(nextM >= 60) { nextH++; nextM -= 60; }
+            const newTime = `${String(nextH).padStart(2,'0')}:${String(nextM).padStart(2,'0')}`;
+            
+            const extras = config.extraSlots || [];
+            extras.push(newTime);
+            await setDoc(configRef, { extraSlots: extras }, { merge: true });
+        };
+
+        function updateDashboard() {
+            let rev = 0; agendamentosData.forEach(a => { if(a.status === 'confirmed' && a.nome !== 'BLOQUEADO') rev += (a.preco || 0); });
+            let exp = 0; despesasData.forEach(e => exp += (e.valor || 0));
+            document.getElementById('dash-revenue').innerText = `R$ ${rev.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            document.getElementById('dash-expense').innerText = `R$ ${exp.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            document.getElementById('dash-profit').innerText = `R$ ${(rev - exp).toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            updateCharts(rev, exp);
+        }
+
+        let mainChart, pieChart;
+        function updateCharts(rev, exp) {
+            const c1 = document.getElementById('mainChart')?.getContext('2d');
+            if(!c1) return;
+            if(mainChart) mainChart.destroy();
+            mainChart = new Chart(c1, {
+                type: 'bar',
+                data: { labels: ['Faturamento', 'Custos'], datasets: [{ data: [rev, exp], backgroundColor: ['#1e90ff', '#ef4444'] }] },
+                options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#222' }, ticks: { color: '#aaa' } }, x: { ticks: { color: '#aaa' } } } }
+            });
+            const c2 = document.getElementById('pieChart')?.getContext('2d');
+            if(!c2) return;
+            const sMap = {}; agendamentosData.filter(a => a.nome !== 'BLOQUEADO').forEach(a => sMap[a.servico] = (sMap[a.servico] || 0) + 1);
+            if(pieChart) pieChart.destroy();
+            pieChart = new Chart(c2, {
+                type: 'doughnut',
+                data: { labels: Object.keys(sMap), datasets: [{ data: Object.values(sMap), backgroundColor: ['#1e90ff', '#10b981', '#f59e0b', '#8b5cf6', '#333'] }] },
+                options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: '#aaa', font: { size: 10 } } } } }
             });
         }
 
+        window.addExpense = async () => {
+            const desc = document.getElementById('exp-desc').value;
+            const valor = parseFloat(document.getElementById('exp-val').value);
+            const data = document.getElementById('exp-date').value;
+            if(!desc || !valor || !data) return;
+            await addDoc(collection(db, "despesas"), { descricao: desc, valor, data });
+            document.getElementById('exp-desc').value = ''; document.getElementById('exp-val').value = '';
+        };
+
+        window.deleteExpense = async (id) => { if(confirm('Excluir?')) await deleteDoc(doc(db, "despesas", id)); };
+
+        function renderExpenses() {
+            const b = document.getElementById('list-expenses'); if(!b) return; b.innerHTML = '';
+            despesasData.sort((a,b) => b.data.localeCompare(a.data)).forEach(e => {
+                b.innerHTML += `<tr><td>${e.data.split('-').reverse().join('/')}</td><td>${e.descricao}</td><td style="color:var(--danger)">R$ ${e.valor.toFixed(2)}</td><td style="text-align: right;"><button class="btn-action" style="background:none; color:var(--danger); padding:0;" onclick="deleteExpense('${e.id}')"><i data-lucide="trash-2"></i></button></td></tr>`;
+            });
+            lucide.createIcons();
+        }
+
+        function renderClients() {
+            const b = document.getElementById('list-clients'); if(!b) return; b.innerHTML = '';
+            const m = {}; agendamentosData.filter(a => a.nome && a.nome !== 'BLOQUEADO').forEach(a => {
+                if(!m[a.nome]) m[a.nome] = { last: a.data, total: 0, count: 0 };
+                if(a.status === 'confirmed') {
+                    m[a.nome].total += (a.preco || 0); m[a.nome].count++;
+                    if(new Date(a.data) > new Date(m[a.nome].last)) m[a.nome].last = a.data;
+                }
+            });
+            Object.keys(m).sort((a, b) => m[b].total - m[a].total).forEach(k => {
+                const c = m[k]; b.innerHTML += `<tr><td><b>${k}</b></td><td>${c.last.split('-').reverse().join('/')}</td><td style="color:var(--primary)">R$ ${c.total.toFixed(2)}</td><td>${c.count} visitas</td></tr>`;
+            });
+        }
     </script>
 </body>
 </html>
