@@ -331,12 +331,12 @@
         let selectedSlot = null;
         let mainChart = null; 
         let pieChart = null;
-        let sortClientsByInactivity = true;
+        let sortClientsByInactivity = true; //
 
         const baseSlots = ["09:00", "09:40", "10:20", "11:00", "11:40", "13:00", "13:40", "14:20", "15:00", "15:40", "16:20", "17:00", "17:40", "18:20"];
 
         // Funções Globais para Botões (acessíveis via onclick)
-        window.notifyInactive = (nome, telefone, dias) => {
+        window.notifyInactive = (nome, telefone, dias) => { //
             const clean = telefone.replace(/\D/g, "");
             const phone = clean.startsWith("55") ? clean : "55" + clean;
             const msg = encodeURIComponent(
@@ -348,7 +348,7 @@
             window.open(`https://api.whatsapp.com/send?phone=${phone}&text=${msg}`);
         };
 
-        window.toggleClientSort = () => {
+        window.toggleClientSort = () => { //
             sortClientsByInactivity = !sortClientsByInactivity;
             renderClients();
         };
@@ -501,10 +501,12 @@
                 btn.className = `slot-btn ${agend ? (agend.status === 'blocked' ? 'blocked' : 'occupied') : ''} ${isPartOfLong ? 'part-of-long' : ''} ${isEditing ? 'active-editing' : ''}`;
                 
                 if (agend) {
-                    btn.innerText = `${time} - ${agend.status === 'blocked' ? 'BLOQUEADO' : agend.nome}`;
+                    const displayName = agend.nome || agend.cliente || '...';
+                    btn.innerText = `${time} - ${agend.status === 'blocked' ? 'BLOQUEADO' : displayName}`;
                 } else if (isPartOfLong) {
                     const owner = agendamentosData.find(a => a.data === selectedDateISO && a.hora === slots[index-1]);
-                    btn.innerText = `${time} - (Reservado: ${owner ? owner.nome : '...' })`;
+                    const ownerName = owner ? (owner.nome || owner.cliente || '...') : '...';
+                    btn.innerText = `${time} - (Reservado: ${ownerName})`;
                     btn.style.opacity = "0.5";
                 } else {
                     btn.innerText = time;
@@ -525,7 +527,8 @@
             
             document.getElementById('slot-editor').style.display = 'block';
             document.getElementById('editor-title').innerText = `Horário: ${time}`;
-            document.getElementById('edit-client').value = agend ? (agend.nome === 'BLOQUEADO' ? '' : agend.nome) : '';
+            const editClientVal = agend ? ((agend.nome === 'BLOQUEADO' || agend.cliente === 'BLOQUEADO') ? '' : (agend.nome || agend.cliente || '')) : '';
+            document.getElementById('edit-client').value = editClientVal;
             document.getElementById('edit-phone').value = agend?.telefone || '';
             
             const serviceSelect = document.getElementById('edit-service');
@@ -550,7 +553,8 @@
                     if(!telefone) return;
                     const cleanPhone = telefone.replace(/\D/g, "");
                     const fullPhone = cleanPhone.startsWith("55") ? cleanPhone : "55" + cleanPhone;
-                    const msg = encodeURIComponent(`Olá, ${agend.nome}! 👋\n\nEstou passando para confirmar o seu agendamento na *Lopes Barbearia*.\n\n📅 Data: ${agend.data.split('-').reverse().join('/')}\n⏰ Hora: ${agend.hora}h\n✂️ Serviço: ${agend.servico}\n\nPodemos confirmar? 😉`);
+                    const displayName = agend.nome || agend.cliente || 'cliente';
+                    const msg = encodeURIComponent(`Olá, ${displayName}! 👋\n\nEstou passando para confirmar o seu agendamento na *Lopes Barbearia*.\n\n📅 Data: ${agend.data.split('-').reverse().join('/')}\n⏰ Hora: ${agend.hora}h\n✂️ Serviço: ${agend.servico}\n\nPodemos confirmar? 😉`);
                     window.open(`https://api.whatsapp.com/send?phone=${fullPhone}&text=${msg}`);
                 };
             } else {
@@ -601,17 +605,17 @@
             } catch(e) { alert("Erro ao salvar: " + e.message); }
         };
 
-window.cancelBooking = async () => {
-    if(!selectedSlot || !selectedSlot.agend) return;
-    const ag = selectedSlot.agend;
+        window.cancelBooking = async () => {
+            if(!selectedSlot || !selectedSlot.agend) return;
+            const ag = selectedSlot.agend;
 
-    if(confirm('Cancelar agendamento?')) {
-        await deleteDoc(doc(db, "agendamentos", ag.id));
-        document.getElementById('slot-editor').style.display = 'none';
-        selectedSlot = null;
-        renderSlots();
-    }
-};
+            if(confirm('Cancelar agendamento?')) {
+                await deleteDoc(doc(db, "agendamentos", ag.id));
+                document.getElementById('slot-editor').style.display = 'none';
+                selectedSlot = null;
+                renderSlots();
+            }
+        };
 
         window.toggleBlockSlot = async () => {
             const data = {
@@ -687,7 +691,7 @@ window.cancelBooking = async () => {
             const sMap = {};
 
             agendamentosData.forEach(a => { 
-                if(a.status === 'confirmed' && a.nome !== 'BLOQUEADO') {
+                if(a.status === 'confirmed' && (a.nome || a.cliente) !== 'BLOQUEADO') {
                     const dt = new Date(a.data + 'T00:00:00');
                     if (dt >= range.start && dt < range.end) {
                         rev += Number(a.preco || 0);
@@ -762,26 +766,27 @@ window.cancelBooking = async () => {
             b.innerHTML = '';
             const m = {}; 
             
-            agendamentosData.filter(a => a.nome && a.nome !== 'BLOQUEADO').forEach(a => {
-                if(!m[a.nome]) m[a.nome] = { last: a.data, total: 0, count: 0 };
+            agendamentosData.filter(a => (a.nome || a.cliente) && ((a.nome || a.cliente) !== 'BLOQUEADO')).forEach(a => {
+                const key = a.nome || a.cliente;
+                if(!m[key]) m[key] = { last: a.data, total: 0, count: 0 };
                 if(a.status === 'confirmed') {
-                    m[a.nome].total += Number(a.preco || 0); 
-                    m[a.nome].count++;
-                    if(new Date(a.data) > new Date(m[a.nome].last)) m[a.nome].last = a.data;
+                    m[key].total += Number(a.preco || 0); 
+                    m[key].count++;
+                    if(new Date(a.data) > new Date(m[key].last)) m[key].last = a.data;
                 }
             });
 
-            Object.keys(m).sort((a, b) => {
+            Object.keys(m).sort((a, b) => { //
                 return sortClientsByInactivity
                     ? new Date(m[a].last) - new Date(m[b].last)
                     : new Date(m[b].last) - new Date(m[a].last);
             }).forEach(k => {
                 const c = m[k];
-                const lastDate = new Date(c.last + 'T00:00:00');
-                const diffDays = Math.floor((new Date() - lastDate) / (1000 * 60 * 60 * 24));
-                const phone = agendamentosData.find(a => a.nome === k && a.telefone)?.telefone;
+                const lastDate = new Date(c.last + 'T00:00:00'); //
+                const diffDays = Math.floor((new Date() - lastDate) / (1000 * 60 * 60 * 24)); //
+                const phone = agendamentosData.find(a => (a.nome === k || a.cliente === k) && a.telefone)?.telefone; //
 
-                const btnWhatsapp = phone
+                const btnWhatsapp = phone //
                     ? `<button class="btn-action" style="padding:4px 8px;font-size:0.7rem" onclick="notifyInactive('${k}','${phone}',${diffDays})">📲 Avisar</button>`
                     : '-';
 

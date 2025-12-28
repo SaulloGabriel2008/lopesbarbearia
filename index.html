@@ -217,14 +217,14 @@
         </div>
 
         <div id="auth-signup" style="display: none;">
-            <h2 style="text-align: center;">Nova Conta</h2>
-            <input type="text" id="signup-nome" placeholder="Nome Completo *">
-            <input type="text" id="signup-phone" placeholder="Telefone *" required>
-            <input type="email" id="signup-email" placeholder="E-mail (opcional)">
-            <input type="password" id="signup-senha" placeholder="Senha (mín. 6 dígitos) *">
-            <button class="nav-btn active" style="width: 100%; margin-top: 10px;" onclick="handleSignUp()">Cadastrar</button>
-            <span class="toggle-auth" onclick="toggleAuthMode('login')">Já tem conta? Entrar</span>
-        </div>
+    <h2 style="text-align: center;">Nova Conta</h2>
+    <input type="text" id="signup-nome" placeholder="Nome Completo *" required>
+    <input type="text" id="signup-phone" placeholder="Telefone (DDD + Número) *" required>
+    <input type="email" id="signup-email" placeholder="E-mail *" required>
+    <input type="password" id="signup-senha" placeholder="Senha (mín. 6 dígitos) *" required>
+    <button class="nav-btn active" style="width: 100%; margin-top: 10px;" onclick="handleSignUp()">Cadastrar</button>
+    <span class="toggle-auth" onclick="toggleAuthMode('login')">Já tem conta? Entrar</span>
+</div>
 
         <button class="social-btn google-btn" onclick="handleGoogleLogin()">
             <img src="https://br.advfn.com/favicon.ico" alt="Google"> Entrar com Google
@@ -414,30 +414,57 @@ window.setAutismo = (val) => {
             } catch (e) { grid.innerHTML = "Erro ao carregar."; }
         }
 
-        window.handleSignUp = async () => {
-            const nome = document.getElementById('signup-nome').value.trim();
-            const phoneRaw = document.getElementById('signup-phone').value;
-            const emailInput = document.getElementById('signup-email').value.trim();
-            const senha = document.getElementById('signup-senha').value;
-            const phoneClean = phoneRaw.replace(/\D/g, '');
+window.handleSignUp = async () => {
+    const nome = document.getElementById('signup-nome').value.trim();
+    const phoneRaw = document.getElementById('signup-phone').value;
+    const emailInput = document.getElementById('signup-email').value.trim();
+    const senha = document.getElementById('signup-senha').value;
+    const phoneClean = phoneRaw.replace(/\D/g, '');
 
-            if (!nome || phoneClean.length < 10) {
-                alert("Informe nome e telefone válido.");
-                return;
-            }
-            // Gera email fake se não informado
-            const email = emailInput || `${phoneClean}@cliente.lopes`;
+    // Validação de campos obrigatórios
+    if (!nome) {
+        alert("Por favor, informe seu nome completo.");
+        return;
+    }
 
-            try {
-                const res = await createUserWithEmailAndPassword(auth, email, senha);
-                await updateProfile(res.user, { displayName: nome });
-                await setDoc(doc(db, 'users', res.user.uid), {
-                    nome, email, phone: phoneClean, telefone: phoneClean
-                });
-                alert("Conta criada!");
-            } catch (e) { alert(e.message); }
-        };
+    if (phoneClean.length < 10) {
+        alert("Por favor, informe um telefone válido com DDD.");
+        return;
+    }
 
+    if (!emailInput || !emailInput.includes('@')) {
+        alert("Por favor, informe um e-mail válido.");
+        return;
+    }
+
+    if (senha.length < 6) {
+        alert("A senha deve ter no mínimo 6 dígitos.");
+        return;
+    }
+
+    try {
+        // Agora o e-mail é obrigatório e não mais gerado automaticamente por telefone
+        const res = await createUserWithEmailAndPassword(auth, emailInput, senha);
+        
+        await updateProfile(res.user, { displayName: nome });
+        
+        await setDoc(doc(db, 'users', res.user.uid), {
+            nome: nome,
+            email: emailInput,
+            phone: phoneClean,
+            telefone: phoneClean,
+            createdAt: new Date()
+        });
+
+        alert("Conta criada com sucesso!");
+    } catch (e) {
+        if (e.code === 'auth/email-already-in-use') {
+            alert("Este e-mail já está em uso por outra conta.");
+        } else {
+            alert("Erro ao criar conta: " + e.message);
+        }
+    }
+};
         window.handleLogin = async () => {
             const iden = document.getElementById('login-email').value;
             const senha = document.getElementById('login-senha').value;
@@ -457,56 +484,81 @@ window.setAutismo = (val) => {
         window.handleGoogleLogin = async () => { try { await signInWithPopup(auth, provider); } catch (e) { await signInWithRedirect(auth, provider); } };
         window.handleLogout = () => signOut(auth);
 
-        onAuthStateChanged(auth, (user) => {
-            state.user = user;
-            if (user) {
-                document.getElementById('user-logged-info').style.display = "block";
-                document.getElementById('auth-login').style.display = "none";
-                document.getElementById('auth-signup').style.display = "none";
-                document.querySelector('.google-btn').style.display = "none";
-                document.getElementById('clientName').innerText = user.displayName || user.email;
-                document.getElementById('userNameLogged').innerText = `Agendando para: ${user.displayName || user.email}`;
-                loadUserAppointments(user.uid);
-            } else {
-                document.getElementById('user-logged-info').style.display = "none";
-                document.getElementById('auth-login').style.display = "block";
-                document.querySelector('.google-btn').style.display = "flex";
+onAuthStateChanged(auth, async (user) => {
+    state.user = user;
+    if (user) {
+        let nomeParaExibir = user.displayName || user.email;
+
+        // Busca o nome salvo no Firestore para garantir que apareça o nome real
+        try {
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            if (userDoc.exists() && userDoc.data().nome) {
+                nomeParaExibir = userDoc.data().nome;
             }
-            updateUI();
-        });
+        } catch (e) {
+            console.error("Erro ao buscar nome:", e);
+        }
+
+        document.getElementById('user-logged-info').style.display = "block";
+        document.getElementById('auth-login').style.display = "none";
+        document.getElementById('auth-signup').style.display = "none";
+        document.querySelector('.google-btn').style.display = "none";
+        
+        // Atualiza as áreas que você mostrou nas imagens
+        document.getElementById('clientName').innerText = nomeParaExibir;
+        document.getElementById('userNameLogged').innerText = `Agendando para: ${nomeParaExibir}`;
+        
+        loadUserAppointments(user.uid);
+    } else {
+        document.getElementById('user-logged-info').style.display = "none";
+        document.getElementById('auth-login').style.display = "block";
+        document.querySelector('.google-btn').style.display = "flex";
+        document.getElementById('userNameLogged').innerText = "";
+    }
+    updateUI();
+});
 
         window.finalizarAgendamento = async () => {
-            if (!state.user) { showSection('cliente'); return; }
-            const btn = document.getElementById('btnConfirmar');
-            btn.innerText = "SALVANDO..."; btn.disabled = true;
-            try {
-                let telefone = '';
-                const uDoc = await getDoc(doc(db, 'users', state.user.uid));
-                if (uDoc.exists()) telefone = uDoc.data().phone || '';
+    if (!state.user) { showSection('cliente'); return; }
+    const btn = document.getElementById('btnConfirmar');
+    btn.innerText = "SALVANDO..."; btn.disabled = true;
+    
+    try {
+        // Busca dados atualizados do usuário
+        const uDoc = await getDoc(doc(db, 'users', state.user.uid));
+        const userData = uDoc.data();
+        const nomeCliente = userData?.nome || state.user.displayName || state.user.email;
+        const telefone = userData?.phone || '';
 
-                const servicoFinal = (state.servico.nome === 'Corte Infantil') 
-                    ? (state.autismo ? 'Corte Infantil (Autismo)' : 'Corte Infantil') 
-                    : state.servico.nome;
+        const servicoFinal = (state.servico.nome === 'Corte Infantil') 
+            ? (state.autismo ? 'Corte Infantil (Autismo)' : 'Corte Infantil') 
+            : state.servico.nome;
 
-                await addDoc(collection(db, "agendamentos"), {
-                    userId: state.user.uid,
-                    cliente: state.user.displayName || state.user.email,
-                    servico: servicoFinal,
-                    data: state.data,
-                    hora: state.hora,
-                    slots: state.servico.slots,
-                    preco: state.servico.preco,
-                    telefone: telefone,
-                    autismo: state.autismo,
-                    observacoes: document.getElementById('observations').value,
-                    status: 'confirmed',
-                    timestamp: new Date()
-                });
-                const msg = encodeURIComponent(`💈 *LOPES BARBEARIA*\n\n👤 Cliente: ${state.user.displayName}\n✂️ Serviço: ${servicoFinal}\n📅 Data: ${state.data.split('-').reverse().join('/')}\n⏰ Hora: ${state.hora}h`);
-                window.open(`https://api.whatsapp.com/send?phone=5528999082741&text=${msg}`);
-                location.reload();
-            } catch (e) { alert(e.message); btn.innerText = "CONFIRMAR"; btn.disabled = false; }
-        };
+        await addDoc(collection(db, "agendamentos"), {
+            userId: state.user.uid,
+            cliente: nomeCliente, // Salva com o nome real
+            nome: nomeCliente,
+            servico: servicoFinal,
+            data: state.data,
+            hora: state.hora,
+            slots: state.servico.slots,
+            preco: state.servico.preco,
+            telefone: telefone,
+            autismo: state.autismo,
+            observacoes: document.getElementById('observations').value,
+            status: 'confirmed',
+            timestamp: new Date()
+        });
+
+        const msg = encodeURIComponent(`💈 *LOPES BARBEARIA*\n\n👤 Cliente: ${nomeCliente}\n✂️ Serviço: ${servicoFinal}\n📅 Data: ${state.data.split('-').reverse().join('/')}\n⏰ Hora: ${state.hora}h`);
+        window.open(`https://api.whatsapp.com/send?phone=5528999082741&text=${msg}`);
+        location.reload();
+    } catch (e) { 
+        alert(e.message); 
+        btn.innerText = "CONFIRMAR AGENDAMENTO"; 
+        btn.disabled = false; 
+    }
+};
 
         function updateUI() {
             const btn = document.getElementById('btnConfirmar');
