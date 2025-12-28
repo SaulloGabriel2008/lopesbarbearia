@@ -56,7 +56,7 @@
         .calendar-day { background: var(--bg-card); min-height: 90px; padding: 0.5rem; cursor: pointer; transition: 0.2s; position: relative; }
         .calendar-day:hover { background: #1a1a1a; }
         .calendar-day.selected { border: 2px solid var(--primary); z-index: 10; }
-        .calendar-day.closed { opacity: 0.4; background: #000; pointer-events: none; }
+        .calendar-day.closed { opacity: 0.4; background: #000; }
         .day-number { font-weight: bold; font-size: 0.9rem; margin-bottom: 4px; }
         
         .slots-container { background: var(--bg-card); border-radius: 0.75rem; border: 1px solid var(--border); padding: 1.5rem; }
@@ -71,7 +71,6 @@
         .slot-btn.blocked { background: #2a1010; color: var(--danger); border-color: var(--danger); opacity: 0.7; }
         .slot-btn.part-of-long { border-style: dashed; opacity: 0.9; }
         
-        /* CORREÇÃO 1: Feedback visual de seleção do slot */
         .slot-btn.active-editing {
             border: 2px solid var(--primary);
             box-shadow: 0 0 10px rgba(30, 144, 255, 0.4);
@@ -99,10 +98,18 @@
         tr:last-child td { border: none; }
 
         .tab-content { display: none; }
-        .tab-content.active { display: block; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
         .charts-container { display: grid; grid-template-columns: 1.5fr 1fr; gap: 1.5rem; margin-top: 2rem; }
         @media (max-width: 900px) { .charts-container { grid-template-columns: 1fr; } }
+        
+        /* CORREÇÃO DO CHART: Container com tamanho fixo relativo */
+        .chart-box {
+            position: relative;
+            height: 250px;
+            width: 100%;
+        }
     </style>
 </head>
 <body>
@@ -148,9 +155,23 @@
                         <div class="stat-value" id="dash-profit" style="color: var(--success)">R$ 0,00</div>
                     </div>
                 </div>
+                <div style="display:flex; justify-content:flex-end; gap:8px; margin-bottom:12px;">
+                    <button id="period-month" class="btn-action" style="padding:6px 12px;">Mês</button>
+                    <button id="period-week" class="btn-action" style="padding:6px 12px;">Semana</button>
+                    <button id="period-year" class="btn-action" style="padding:6px 12px;">Ano</button>
+                </div>
                 <div class="charts-container">
-                    <div class="stat-card"><canvas id="mainChart"></canvas></div>
-                    <div class="stat-card"><canvas id="pieChart"></canvas></div>
+                    <!-- CORREÇÃO: Container dedicado para o Canvas -->
+                    <div class="stat-card">
+                        <div class="chart-box">
+                            <canvas id="mainChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="chart-box">
+                            <canvas id="pieChart"></canvas>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -162,6 +183,7 @@
                             <button class="btn-action" style="padding: 5px 10px;" onclick="changeMonth(-1)"><i data-lucide="chevron-left"></i></button>
                             <h3 id="calendar-month-year">...</h3>
                             <button class="btn-action" style="padding: 5px 10px;" onclick="changeMonth(1)"><i data-lucide="chevron-right"></i></button>
+                            <button class="btn-action" style="margin-left:12px; background:#333; padding: 6px 10px;" onclick="fixClosingDay()">Corrigir Fechamento (Domingo)</button>
                         </div>
                         <div style="display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; background: #0d0d0d; padding: 10px 0; font-size: 0.7rem; color: var(--text-muted); font-weight: bold;">
                             <div>DOM</div><div>SEG</div><div>TER</div><div>QUA</div><div>QUI</div><div>SEX</div><div>SAB</div>
@@ -182,7 +204,6 @@
                         <div id="slot-editor" style="display: none; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                                 <h5 id="editor-title" style="color: var(--primary);">Horário</h5>
-                                <!-- CORREÇÃO 2: Botão de WhatsApp -->
                                 <button id="btn-whatsapp-client" class="btn-whatsapp" title="Enviar Mensagem no WhatsApp" style="display: none;">
                                     <i data-lucide="message-circle"></i>
                                 </button>
@@ -204,8 +225,12 @@
                                         <option value="Barba Completa|40|1">Barba (R$ 40 - 40min)</option>
                                         <option value="Combo Corte + Barba|75|2">Combo (R$ 75 - 80min)</option>
                                         <option value="Corte Infantil|40|1">Corte Infantil (R$ 40 - 40min)</option>
-                                        <option value="Corte Autismo|60|2">Corte Autismo (R$ 60 - 80min)</option>
+                                        <option value="Corte Infantil (Autismo)|60|2">Corte Infantil (Autismo) (R$ 60 - 80min)</option>
                                     </select>
+                                </div>
+                                <div>
+                                    <label>Observações (Atendimento especializado)</label>
+                                    <textarea id="edit-observations" placeholder="Preferências sensoriais, notas" style="width:100%; height:70px; margin-top:8px; padding:8px; background:#000; color:#fff; border:1px solid var(--border); border-radius:6px;"></textarea>
                                 </div>
                                 <div id="warning-double" style="display:none; color: var(--danger); font-size: 0.75rem; font-weight: bold;">
                                     ⚠️ Este serviço requer 2 horários seguidos.
@@ -255,6 +280,15 @@
                                 <option value="yearly">Anual</option>
                             </select>
                         </div>
+                        <div>
+                            <label>Categoria</label>
+                            <select id="exp-category">
+                                <option value="Produtos">Produtos</option>
+                                <option value="Aluguel">Aluguel</option>
+                                <option value="Marketing">Marketing</option>
+                                <option value="Outros">Outros</option>
+                            </select>
+                        </div>
                         <button class="btn-action" style="background: var(--danger); color: white;" onclick="addExpense()">ADICIONAR</button>
                     </div>
                 </div>
@@ -265,6 +299,7 @@
                             <tr>
                                 <th>Data</th>
                                 <th>Recorrência</th>
+                                <th>Categoria</th>
                                 <th>Descrição</th>
                                 <th>Valor</th>
                                 <th style="text-align: right;">Ações</th>
@@ -282,7 +317,6 @@
         import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
         import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc, updateDoc, addDoc, getDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
-        // Configuração do Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyBLBFTLC7sqM9VUhlsypPugQ-LhcX7-0Rw",
             authDomain: "barbearia-do-rei.firebaseapp.com",
@@ -302,6 +336,9 @@
         let currentCalendarDate = new Date();
         let selectedDateISO = new Date().toISOString().split('T')[0];
         let selectedSlot = null;
+        // CORREÇÃO: Variáveis do gráfico movidas para cá para evitar ReferenceError
+        let mainChart = null; 
+        let pieChart = null;
 
         const baseSlots = ["09:00", "09:40", "10:20", "11:00", "11:40", "13:00", "13:40", "14:20", "15:00", "15:40", "16:20", "17:00", "17:40", "18:20"];
 
@@ -312,6 +349,11 @@
             document.getElementById('tab-' + tab).classList.add('active');
             document.getElementById('view-title').innerText = tab.charAt(0).toUpperCase() + tab.slice(1);
             if(event && event.currentTarget) event.currentTarget.classList.add('active');
+            
+            // CORREÇÃO: Forçar atualização dos gráficos quando voltar para Dashboard
+            if(tab === 'dashboard') {
+                setTimeout(() => updateDashboard(), 50); // Delay curto para garantir que o DOM está visível
+            }
             if(tab === 'agendamentos') renderCalendar();
         };
 
@@ -402,7 +444,20 @@
 
                 const div = document.createElement('div');
                 div.className = `calendar-day ${iso === selectedDateISO ? 'selected' : ''} ${config.status === 'closed' ? 'closed' : ''}`;
-                div.onclick = () => { selectedDateISO = iso; renderCalendar(); renderSlots(); };
+                div.onclick = async () => {
+                    selectedDateISO = iso;
+
+                if (config.status === 'closed') {
+        await setDoc(
+            doc(db, "config_dias", iso),
+            { status: 'open' },
+            { merge: true }
+        );
+    }
+
+    renderCalendar();
+    renderSlots();
+};
                 div.innerHTML = `<div class="day-number">${d}</div>`;
                 
                 dayAgends.forEach(a => {
@@ -412,6 +467,21 @@
                 grid.appendChild(div);
             }
         }
+
+        window.fixClosingDay = async () => {
+            if(!confirm('Abrir segundas e fechar domingos para o mês atual? Isso atualizará as configurações do mês selecionado. Continuar?')) return;
+            const year = currentCalendarDate.getFullYear();
+            const month = currentCalendarDate.getMonth();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            for(let d=1; d<=daysInMonth; d++) {
+                const iso = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                const dow = new Date(iso).getDay();
+                const status = (dow === 0) ? 'closed' : 'open';
+                await setDoc(doc(db, 'config_dias', iso), { status }, { merge: true });
+            }
+            alert('Configurações atualizadas para o mês.');
+            renderCalendar(); renderSlots();
+        };
 
         function renderSlots() {
             const grid = document.getElementById('slots-grid');
@@ -434,7 +504,6 @@
                     if (prevAgend && prevAgend.slots === 2) isPartOfLong = true;
                 }
 
-                // CORREÇÃO 1: Classe active-editing para feedback visual
                 const isEditing = selectedSlot && selectedSlot.time === time;
                 btn.className = `slot-btn ${agend ? (agend.status === 'blocked' ? 'blocked' : 'occupied') : ''} ${isPartOfLong ? 'part-of-long' : ''} ${isEditing ? 'active-editing' : ''}`;
                 
@@ -459,7 +528,7 @@
 
         function openSlotEditor(time, agend, allSlots, index) {
             selectedSlot = { time, agend, allSlots, index };
-            renderSlots(); // Atualiza bordas de seleção
+            renderSlots();
             
             document.getElementById('slot-editor').style.display = 'block';
             document.getElementById('editor-title').innerText = `Horário: ${time}`;
@@ -468,17 +537,18 @@
             
             const serviceSelect = document.getElementById('edit-service');
             if (agend && agend.servico) {
+                const target = agend.servico.toString().toLowerCase();
                 for (let i = 0; i < serviceSelect.options.length; i++) {
-                    if (serviceSelect.options[i].value.startsWith(agend.servico)) {
+                    const optName = serviceSelect.options[i].value.split('|')[0].toLowerCase();
+                    if (optName === target || optName.includes(target) || target.includes(optName)) {
                         serviceSelect.selectedIndex = i;
                         break;
                     }
                 }
             }
-
+            document.getElementById('edit-observations').value = agend?.observacoes || '';
             document.getElementById('btn-cancel-booking').style.display = agend ? 'block' : 'none';
             
-            // CORREÇÃO 2: Configurar botão de WhatsApp
             const btnWhatsapp = document.getElementById('btn-whatsapp-client');
             if (agend && agend.status !== 'blocked') {
                 btnWhatsapp.style.display = 'flex';
@@ -508,6 +578,7 @@
         window.saveBooking = async () => {
             const nome = document.getElementById('edit-client').value;
             const telefone = document.getElementById('edit-phone').value;
+            const observacoes = document.getElementById('edit-observations').value || '';
             const servRaw = document.getElementById('edit-service').value.split('|');
             const slotsNeeded = parseInt(servRaw[2]);
 
@@ -523,7 +594,7 @@
             }
 
             const data = {
-                nome, telefone, data: selectedDateISO, hora: selectedSlot.time,
+                nome, telefone, observacoes, data: selectedDateISO, hora: selectedSlot.time,
                 servico: servRaw[0], preco: parseFloat(servRaw[1]),
                 slots: slotsNeeded,
                 status: 'confirmed', timestamp: new Date()
@@ -538,6 +609,20 @@
             } catch(e) { alert("Erro ao salvar: " + e.message); }
         };
 
+        window.cancelBooking = async () => {
+            if(!selectedSlot || !selectedSlot.agend) return;
+            const ag = selectedSlot.agend;
+            const scheduled = new Date(`${ag.data}T${ag.hora}:00`);
+            const diff = scheduled - new Date();
+            if (diff < 2 * 60 * 60 * 1000) return alert('Não é permitido cancelar com menos de 2 horas do horário.');
+            if(confirm('Cancelar agendamento?')) {
+                await deleteDoc(doc(db, "agendamentos", ag.id));
+                document.getElementById('slot-editor').style.display = 'none';
+                selectedSlot = null;
+                renderSlots();
+            }
+        };
+
         window.toggleBlockSlot = async () => {
             const data = {
                 nome: "BLOQUEADO", data: selectedDateISO, hora: selectedSlot.time,
@@ -548,15 +633,6 @@
             document.getElementById('slot-editor').style.display = 'none';
             selectedSlot = null;
             renderSlots();
-        };
-
-        window.cancelBooking = async () => {
-            if(confirm('Cancelar agendamento?')) {
-                await deleteDoc(doc(db, "agendamentos", selectedSlot.agend.id));
-                document.getElementById('slot-editor').style.display = 'none';
-                selectedSlot = null;
-                renderSlots();
-            }
         };
 
         window.toggleDayStatus = async (status) => {
@@ -581,9 +657,67 @@
             await setDoc(configRef, { extraSlots: extras }, { merge: true });
         };
 
+        let currentPeriod = 'month';
+        function setDashboardPeriod(p) {
+            currentPeriod = p;
+            document.getElementById('period-month').style.opacity = p === 'month' ? 1 : 0.6;
+            document.getElementById('period-week').style.opacity = p === 'week' ? 1 : 0.6;
+            document.getElementById('period-year').style.opacity = p === 'year' ? 1 : 0.6;
+            updateDashboard();
+        }
+        document.getElementById('period-month').onclick = () => setDashboardPeriod('month');
+        document.getElementById('period-week').onclick = () => setDashboardPeriod('week');
+        document.getElementById('period-year').onclick = () => setDashboardPeriod('year');
+
+        function getPeriodRange(p) {
+            const now = new Date();
+            if (p === 'month') {
+                const start = new Date(now.getFullYear(), now.getMonth(), 1);
+                const end = new Date(now.getFullYear(), now.getMonth()+1, 1);
+                return {start, end};
+            } else if (p === 'week') {
+                const start = new Date(now);
+                const day = (start.getDay() + 6) % 7; 
+                start.setHours(0,0,0,0);
+                start.setDate(start.getDate() - day);
+                const end = new Date(start);
+                end.setDate(start.getDate() + 7);
+                return {start, end};
+            } else {
+                const start = new Date(now.getFullYear(), 0, 1);
+                const end = new Date(now.getFullYear()+1, 0, 1);
+                return {start, end};
+            }
+        }
+
         function updateDashboard() {
-            let rev = 0; agendamentosData.forEach(a => { if(a.status === 'confirmed' && a.nome !== 'BLOQUEADO') rev += (a.preco || 0); });
-            let exp = 0; despesasData.forEach(e => exp += (e.valor || 0));
+            const range = getPeriodRange(currentPeriod);
+            let rev = 0; 
+            
+            // Filtro para o Gráfico de Pizza (sMap) respeitar o período selecionado
+            const sMap = {};
+
+            agendamentosData.forEach(a => { 
+                if(a.status === 'confirmed' && a.nome !== 'BLOQUEADO') {
+                    const dt = new Date(a.data + 'T00:00:00');
+                    if (dt >= range.start && dt < range.end) {
+                        // CORREÇÃO: Forçar Number para evitar concatenação de strings
+                        rev += Number(a.preco || 0);
+                        
+                        // Populando dados do gráfico de Pizza filtrado
+                        sMap[a.servico] = (sMap[a.servico] || 0) + 1;
+                    }
+                }
+            });
+
+            let exp = 0; 
+            despesasData.forEach(e => {
+                const dt = new Date(e.data + 'T00:00:00');
+                if (dt >= range.start && dt < range.end) {
+                    exp += Number(e.valor || 0); // CORREÇÃO: Forçar Number
+                }
+            });
+
             const profit = rev - exp;
             document.getElementById('dash-revenue').innerText = `R$ ${rev.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
             const expEl = document.getElementById('dash-expense');
@@ -592,38 +726,80 @@
             const profitEl = document.getElementById('dash-profit');
             profitEl.innerText = `R$ ${profit.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
             profitEl.style.color = profit > 0 ? 'var(--success)' : (profit < 0 ? 'var(--danger)' : 'var(--text-muted)');
-            updateCharts(rev, exp);
+            
+            updateCharts(rev, exp, sMap);
         }
 
-        let mainChart, pieChart;
-        function updateCharts(rev, exp) {
+        setDashboardPeriod('month');
+
+        // Removida declaração tardia de mainChart e pieChart que causava o erro
+        function updateCharts(rev, exp, sMap) {
+            // MAIN CHART
             const c1 = document.getElementById('mainChart')?.getContext('2d');
-            if(!c1) return;
-            if(mainChart) mainChart.destroy();
-            mainChart = new Chart(c1, {
-                type: 'bar',
-                data: { labels: ['Faturamento', 'Custos'], datasets: [{ data: [rev, exp], backgroundColor: ['#1e90ff', '#ef4444'] }] },
-                options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#222' }, ticks: { color: '#aaa' } }, x: { ticks: { color: '#aaa' } } } }
-            });
+            if(c1) {
+                if(mainChart) mainChart.destroy();
+                mainChart = new Chart(c1, {
+                    type: 'bar',
+                    data: { 
+                        labels: ['Faturamento', 'Custos'], 
+                        datasets: [{ 
+                            data: [rev, exp], 
+                            backgroundColor: ['#1e90ff', '#ef4444'],
+                            barThickness: 50 // Estilo visual
+                        }] 
+                    },
+                    options: { 
+                        responsive: true,
+                        maintainAspectRatio: false, // Importante para preencher o container pai
+                        plugins: { legend: { display: false } }, 
+                        scales: { 
+                            y: { grid: { color: '#222' }, ticks: { color: '#aaa' }, beginAtZero: true }, 
+                            x: { ticks: { color: '#aaa' }, grid: { display: false } } 
+                        } 
+                    }
+                });
+            }
+
+            // PIE CHART
             const c2 = document.getElementById('pieChart')?.getContext('2d');
-            if(!c2) return;
-            const sMap = {}; agendamentosData.filter(a => a.nome !== 'BLOQUEADO').forEach(a => sMap[a.servico] = (sMap[a.servico] || 0) + 1);
-            if(pieChart) pieChart.destroy();
-            pieChart = new Chart(c2, {
-                type: 'doughnut',
-                data: { labels: Object.keys(sMap), datasets: [{ data: Object.values(sMap), backgroundColor: ['#1e90ff', '#10b981', '#f59e0b', '#8b5cf6', '#333'] }] },
-                options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: '#aaa', font: { size: 10 } } } } }
-            });
+            if(c2) {
+                // Se sMap estiver vazio (sem dados), ChartJS lida bem, mas podemos evitar erro
+                const labels = Object.keys(sMap);
+                const data = Object.values(sMap);
+                
+                if(pieChart) pieChart.destroy();
+                pieChart = new Chart(c2, {
+                    type: 'doughnut',
+                    data: { 
+                        labels: labels, 
+                        datasets: [{ 
+                            data: data, 
+                            backgroundColor: ['#1e90ff', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#333'],
+                            borderWidth: 0
+                        }] 
+                    },
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false, // Importante para preencher o container pai
+                        plugins: { 
+                            legend: { position: 'right', labels: { color: '#aaa', boxWidth: 12, font: { size: 10 } } } 
+                        } 
+                    }
+                });
+            }
         }
 
         window.addExpense = async () => {
             const desc = document.getElementById('exp-desc').value;
-            const valor = parseFloat(document.getElementById('exp-val').value);
+            const rawVal = document.getElementById('exp-val').value || '';
+            const valor = parseFloat(rawVal.replace(/\./g,'').replace(',', '.').replace(/[^0-9.-]/g,''));
             const data = document.getElementById('exp-date').value;
             const recurrence = document.getElementById('exp-recurrence').value || '';
-            if(!desc || !valor || !data) return;
-            await addDoc(collection(db, "despesas"), { descricao: desc, valor, data, recurrence });
-            document.getElementById('exp-desc').value = ''; document.getElementById('exp-val').value = ''; document.getElementById('exp-recurrence').value = '';
+            const category = document.getElementById('exp-category')?.value || 'Outros';
+            if(!desc || isNaN(valor) || !data) return alert('Preencha descrição, valor válido e data.');
+            await addDoc(collection(db, "despesas"), { descricao: desc, valor, data, recurrence, category });
+            document.getElementById('exp-desc').value = ''; document.getElementById('exp-val').value = ''; document.getElementById('exp-date').value = ''; document.getElementById('exp-recurrence').value = ''; document.getElementById('exp-category').value = '';
+            alert('Despesa adicionada!');
         };    
 
         window.deleteExpense = async (id) => { if(confirm('Excluir?')) await deleteDoc(doc(db, "despesas", id)); };
@@ -633,7 +809,8 @@
             const rMap = { weekly: 'Semanal', monthly: 'Mensal', yearly: 'Anual' };
             despesasData.sort((a,b) => b.data.localeCompare(a.data)).forEach(e => {
                 const rLabel = e.recurrence ? (rMap[e.recurrence] || e.recurrence) : '-';
-                b.innerHTML += `<tr><td>${e.data.split('-').reverse().join('/')}</td><td>${rLabel}</td><td>${e.descricao}</td><td style="color:var(--warn)">R$ ${e.valor.toFixed(2)}</td><td style="text-align: right;"><button class="btn-action" style="background:none; color:var(--danger); padding:0;" onclick="deleteExpense('${e.id}')"><i data-lucide="trash-2"></i></button></td></tr>`;
+                const cat = e.category || '-';
+                b.innerHTML += `<tr><td>${e.data.split('-').reverse().join('/')}</td><td>${rLabel}</td><td>${cat}</td><td>${e.descricao}</td><td style="color:var(--warn)">R$ ${Number(e.valor).toLocaleString('pt-BR', {minimumFractionDigits:2})}</td><td style="text-align: right;"><button class="btn-action" style="background:none; color:var(--danger); padding:0;" onclick="deleteExpense('${e.id}')"><i data-lucide="trash-2"></i></button></td></tr>`;
             });
             lucide.createIcons();
         }
@@ -643,7 +820,7 @@
             const m = {}; agendamentosData.filter(a => a.nome && a.nome !== 'BLOQUEADO').forEach(a => {
                 if(!m[a.nome]) m[a.nome] = { last: a.data, total: 0, count: 0 };
                 if(a.status === 'confirmed') {
-                    m[a.nome].total += (a.preco || 0); m[a.nome].count++;
+                    m[a.nome].total += Number(a.preco || 0); m[a.nome].count++; // Correção Number
                     if(new Date(a.data) > new Date(m[a.nome].last)) m[a.nome].last = a.data;
                 }
             });

@@ -180,6 +180,10 @@
                     <span class="summary-label">Data e Hora</span>
                     <span class="summary-value" id="resumoDataHora">---</span>
                 </div>
+                <div id="observations-area" style="display:none; margin-bottom: 12px;">
+                    <span class="summary-label">Observações / Preferências sensoriais</span>
+                    <textarea id="observations" placeholder="Ex: Prefere atenção calma, sem barulho" style="width:100%; height:70px; margin-top:8px; padding:8px; background:#000; color:#fff; border:1px solid var(--border); border-radius:6px;"></textarea>
+                </div>
                 <span class="summary-label">Total a pagar</span>
                 <span class="total-price" id="resumoPreco">R$ 0</span>
                 
@@ -280,6 +284,9 @@
             document.getElementById('resumoPreco').innerText = `R$ ${preco}`;
             document.getElementById('dateTimeArea').style.opacity = "1";
             document.getElementById('dateTimeArea').style.pointerEvents = "all";
+            // Mostrar campo de observações para Corte Infantil
+            const obsArea = document.getElementById('observations-area');
+            if(nome.toLowerCase().includes('infantil')) obsArea.style.display = 'block'; else obsArea.style.display = 'none';
             updateUI();
         };
 
@@ -426,6 +433,8 @@
                     if (userDoc.exists()) telefone = userDoc.data().phone || userDoc.data().telefone || '';
                 } catch (err) { console.warn('Erro ao buscar telefone do usuário', err); }
 
+                const observacoes = (document.getElementById('observations')?.value || '').trim();
+
                 await addDoc(collection(db, "agendamentos"), {
                     userId: state.user.uid,
                     nome: state.user.displayName || state.user.email,
@@ -436,6 +445,7 @@
                     preco: state.servico.preco,
                     slots: slotsNeeded,
                     telefone: telefone,
+                    observacoes: observacoes,
                     status: 'confirmed',
                     timestamp: new Date()
                 });
@@ -443,7 +453,7 @@
                 window.open(`https://api.whatsapp.com/send?phone=5528999082741&text=${msg}`);
                 location.reload();
             } catch (e) { alert(e.message); btn.innerText = "CONFIRMAR"; btn.disabled = false; }
-        };
+        };    
 
         function updateUI() {
             const btn = document.getElementById('btnConfirmar');
@@ -458,13 +468,21 @@
             lista.innerHTML = snap.empty ? "Sem agendamentos ativos." : "";
             snap.forEach(d => {
                 const data = d.data();
+                const obs = data.observacoes ? `<div style="font-size:0.85rem; margin-top:6px; color:var(--text-muted)">Observações: ${data.observacoes}</div>` : '';
                 lista.innerHTML += `<div style="border-bottom: 1px solid #222; padding: 10px 0;">
-                    <b>${data.servico}</b><br>${data.data.split('-').reverse().join('/')} às ${data.hora}h <button style="margin-left:10px; background:#e53e3e; color:#fff; border:none; padding:4px 8px; border-radius:6px; cursor:pointer;" onclick="cancelMyBooking('${d.id}')">CANCELAR</button>
+                    <b>${data.servico}</b><br>${data.data.split('-').reverse().join('/')} às ${data.hora}h ${obs}
+                    <div style="margin-top:6px;"><button style="background:#e53e3e; color:#fff; border:none; padding:6px 8px; border-radius:6px; cursor:pointer;" onclick="cancelMyBooking('${d.id}')">CANCELAR</button></div>
                 </div>`;
             });
         }
 
         window.cancelMyBooking = async (id) => {
+            const snap = await getDoc(doc(db, 'agendamentos', id));
+            if (!snap.exists()) return alert('Agendamento não encontrado.');
+            const data = snap.data();
+            const scheduled = new Date(`${data.data}T${data.hora}:00`);
+            const diff = scheduled - new Date();
+            if (diff < 2 * 60 * 60 * 1000) return alert('Não é permitido cancelar com menos de 2 horas do horário.');
             if (!confirm('Cancelar agendamento?')) return;
             await deleteDoc(doc(db, 'agendamentos', id));
             loadUserAppointments(state.user.uid);
