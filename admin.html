@@ -104,7 +104,6 @@
         .charts-container { display: grid; grid-template-columns: 1.5fr 1fr; gap: 1.5rem; margin-top: 2rem; }
         @media (max-width: 900px) { .charts-container { grid-template-columns: 1fr; } }
         
-        /* CORREÇÃO DO CHART: Container com tamanho fixo relativo */
         .chart-box {
             position: relative;
             height: 250px;
@@ -139,7 +138,6 @@
         <main>
             <h2 id="view-title" style="margin-bottom: 1.5rem;">Dashboard</h2>
 
-            <!-- DASHBOARD -->
             <div id="tab-dashboard" class="tab-content active">
                 <div class="stats-grid">
                     <div class="stat-card">
@@ -161,7 +159,6 @@
                     <button id="period-year" class="btn-action" style="padding:6px 12px;">Ano</button>
                 </div>
                 <div class="charts-container">
-                    <!-- CORREÇÃO: Container dedicado para o Canvas -->
                     <div class="stat-card">
                         <div class="chart-box">
                             <canvas id="mainChart"></canvas>
@@ -175,16 +172,13 @@
                 </div>
             </div>
 
-            <!-- AGENDAMENTOS -->
             <div id="tab-agendamentos" class="tab-content">
                 <div class="calendar-wrapper">
                     <div class="calendar-card">
                         <div class="calendar-header">
                             <button class="btn-action" style="padding: 5px 10px;" onclick="changeMonth(-1)"><i data-lucide="chevron-left"></i></button>
                             <h3 id="calendar-month-year">...</h3>
-                            <button class="btn-action" style="padding: 5px 10px;" onclick="changeMonth(1)"><i data-lucide="chevron-right"></i></button>
-                            <button class="btn-action" style="margin-left:12px; background:#333; padding: 6px 10px;" onclick="fixClosingDay()">Corrigir Fechamento (Domingo)</button>
-                        </div>
+                            <button class="btn-action" style="padding: 5px 10px;" onclick="changeMonth(1)"><i data-lucide="chevron-right"></i></button>                        </div>
                         <div style="display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; background: #0d0d0d; padding: 10px 0; font-size: 0.7rem; color: var(--text-muted); font-weight: bold;">
                             <div>DOM</div><div>SEG</div><div>TER</div><div>QUA</div><div>QUI</div><div>SEX</div><div>SAB</div>
                         </div>
@@ -246,7 +240,6 @@
                 </div>
             </div>
 
-            <!-- CLIENTES -->
             <div id="tab-clientes" class="tab-content">
                 <div class="table-wrapper">
                     <table>
@@ -255,7 +248,8 @@
                                 <th>Cliente</th>
                                 <th>Última Visita</th>
                                 <th>Total Gasto</th>
-                                <th>Frequência</th>
+                                <th style="cursor:pointer" onclick="toggleClientSort()">Dias sem ir ⬍</th>
+                                <th>Ações</th>
                             </tr>
                         </thead>
                         <tbody id="list-clients"></tbody>
@@ -263,7 +257,6 @@
                 </div>
             </div>
 
-            <!-- FINANÇAS -->
             <div id="tab-financas" class="tab-content">
                 <div class="admin-section">
                     <h4 style="margin-bottom: 1rem;">Lançar Nova Despesa</h4>
@@ -336,13 +329,30 @@
         let currentCalendarDate = new Date();
         let selectedDateISO = new Date().toISOString().split('T')[0];
         let selectedSlot = null;
-        // CORREÇÃO: Variáveis do gráfico movidas para cá para evitar ReferenceError
         let mainChart = null; 
         let pieChart = null;
+        let sortClientsByInactivity = true;
 
         const baseSlots = ["09:00", "09:40", "10:20", "11:00", "11:40", "13:00", "13:40", "14:20", "15:00", "15:40", "16:20", "17:00", "17:40", "18:20"];
 
-        // UI Helpers
+        // Funções Globais para Botões (acessíveis via onclick)
+        window.notifyInactive = (nome, telefone, dias) => {
+            const clean = telefone.replace(/\D/g, "");
+            const phone = clean.startsWith("55") ? clean : "55" + clean;
+            const msg = encodeURIComponent(
+                `Olá, ${nome}! 👋\n\n` +
+                `Sentimos sua falta na *Lopes Barbearia*! ✂️\n` +
+                `Já fazem ${dias} dias desde sua última visita.\n\n` +
+                `Que tal agendar um horário pra dar aquele tapa no visual? 😉`
+            );
+            window.open(`https://api.whatsapp.com/send?phone=${phone}&text=${msg}`);
+        };
+
+        window.toggleClientSort = () => {
+            sortClientsByInactivity = !sortClientsByInactivity;
+            renderClients();
+        };
+
         window.switchTab = (tab) => {
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
@@ -350,11 +360,11 @@
             document.getElementById('view-title').innerText = tab.charAt(0).toUpperCase() + tab.slice(1);
             if(event && event.currentTarget) event.currentTarget.classList.add('active');
             
-            // CORREÇÃO: Forçar atualização dos gráficos quando voltar para Dashboard
             if(tab === 'dashboard') {
-                setTimeout(() => updateDashboard(), 50); // Delay curto para garantir que o DOM está visível
+                setTimeout(() => updateDashboard(), 50);
             }
             if(tab === 'agendamentos') renderCalendar();
+            if(tab === 'clientes') renderClients();
         };
 
         onAuthStateChanged(auth, user => {
@@ -368,32 +378,35 @@
             }
         });
 
+        // Login Script
         const loginError = document.getElementById('login-error');
-        document.getElementById('btn-login').onclick = async () => {
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
-            const btn = document.getElementById('btn-login');
-            
-            if (!email || !password) {
-                loginError.innerText = "Por favor, preencha todos os campos.";
-                loginError.style.display = 'block';
-                return;
-            }
+        const btnLogin = document.getElementById('btn-login');
+        if(btnLogin) {
+            btnLogin.onclick = async () => {
+                const email = document.getElementById('login-email').value;
+                const password = document.getElementById('login-password').value;
+                
+                if (!email || !password) {
+                    loginError.innerText = "Por favor, preencha todos os campos.";
+                    loginError.style.display = 'block';
+                    return;
+                }
 
-            btn.disabled = true;
-            btn.innerText = "AUTENTICANDO...";
-            loginError.style.display = 'none';
+                btnLogin.disabled = true;
+                btnLogin.innerText = "AUTENTICANDO...";
+                loginError.style.display = 'none';
 
-            try {
-                await signInWithEmailAndPassword(auth, email, password);
-            } catch (error) {
-                btn.disabled = false;
-                btn.innerText = "ENTRAR";
-                loginError.style.display = 'block';
-                if (error.code === 'auth/invalid-credential') loginError.innerText = "Credenciais inválidas.";
-                else loginError.innerText = "Erro: " + error.message;
-            }
-        };
+                try {
+                    await signInWithEmailAndPassword(auth, email, password);
+                } catch (error) {
+                    btnLogin.disabled = false;
+                    btnLogin.innerText = "ENTRAR";
+                    loginError.style.display = 'block';
+                    if (error.code === 'auth/invalid-credential') loginError.innerText = "Credenciais inválidas.";
+                    else loginError.innerText = "Erro: " + error.message;
+                }
+            };
+        }
 
         window.logout = () => signOut(auth);
 
@@ -420,6 +433,7 @@
             });
         }
 
+        // --- Agenda & Calendar ---
         window.changeMonth = (v) => { currentCalendarDate.setMonth(currentCalendarDate.getMonth() + v); renderCalendar(); };
 
         function renderCalendar() {
@@ -439,25 +453,19 @@
 
             for(let d=1; d<=daysInMonth; d++) {
                 const iso = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-                const config = configDiasData[iso] || { status: (new Date(iso).getDay() === 0 ? 'closed' : 'open') };
+                const [y, m, dayNum] = iso.split('-').map(Number);
+                const dayOfWeek = new Date(y, m - 1, dayNum).getDay();
+
+                const config = configDiasData[iso] || { status: (dayOfWeek === 0 ? 'closed' : 'open') };
                 const dayAgends = agendamentosData.filter(a => a.data === iso);
 
                 const div = document.createElement('div');
                 div.className = `calendar-day ${iso === selectedDateISO ? 'selected' : ''} ${config.status === 'closed' ? 'closed' : ''}`;
                 div.onclick = async () => {
                     selectedDateISO = iso;
-
-                if (config.status === 'closed') {
-        await setDoc(
-            doc(db, "config_dias", iso),
-            { status: 'open' },
-            { merge: true }
-        );
-    }
-
-    renderCalendar();
-    renderSlots();
-};
+                    renderCalendar();
+                    renderSlots();
+                };
                 div.innerHTML = `<div class="day-number">${d}</div>`;
                 
                 dayAgends.forEach(a => {
@@ -467,21 +475,6 @@
                 grid.appendChild(div);
             }
         }
-
-        window.fixClosingDay = async () => {
-            if(!confirm('Abrir segundas e fechar domingos para o mês atual? Isso atualizará as configurações do mês selecionado. Continuar?')) return;
-            const year = currentCalendarDate.getFullYear();
-            const month = currentCalendarDate.getMonth();
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
-            for(let d=1; d<=daysInMonth; d++) {
-                const iso = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-                const dow = new Date(iso).getDay();
-                const status = (dow === 0) ? 'closed' : 'open';
-                await setDoc(doc(db, 'config_dias', iso), { status }, { merge: true });
-            }
-            alert('Configurações atualizadas para o mês.');
-            renderCalendar(); renderSlots();
-        };
 
         function renderSlots() {
             const grid = document.getElementById('slots-grid');
@@ -555,7 +548,6 @@
                 btnWhatsapp.onclick = () => {
                     const telefone = agend.telefone || prompt("Insira o número de WhatsApp do cliente (com DDD):", "28999082741");
                     if(!telefone) return;
-                    
                     const cleanPhone = telefone.replace(/\D/g, "");
                     const fullPhone = cleanPhone.startsWith("55") ? cleanPhone : "55" + cleanPhone;
                     const msg = encodeURIComponent(`Olá, ${agend.nome}! 👋\n\nEstou passando para confirmar o seu agendamento na *Lopes Barbearia*.\n\n📅 Data: ${agend.data.split('-').reverse().join('/')}\n⏰ Hora: ${agend.hora}h\n✂️ Serviço: ${agend.servico}\n\nPodemos confirmar? 😉`);
@@ -564,14 +556,14 @@
             } else {
                 btnWhatsapp.style.display = 'none';
             }
-
             updateWarning();
         }
 
         function updateWarning() {
             const servRaw = document.getElementById('edit-service').value.split('|');
             const slotsNeeded = parseInt(servRaw[2]);
-            document.getElementById('warning-double').style.display = (slotsNeeded > 1) ? 'block' : 'none';
+            const warning = document.getElementById('warning-double');
+            if(warning) warning.style.display = (slotsNeeded > 1) ? 'block' : 'none';
         }
         document.getElementById('edit-service').onchange = updateWarning;
 
@@ -609,19 +601,17 @@
             } catch(e) { alert("Erro ao salvar: " + e.message); }
         };
 
-        window.cancelBooking = async () => {
-            if(!selectedSlot || !selectedSlot.agend) return;
-            const ag = selectedSlot.agend;
-            const scheduled = new Date(`${ag.data}T${ag.hora}:00`);
-            const diff = scheduled - new Date();
-            if (diff < 2 * 60 * 60 * 1000) return alert('Não é permitido cancelar com menos de 2 horas do horário.');
-            if(confirm('Cancelar agendamento?')) {
-                await deleteDoc(doc(db, "agendamentos", ag.id));
-                document.getElementById('slot-editor').style.display = 'none';
-                selectedSlot = null;
-                renderSlots();
-            }
-        };
+window.cancelBooking = async () => {
+    if(!selectedSlot || !selectedSlot.agend) return;
+    const ag = selectedSlot.agend;
+
+    if(confirm('Cancelar agendamento?')) {
+        await deleteDoc(doc(db, "agendamentos", ag.id));
+        document.getElementById('slot-editor').style.display = 'none';
+        selectedSlot = null;
+        renderSlots();
+    }
+};
 
         window.toggleBlockSlot = async () => {
             const data = {
@@ -657,6 +647,7 @@
             await setDoc(configRef, { extraSlots: extras }, { merge: true });
         };
 
+        // --- Dashboard & Charts ---
         let currentPeriod = 'month';
         function setDashboardPeriod(p) {
             currentPeriod = p;
@@ -693,18 +684,13 @@
         function updateDashboard() {
             const range = getPeriodRange(currentPeriod);
             let rev = 0; 
-            
-            // Filtro para o Gráfico de Pizza (sMap) respeitar o período selecionado
             const sMap = {};
 
             agendamentosData.forEach(a => { 
                 if(a.status === 'confirmed' && a.nome !== 'BLOQUEADO') {
                     const dt = new Date(a.data + 'T00:00:00');
                     if (dt >= range.start && dt < range.end) {
-                        // CORREÇÃO: Forçar Number para evitar concatenação de strings
                         rev += Number(a.preco || 0);
-                        
-                        // Populando dados do gráfico de Pizza filtrado
                         sMap[a.servico] = (sMap[a.servico] || 0) + 1;
                     }
                 }
@@ -714,7 +700,7 @@
             despesasData.forEach(e => {
                 const dt = new Date(e.data + 'T00:00:00');
                 if (dt >= range.start && dt < range.end) {
-                    exp += Number(e.valor || 0); // CORREÇÃO: Forçar Number
+                    exp += Number(e.valor || 0);
                 }
             });
 
@@ -722,7 +708,6 @@
             document.getElementById('dash-revenue').innerText = `R$ ${rev.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
             const expEl = document.getElementById('dash-expense');
             expEl.innerText = `R$ ${exp.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-            expEl.style.color = 'var(--warn)';
             const profitEl = document.getElementById('dash-profit');
             profitEl.innerText = `R$ ${profit.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
             profitEl.style.color = profit > 0 ? 'var(--success)' : (profit < 0 ? 'var(--danger)' : 'var(--text-muted)');
@@ -730,11 +715,7 @@
             updateCharts(rev, exp, sMap);
         }
 
-        setDashboardPeriod('month');
-
-        // Removida declaração tardia de mainChart e pieChart que causava o erro
         function updateCharts(rev, exp, sMap) {
-            // MAIN CHART
             const c1 = document.getElementById('mainChart')?.getContext('2d');
             if(c1) {
                 if(mainChart) mainChart.destroy();
@@ -742,15 +723,10 @@
                     type: 'bar',
                     data: { 
                         labels: ['Faturamento', 'Custos'], 
-                        datasets: [{ 
-                            data: [rev, exp], 
-                            backgroundColor: ['#1e90ff', '#ef4444'],
-                            barThickness: 50 // Estilo visual
-                        }] 
+                        datasets: [{ data: [rev, exp], backgroundColor: ['#1e90ff', '#ef4444'], barThickness: 50 }] 
                     },
                     options: { 
-                        responsive: true,
-                        maintainAspectRatio: false, // Importante para preencher o container pai
+                        responsive: true, maintainAspectRatio: false,
                         plugins: { legend: { display: false } }, 
                         scales: { 
                             y: { grid: { color: '#222' }, ticks: { color: '#aaa' }, beginAtZero: true }, 
@@ -760,45 +736,77 @@
                 });
             }
 
-            // PIE CHART
             const c2 = document.getElementById('pieChart')?.getContext('2d');
             if(c2) {
-                // Se sMap estiver vazio (sem dados), ChartJS lida bem, mas podemos evitar erro
                 const labels = Object.keys(sMap);
                 const data = Object.values(sMap);
-                
                 if(pieChart) pieChart.destroy();
                 pieChart = new Chart(c2, {
                     type: 'doughnut',
                     data: { 
                         labels: labels, 
-                        datasets: [{ 
-                            data: data, 
-                            backgroundColor: ['#1e90ff', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#333'],
-                            borderWidth: 0
-                        }] 
+                        datasets: [{ data: data, backgroundColor: ['#1e90ff', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#333'], borderWidth: 0 }] 
                     },
                     options: { 
-                        responsive: true, 
-                        maintainAspectRatio: false, // Importante para preencher o container pai
-                        plugins: { 
-                            legend: { position: 'right', labels: { color: '#aaa', boxWidth: 12, font: { size: 10 } } } 
-                        } 
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { position: 'right', labels: { color: '#aaa', boxWidth: 12, font: { size: 10 } } } } 
                     }
                 });
             }
         }
 
+        // --- Clientes Section (MODIFICADA) ---
+        function renderClients() {
+            const b = document.getElementById('list-clients'); 
+            if(!b) return; 
+            b.innerHTML = '';
+            const m = {}; 
+            
+            agendamentosData.filter(a => a.nome && a.nome !== 'BLOQUEADO').forEach(a => {
+                if(!m[a.nome]) m[a.nome] = { last: a.data, total: 0, count: 0 };
+                if(a.status === 'confirmed') {
+                    m[a.nome].total += Number(a.preco || 0); 
+                    m[a.nome].count++;
+                    if(new Date(a.data) > new Date(m[a.nome].last)) m[a.nome].last = a.data;
+                }
+            });
+
+            Object.keys(m).sort((a, b) => {
+                return sortClientsByInactivity
+                    ? new Date(m[a].last) - new Date(m[b].last)
+                    : new Date(m[b].last) - new Date(m[a].last);
+            }).forEach(k => {
+                const c = m[k];
+                const lastDate = new Date(c.last + 'T00:00:00');
+                const diffDays = Math.floor((new Date() - lastDate) / (1000 * 60 * 60 * 24));
+                const phone = agendamentosData.find(a => a.nome === k && a.telefone)?.telefone;
+
+                const btnWhatsapp = phone
+                    ? `<button class="btn-action" style="padding:4px 8px;font-size:0.7rem" onclick="notifyInactive('${k}','${phone}',${diffDays})">📲 Avisar</button>`
+                    : '-';
+
+                b.innerHTML += `
+                    <tr>
+                        <td><b>${k}</b></td>
+                        <td>${c.last.split('-').reverse().join('/')}</td>
+                        <td style="color:var(--primary)">R$ ${c.total.toFixed(2)}</td>
+                        <td>${diffDays} dias</td>
+                        <td>${btnWhatsapp}</td>
+                    </tr>`;
+            });
+            lucide.createIcons();
+        }
+
+        // --- Finanças Section ---
         window.addExpense = async () => {
             const desc = document.getElementById('exp-desc').value;
             const rawVal = document.getElementById('exp-val').value || '';
-            const valor = parseFloat(rawVal.replace(/\./g,'').replace(',', '.').replace(/[^0-9.-]/g,''));
+            const valor = parseFloat(rawVal);
             const data = document.getElementById('exp-date').value;
             const recurrence = document.getElementById('exp-recurrence').value || '';
             const category = document.getElementById('exp-category')?.value || 'Outros';
             if(!desc || isNaN(valor) || !data) return alert('Preencha descrição, valor válido e data.');
             await addDoc(collection(db, "despesas"), { descricao: desc, valor, data, recurrence, category });
-            document.getElementById('exp-desc').value = ''; document.getElementById('exp-val').value = ''; document.getElementById('exp-date').value = ''; document.getElementById('exp-recurrence').value = ''; document.getElementById('exp-category').value = '';
             alert('Despesa adicionada!');
         };    
 
@@ -815,19 +823,6 @@
             lucide.createIcons();
         }
 
-        function renderClients() {
-            const b = document.getElementById('list-clients'); if(!b) return; b.innerHTML = '';
-            const m = {}; agendamentosData.filter(a => a.nome && a.nome !== 'BLOQUEADO').forEach(a => {
-                if(!m[a.nome]) m[a.nome] = { last: a.data, total: 0, count: 0 };
-                if(a.status === 'confirmed') {
-                    m[a.nome].total += Number(a.preco || 0); m[a.nome].count++; // Correção Number
-                    if(new Date(a.data) > new Date(m[a.nome].last)) m[a.nome].last = a.data;
-                }
-            });
-            Object.keys(m).sort((a, b) => m[b].total - m[a].total).forEach(k => {
-                const c = m[k]; b.innerHTML += `<tr><td><b>${k}</b></td><td>${c.last.split('-').reverse().join('/')}</td><td style="color:var(--primary)">R$ ${c.total.toFixed(2)}</td><td>${c.count} visitas</td></tr>`;
-            });
-        }
     </script>
 </body>
 </html>

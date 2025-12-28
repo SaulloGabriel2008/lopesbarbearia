@@ -153,12 +153,12 @@
                         <span class="service-price">R$ 75</span>
                     </div>
                 </div>
-                <div class="service-card" onclick="selectService(this, 'Corte Infantil (Autismo)', 80, 60)">
-                    <h3>Corte Infantil (Autismo)</h3>
+                <div class="service-card" onclick="selectService(this, 'Corte Infantil', 40, 40)">
+                    <h3>Corte Infantil</h3>
                     <p>Atendimento humanizado e paciente para crianças.</p>
                     <div class="service-meta">
-                        <span class="service-time">⏱ 80 MIN</span>
-                        <span class="service-price">R$ 60</span>
+                        <span class="service-time">⏱ 40 MIN</span>
+                        <span class="service-price">R$ 40</span>
                     </div>
                 </div>
             </div>
@@ -176,16 +176,27 @@
                     <span class="summary-label">Serviço</span>
                     <span class="summary-value" id="resumoServico">---</span>
                 </div>
+
+                <div id="autismo-area" style="display:none; margin-bottom:12px;">
+                    <span class="summary-label">Atendimento especializado?</span>
+                    <div style="display: flex; gap: 8px; margin-top: 8px;">
+                        <button class="time-btn" style="flex:1" onclick="setAutismo(true)">Sim (Autismo)</button>
+                        <button class="time-btn" style="flex:1" onclick="setAutismo(false)">Não</button>
+                    </div>
+                </div>
+
                 <div class="summary-row">
                     <span class="summary-label">Data e Hora</span>
                     <span class="summary-value" id="resumoDataHora">---</span>
                 </div>
                 <div id="observations-area" style="display:none; margin-bottom: 12px;">
                     <span class="summary-label">Observações / Preferências sensoriais</span>
-                    <textarea id="observations" placeholder="Ex: Prefere atenção calma, sem barulho" style="width:100%; height:70px; margin-top:8px; padding:8px; background:#000; color:#fff; border:1px solid var(--border); border-radius:6px;"></textarea>
+                    <textarea id="observations" placeholder="Ex: Prefere atenção calma, sem barulho" style="width:100%; height:70px; margin-top:8px; padding:8px; background:#000; color:#fff; border:1px solid var(--border); border-radius:6px; font-family: sans-serif;"></textarea>
                 </div>
                 <span class="summary-label">Total a pagar</span>
-                <span class="total-price" id="resumoPreco">R$ 0</span>
+                <span class="total-price" id="resumoPreco">
+    R$ 0 <span id="resumoTempo" style="font-size:0.8rem; color:var(--text-muted); font-weight:500;"></span>
+</span>
                 
                 <div id="userNameLogged" style="margin-bottom: 15px; font-size: 0.8rem; color: var(--primary); font-weight: 600;"></div>
                 
@@ -207,10 +218,10 @@
 
         <div id="auth-signup" style="display: none;">
             <h2 style="text-align: center;">Nova Conta</h2>
-            <input type="text" id="signup-nome" placeholder="Nome Completo">
-            <input type="text" id="signup-phone" placeholder="Telefone (opcional)">
-            <input type="email" id="signup-email" placeholder="E-mail">
-            <input type="password" id="signup-senha" placeholder="Senha (mín. 6 dígitos)">
+            <input type="text" id="signup-nome" placeholder="Nome Completo *">
+            <input type="text" id="signup-phone" placeholder="Telefone *" required>
+            <input type="email" id="signup-email" placeholder="E-mail (opcional)">
+            <input type="password" id="signup-senha" placeholder="Senha (mín. 6 dígitos) *">
             <button class="nav-btn active" style="width: 100%; margin-top: 10px;" onclick="handleSignUp()">Cadastrar</button>
             <span class="toggle-auth" onclick="toggleAuthMode('login')">Já tem conta? Entrar</span>
         </div>
@@ -230,7 +241,7 @@
 
     <footer>
         <p>📍 Av. Central, 149-21 - Alto Lagoa Funda, Marataízes - ES, 29345-000</p>
-        <a href="https://www.google.com/maps/search/?api=1&query=Av.+Central,+149-21+-+Alto+Lagoa+Funda,+Marataízes+-+ES,+29345-000" target="_blank" class="map-link">
+        <a href="https://maps.google.com" target="_blank" class="map-link">
             🗺️ VER NO GOOGLE MAPS
         </a>
         <p style="margin-top: 20px; opacity: 0.5;">© 2025 LOPES BARBEARIA</p>
@@ -255,12 +266,11 @@
         const auth = getAuth(app);
         const provider = new GoogleAuthProvider();
 
-        // BLOQUEIO DE DATAS PASSADAS NO INPUT
         const hojeObj = new Date();
         const hojeISO = hojeObj.toISOString().split('T')[0];
         document.getElementById('dataAgendamento').setAttribute('min', hojeISO);
 
-        let state = { servico: null, data: null, hora: null, user: null };
+        let state = { servico: null, data: null, hora: null, user: null, autismo: false };
         const horariosBase = ["09:00", "09:40", "10:20", "11:00", "11:40", "13:00", "13:40", "14:20", "15:00", "15:40", "16:20", "17:00", "17:40", "18:20"];
 
         window.showSection = (name) => {
@@ -280,15 +290,66 @@
             el.classList.add('selected');
             const slots = Math.max(1, Math.ceil(duracao / 40));
             state.servico = { nome, duracao, preco, slots };
-            document.getElementById('resumoServico').innerText = `${nome}${slots > 1 ? ' ('+slots+' slots)' : ''}`;
-            document.getElementById('resumoPreco').innerText = `R$ ${preco}`;
+            state.autismo = false;
+
+document.getElementById('resumoServico').innerText =
+    `${nome}${slots > 1 ? ' (' + slots + ' slots)' : ''}`;
+
+document.getElementById('resumoPreco').innerHTML =
+    `R$ ${preco} <span id="resumoTempo" style="font-size:0.8rem; color:var(--text-muted); font-weight:500;">
+        • ⏱ ${duracao} min
+     </span>`;
             document.getElementById('dateTimeArea').style.opacity = "1";
             document.getElementById('dateTimeArea').style.pointerEvents = "all";
-            // Mostrar campo de observações para Corte Infantil
+
+            const autismoArea = document.getElementById('autismo-area');
             const obsArea = document.getElementById('observations-area');
-            if(nome.toLowerCase().includes('infantil')) obsArea.style.display = 'block'; else obsArea.style.display = 'none';
+            
+            if(nome === 'Corte Infantil') {
+                autismoArea.style.display = 'block';
+                obsArea.style.display = 'none';
+                document.querySelectorAll('#autismo-area .time-btn').forEach(b => b.classList.remove('selected'));
+            } else {
+                autismoArea.style.display = 'none';
+                obsArea.style.display = 'none';
+            }
             updateUI();
         };
+
+window.setAutismo = (val) => {
+    state.autismo = val;
+
+    // Define lógica de preço / tempo / slots
+    if (val) {
+        state.servico.duracao = 80;
+        state.servico.preco = 60;
+        state.servico.slots = 2;
+    } else {
+        state.servico.duracao = 40;
+        state.servico.preco = 40;
+        state.servico.slots = 1;
+    }
+
+    // 🔥 ATUALIZA PREÇO + TEMPO NO RESUMO
+    document.getElementById('resumoPreco').innerHTML =
+        `R$ ${state.servico.preco} <span id="resumoTempo"
+            style="font-size:0.8rem; color:var(--text-muted); font-weight:500;">
+            • ⏱ ${state.servico.duracao} min
+        </span>`;
+
+    // UI dos botões
+    document.querySelectorAll('#autismo-area .time-btn')
+        .forEach(b => b.classList.remove('selected'));
+    event.target.classList.add('selected');
+
+    // Mostra observações
+    document.getElementById('observations-area').style.display = 'block';
+
+    // Recarrega horários se já tiver data (slots mudaram)
+    if (state.data) renderHorarios();
+
+    updateUI();
+};
 
         document.getElementById('dataAgendamento').addEventListener('change', async (e) => {
             state.data = e.target.value;
@@ -301,45 +362,42 @@
         async function renderHorarios() {
             const grid = document.getElementById('gridHorarios');
             if(!state.data) return;
-
-            // BLOQUEIO DE DOMINGO (0 = Domingo)
             const dataSelecionada = new Date(state.data + 'T00:00:00');
             if (dataSelecionada.getDay() === 0) {
-                grid.innerHTML = "<p style='color: #ff4d4d; grid-column: 1/-1;'>A barbearia não abre aos domingos. Por favor, escolha outra data.</p>";
+                grid.innerHTML = "<p style='color: #ff4d4d; grid-column: 1/-1;'>Fechado aos domingos.</p>";
                 return;
             }
-
-            grid.innerHTML = "Verificando horários...";
-            
+            grid.innerHTML = "Carregando...";
             try {
                 const q = query(collection(db, "agendamentos"), where("data", "==", state.data));
                 const snap = await getDocs(q);
                 const occupiedSet = new Set();
                 snap.docs.forEach(d => {
                     const data = d.data();
-                    const slotCount = data.slots || 1;
                     const idx = horariosBase.indexOf(data.hora);
-                    for (let s = 0; s < slotCount; s++) {
+                    for (let s = 0; s < (data.slots || 1); s++) {
                         if (horariosBase[idx + s]) occupiedSet.add(horariosBase[idx + s]);
                     }
                 });
-
                 grid.innerHTML = "";
                 const agora = new Date();
                 const dataHojeStr = agora.toISOString().split('T')[0];
-
-                horariosBase.forEach(h => {
+                horariosBase.forEach((h, index) => {
                     const btn = document.createElement('button');
                     btn.className = 'time-btn';
                     btn.innerText = h;
+                    
+                    const [hH, hM] = h.split(':');
+                    const hBotao = new Date(state.data + `T${hH}:${hM}:00`);
+                    
+                    // Verifica se há slots consecutivos suficientes livres
+                    let canFit = true;
+                    for(let i=0; i < (state.servico?.slots || 1); i++){
+                        const targetTime = horariosBase[index + i];
+                        if(!targetTime || occupiedSet.has(targetTime)) { canFit = false; break; }
+                    }
 
-                    // Lógica para bloquear horários passados se for HOJE
-                    const [hHora, hMin] = h.split(':');
-                    const horaBotao = new Date(state.data + `T${hHora}:${hMin}:00`);
-                    const isPassado = (state.data === dataHojeStr && horaBotao < agora);
-                    const isOcupado = occupiedSet.has(h);
-
-                    if (isOcupado || isPassado) {
+                    if (!canFit || (state.data === dataHojeStr && hBotao < agora)) {
                         btn.classList.add('blocked');
                         btn.disabled = true;
                     } else {
@@ -353,55 +411,55 @@
                     }
                     grid.appendChild(btn);
                 });
-            } catch (error) {
-                grid.innerHTML = "Erro ao carregar horários. Verifique as permissões do Firebase.";
-                console.error(error);
-            }
+            } catch (e) { grid.innerHTML = "Erro ao carregar."; }
         }
 
         window.handleSignUp = async () => {
-            const nome = document.getElementById('signup-nome').value;
-            const phone = document.getElementById('signup-phone')?.value || '';
-            const email = document.getElementById('signup-email').value;
+            const nome = document.getElementById('signup-nome').value.trim();
+            const phoneRaw = document.getElementById('signup-phone').value;
+            const emailInput = document.getElementById('signup-email').value.trim();
             const senha = document.getElementById('signup-senha').value;
+            const phoneClean = phoneRaw.replace(/\D/g, '');
+
+            if (!nome || phoneClean.length < 10) {
+                alert("Informe nome e telefone válido.");
+                return;
+            }
+            // Gera email fake se não informado
+            const email = emailInput || `${phoneClean}@cliente.lopes`;
+
             try {
                 const res = await createUserWithEmailAndPassword(auth, email, senha);
                 await updateProfile(res.user, { displayName: nome });
-                const phoneClean = phone.replace(/\D/g,'');
-                await setDoc(doc(db, 'users', res.user.uid), { nome, email, phone: phoneClean, telefone: phoneClean });
+                await setDoc(doc(db, 'users', res.user.uid), {
+                    nome, email, phone: phoneClean, telefone: phoneClean
+                });
                 alert("Conta criada!");
             } catch (e) { alert(e.message); }
-        };    
+        };
 
         window.handleLogin = async () => {
-            const identifier = document.getElementById('login-email').value;
+            const iden = document.getElementById('login-email').value;
             const senha = document.getElementById('login-senha').value;
             try {
-                if (identifier.includes('@')) {
-                    await signInWithEmailAndPassword(auth, identifier, senha);
+                if (iden.includes('@')) {
+                    await signInWithEmailAndPassword(auth, iden, senha);
                 } else {
-                    const phoneClean = identifier.replace(/\D/g,'');
-                    const q = query(collection(db, 'users'), where('phone', '==', phoneClean));
+                    const clean = iden.replace(/\D/g,'');
+                    const q = query(collection(db, 'users'), where('phone', '==', clean));
                     const snap = await getDocs(q);
                     if (snap.empty) throw new Error('Usuário não encontrado');
-                    const userDoc = snap.docs[0].data();
-                    await signInWithEmailAndPassword(auth, userDoc.email, senha);
+                    await signInWithEmailAndPassword(auth, snap.docs[0].data().email, senha);
                 }
-            } catch (e) { alert("Erro no login: " + (e.message || 'Verifique seus dados')); }
+            } catch (e) { alert("Erro: " + e.message); }
         };
 
-        window.handleGoogleLogin = async () => {
-            try { await signInWithPopup(auth, provider); } catch (e) { await signInWithRedirect(auth, provider); }
-        };
-
+        window.handleGoogleLogin = async () => { try { await signInWithPopup(auth, provider); } catch (e) { await signInWithRedirect(auth, provider); } };
         window.handleLogout = () => signOut(auth);
 
         onAuthStateChanged(auth, (user) => {
             state.user = user;
             if (user) {
-                (async () => {
-                    try { await setDoc(doc(db, 'users', user.uid), { nome: user.displayName || '', email: user.email || '' }, { merge: true }); } catch (e) { console.warn('Erro ao atualizar users doc', e); }
-                })();
                 document.getElementById('user-logged-info').style.display = "block";
                 document.getElementById('auth-login').style.display = "none";
                 document.getElementById('auth-signup').style.display = "none";
@@ -413,7 +471,6 @@
                 document.getElementById('user-logged-info').style.display = "none";
                 document.getElementById('auth-login').style.display = "block";
                 document.querySelector('.google-btn').style.display = "flex";
-                document.getElementById('userNameLogged').innerText = "";
             }
             updateUI();
         });
@@ -422,42 +479,45 @@
             if (!state.user) { showSection('cliente'); return; }
             const btn = document.getElementById('btnConfirmar');
             btn.innerText = "SALVANDO..."; btn.disabled = true;
-
             try {
-                const slotsNeeded = state.servico?.slots || 1;
-
-                // Tenta obter telefone do documento users/{uid}
                 let telefone = '';
-                try {
-                    const userDoc = await getDoc(doc(db, 'users', state.user.uid));
-                    if (userDoc.exists()) telefone = userDoc.data().phone || userDoc.data().telefone || '';
-                } catch (err) { console.warn('Erro ao buscar telefone do usuário', err); }
+                const uDoc = await getDoc(doc(db, 'users', state.user.uid));
+                if (uDoc.exists()) telefone = uDoc.data().phone || '';
 
-                const observacoes = (document.getElementById('observations')?.value || '').trim();
+                const servicoFinal = (state.servico.nome === 'Corte Infantil') 
+                    ? (state.autismo ? 'Corte Infantil (Autismo)' : 'Corte Infantil') 
+                    : state.servico.nome;
 
                 await addDoc(collection(db, "agendamentos"), {
                     userId: state.user.uid,
-                    nome: state.user.displayName || state.user.email,
                     cliente: state.user.displayName || state.user.email,
-                    servico: state.servico.nome,
+                    servico: servicoFinal,
                     data: state.data,
                     hora: state.hora,
+                    slots: state.servico.slots,
                     preco: state.servico.preco,
-                    slots: slotsNeeded,
                     telefone: telefone,
-                    observacoes: observacoes,
+                    autismo: state.autismo,
+                    observacoes: document.getElementById('observations').value,
                     status: 'confirmed',
                     timestamp: new Date()
                 });
-                const msg = encodeURIComponent(`💈 *LOPES BARBEARIA*\n\n👤 Cliente: ${state.user.displayName || state.user.email}\n✂️ Serviço: ${state.servico.nome}\n📅 Data: ${state.data.split('-').reverse().join('/')}\n⏰ Hora: ${state.hora}h`);
+                const msg = encodeURIComponent(`💈 *LOPES BARBEARIA*\n\n👤 Cliente: ${state.user.displayName}\n✂️ Serviço: ${servicoFinal}\n📅 Data: ${state.data.split('-').reverse().join('/')}\n⏰ Hora: ${state.hora}h`);
                 window.open(`https://api.whatsapp.com/send?phone=5528999082741&text=${msg}`);
                 location.reload();
             } catch (e) { alert(e.message); btn.innerText = "CONFIRMAR"; btn.disabled = false; }
-        };    
+        };
 
         function updateUI() {
             const btn = document.getElementById('btnConfirmar');
-            btn.disabled = !(state.servico && state.data && state.hora);
+            let ready = (state.servico && state.data && state.hora);
+            
+            if (state.servico?.nome === 'Corte Infantil') {
+                const autismoBtnSelected = document.querySelector('#autismo-area .time-btn.selected');
+                if (!autismoBtnSelected) ready = false;
+            }
+            
+            btn.disabled = !ready;
             btn.classList.toggle('ready', !btn.disabled);
         }
 
@@ -465,25 +525,18 @@
             const q = query(collection(db, "agendamentos"), where("userId", "==", uid));
             const snap = await getDocs(q);
             const lista = document.getElementById('listaAgendamentos');
-            lista.innerHTML = snap.empty ? "Sem agendamentos ativos." : "";
+            lista.innerHTML = snap.empty ? "Nenhum agendamento ativo." : "";
             snap.forEach(d => {
-                const data = d.data();
-                const obs = data.observacoes ? `<div style="font-size:0.85rem; margin-top:6px; color:var(--text-muted)">Observações: ${data.observacoes}</div>` : '';
+                const dt = d.data();
                 lista.innerHTML += `<div style="border-bottom: 1px solid #222; padding: 10px 0;">
-                    <b>${data.servico}</b><br>${data.data.split('-').reverse().join('/')} às ${data.hora}h ${obs}
-                    <div style="margin-top:6px;"><button style="background:#e53e3e; color:#fff; border:none; padding:6px 8px; border-radius:6px; cursor:pointer;" onclick="cancelMyBooking('${d.id}')">CANCELAR</button></div>
+                    <b>${dt.servico}</b><br>${dt.data.split('-').reverse().join('/')} às ${dt.hora}h
+                    <br><button style="background:#e53e3e; color:#fff; border:none; padding:4px 8px; border-radius:4px; margin-top:5px; cursor:pointer;" onclick="cancelMyBooking('${d.id}')">CANCELAR</button>
                 </div>`;
             });
         }
 
         window.cancelMyBooking = async (id) => {
-            const snap = await getDoc(doc(db, 'agendamentos', id));
-            if (!snap.exists()) return alert('Agendamento não encontrado.');
-            const data = snap.data();
-            const scheduled = new Date(`${data.data}T${data.hora}:00`);
-            const diff = scheduled - new Date();
-            if (diff < 2 * 60 * 60 * 1000) return alert('Não é permitido cancelar com menos de 2 horas do horário.');
-            if (!confirm('Cancelar agendamento?')) return;
+            if (!confirm('Deseja cancelar?')) return;
             await deleteDoc(doc(db, 'agendamentos', id));
             loadUserAppointments(state.user.uid);
         };
