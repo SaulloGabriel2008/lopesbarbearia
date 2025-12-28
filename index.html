@@ -112,12 +112,11 @@
             position: relative;
         }
         
-        /* ESTILO DO BOTÃO SELECIONADO COM PONTILHADO E EVIDÊNCIA */
         .time-btn.selected { 
             background: var(--primary); 
             color: #000; 
             font-weight: 800; 
-            border: 2px dashed #ffffff; /* Borda pontilhada branca para contraste */
+            border: 2px dashed #ffffff;
             box-shadow: 0 0 20px rgba(30,144,255,0.6); 
             transform: scale(1.05);
             z-index: 2;
@@ -140,14 +139,18 @@
         }
         .btn-confirm.ready { background: #fff; color: #000; border-color: #fff; box-shadow: 0 4px 15px rgba(255,255,255,0.1); }
 
+        /* AJUSTE PARA MOBILE NA SEÇÃO DE CONTA */
         .auth-container {
             background: var(--card-bg); padding: 30px; border-radius: 12px;
             max-width: 400px; margin: 40px auto; border: 1px solid var(--border);
             display: none;
+            box-sizing: border-box; /* Garante que o preenchimento não quebre a largura */
+            width: calc(100% - 40px); /* Garante margens laterais no celular */
         }
         .auth-container input {
             width: 100%; padding: 12px; margin: 10px 0; background: #000;
             border: 1px solid var(--border); color: #fff; border-radius: 6px; box-sizing: border-box;
+            font-size: 16px; /* Evita zoom automático chato no iPhone */
         }
         .toggle-auth { color: var(--primary); cursor: pointer; font-size: 0.85rem; text-align: center; display: block; margin-top: 15px; }
 
@@ -163,6 +166,8 @@
             .main-layout { grid-template-columns: 1fr; }
             .summary-card { position: static; }
             .services-grid { grid-template-columns: 1fr; }
+            header { flex-direction: column; gap: 20px; }
+            .auth-container { margin: 20px auto; }
         }
     </style>
 </head>
@@ -335,11 +340,13 @@
         let state = { servico: null, data: null, hora: null, user: null, autismo: false };
         const horariosBase = ["09:00", "09:40", "10:20", "11:00", "11:40", "13:00", "13:40", "14:20", "15:00", "15:40", "16:20", "17:00", "17:40", "18:20"];
 
+        // FUNÇÃO AJUSTADA APENAS PARA EXIBIR BLOCK NO MOBILE
         window.showSection = (name) => {
             document.getElementById('section-agendamento').style.display = name === 'agendamento' ? 'grid' : 'none';
             document.getElementById('section-cliente').style.display = name === 'cliente' ? 'block' : 'none';
             document.getElementById('btn-nav-agendamento').classList.toggle('active', name === 'agendamento');
             document.getElementById('btn-nav-cliente').classList.toggle('active', name === 'cliente');
+            window.scrollTo(0, 0); // Garante que a tela comece do topo ao trocar
         };
 
         window.toggleAuthMode = (mode) => {
@@ -464,7 +471,6 @@
                         btn.classList.add('blocked');
                         btn.disabled = true;
                     } else {
-                        // Restaurar seleção visual se o horário já estava no estado
                         if (state.hora === h) btn.classList.add('selected');
 
                         btn.onclick = () => {
