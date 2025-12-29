@@ -230,7 +230,7 @@
                                         <option value="Corte Infantil|40|1">Corte Infantil (R$ 40 - 40min)</option>
                                     </select>
                                 </div>
-                                <div>
+                                <div id="autismo-container" style="display: none;">
                                     <label>Autismo?</label>
                                     <div class="autismo-toggle">
                                         <button id="autismo-yes" class="toggle-btn" onclick="setAutismo(true)">✅</button>
@@ -367,9 +367,9 @@
 
         // Mapeamento de cores por serviço
         const serviceColors = {
-            "Corte Masculino": "#1e90ff",     // Azul
-            "Barba Completa": "#f59e0b",      // Âmbar
-            "Combo Corte + Barba": "#8b5cf6", // Roxo
+            "Corte Masculino": "#0800ff",     // Azul
+            "Barba Completa": "#d0ff00",      // Amarelo
+            "Combo Corte + Barba": "#3cff00", // Verdão
             "Corte Infantil": "#10b981",      // Verde
             "Bloqueio": "#ef4444",            // Vermelho
             "Outros": "#3b82f6"               // Azul claro
@@ -389,19 +389,26 @@
         const baseSlots = ["09:00", "09:40", "10:20", "11:00", "11:40", "13:00", "13:40", "14:20", "15:00", "15:40", "16:20", "17:00", "17:40", "18:20"];
 
         // Função Global para o Toggle Autismo
-        window.setAutismo = (val) => {
+window.setAutismo = (val) => {
             isAutismo = val;
             const btnYes = document.getElementById('autismo-yes');
             const btnNo = document.getElementById('autismo-no');
             
-            if(val) {
-                btnYes.classList.add('active-yes');
-                btnNo.classList.remove('active-no');
-            } else {
-                btnNo.classList.add('active-no');
-                btnYes.classList.remove('active-yes');
+            if(btnYes && btnNo) {
+                if(val) {
+                    btnYes.classList.add('active-yes');
+                    btnNo.classList.remove('active-no');
+                } else {
+                    btnNo.classList.add('active-no');
+                    btnYes.classList.remove('active-yes');
+                }
             }
-            updateWarning();
+            
+            // Apenas atualiza o aviso de 2 horários, sem entrar em loop
+            const servRaw = document.getElementById('edit-service').value.split('|');
+            const slotsNeeded = isAutismo ? 2 : parseInt(servRaw[2]);
+            const warning = document.getElementById('warning-double');
+            if(warning) warning.style.display = (slotsNeeded > 1) ? 'block' : 'none';
         };
 
         window.notifyInactive = (nome, telefone, dias) => {
@@ -673,8 +680,25 @@
         }
 
         function updateWarning() {
-            const servRaw = document.getElementById('edit-service').value.split('|');
-            const slotsNeeded = isAutismo ? 2 : parseInt(servRaw[2]); // Se autismo estiver marcado, força 2 slots
+            const serviceSelect = document.getElementById('edit-service');
+            if(!serviceSelect) return;
+
+            const servRaw = serviceSelect.value.split('|');
+            const isInfantil = servRaw[0].includes("Infantil");
+            const autismoContainer = document.getElementById('autismo-container');
+            
+            if (isInfantil) {
+                autismoContainer.style.display = 'block';
+                // Mantém o estado atual de isAutismo ao trocar de serviço infantil
+                // Se quiser que sempre resete ao trocar de serviço, use: setAutismo(false);
+            } else {
+                autismoContainer.style.display = 'none';
+                if(isAutismo) {
+                    setAutismo(false); // Reseta apenas se estiver marcado como true
+                }
+            }
+
+            const slotsNeeded = isAutismo ? 2 : parseInt(servRaw[2]);
             const warning = document.getElementById('warning-double');
             if(warning) warning.style.display = (slotsNeeded > 1) ? 'block' : 'none';
         }
@@ -837,7 +861,7 @@
             updateCharts(rev, exp, sMap);
         }
 
-function updateCharts(rev, exp, sMap) {
+        function updateCharts(rev, exp, sMap) {
             const c1 = document.getElementById('mainChart')?.getContext('2d');
             if(c1) {
                 if(mainChart) mainChart.destroy();
