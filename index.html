@@ -188,7 +188,7 @@
         <div class="content-side">
             <div class="section-title"><span class="section-num">1</span> Escolha o Serviço</div>
             <div class="services-grid">
-                <div class="service-card" onclick="selectService(this, 'Corte de Cabelo', 40, 40)">
+                <div class="service-card" onclick="selectService(this, 'Corte Masculino', 40, 40)">
                     <h3>Corte de Cabelo</h3>
                     <p>Corte tradicional com acabamento premium e lavagem.</p>
                     <div class="service-meta">
@@ -196,7 +196,7 @@
                         <span class="service-price">R$ 40</span>
                     </div>
                 </div>
-                <div class="service-card" onclick="selectService(this, 'Barba', 40, 40)">
+                <div class="service-card" onclick="selectService(this, 'Barba Completa', 40, 40)">
                     <h3>Barba</h3>
                     <p>Design de barba com toalha quente e terapia de óleos.</p>
                     <div class="service-meta">
@@ -204,7 +204,7 @@
                         <span class="service-price">R$ 40</span>
                     </div>
                 </div>
-                <div class="service-card" onclick="selectService(this, 'Combo Completo', 80, 75)">
+                <div class="service-card" onclick="selectService(this, 'Combo Corte + Barba', 80, 75)">
                     <h3>Combo Cabelo e Barba</h3>
                     <p>O pacote completo para o cavalheiro moderno.</p>
                     <div class="service-meta">
@@ -358,7 +358,8 @@
             document.querySelectorAll('.service-card').forEach(c => c.classList.remove('selected'));
             el.classList.add('selected');
             const slots = Math.max(1, Math.ceil(duracao / 40));
-            state.servico = { nome, duracao, preco, slots };
+            // armazenar valores originais para restaurar caso o toggle Autismo seja desmarcado
+            state.servico = { nome, duracao, preco, slots, original: { duracao, preco, slots } };
             state.autismo = false;
             state.hora = null;
 
@@ -382,10 +383,22 @@
 
         window.setAutismo = (val) => {
             state.autismo = val;
+            if (!state.servico) return;
+
             if (val) {
-                state.servico.duracao = 80; state.servico.preco = 60; state.servico.slots = 2;
+                // Autismo demanda 2 slots; preço R$60 só para Corte Infantil
+                state.servico.slots = 2;
+                state.servico.duracao = 2 * 40;
+                if (state.servico.nome && state.servico.nome.includes('Infantil')) state.servico.preco = 60;
             } else {
-                state.servico.duracao = 40; state.servico.preco = 40; state.servico.slots = 1;
+                // restaurar valores originais
+                if (state.servico.original) {
+                    state.servico.duracao = state.servico.original.duracao;
+                    state.servico.preco = state.servico.original.preco;
+                    state.servico.slots = state.servico.original.slots;
+                } else {
+                    state.servico.duracao = 40; state.servico.preco = 40; state.servico.slots = 1;
+                }
             }
 
             document.getElementById('resumoPreco').innerHTML = `R$ ${state.servico.preco} <span id="resumoTempo" style="font-size:0.8rem; color:var(--text-muted); font-weight:500;"> • ⏱ ${state.servico.duracao} min </span>`;
@@ -571,20 +584,46 @@
                 const userData = uDoc.data();
                 const nomeCliente = userData?.nome || state.user.displayName || "Cliente";
 
-                const servicoFinal = (state.servico.nome === 'Corte Infantil') 
-                    ? (state.autismo ? 'Corte Infantil (Autismo)' : 'Corte Infantil') 
-                    : state.servico.nome;
+                // Lógica alinhada com o admin
+                const slotsNeeded = state.autismo ? 2 : state.servico.slots;
+                let precoFinal = Number(state.servico.preco) || 0;
+                let servicoFinal = state.servico.nome;
+                if (state.autismo) {
+                    servicoFinal += ' (Autismo)';
+                    if (state.servico.nome && state.servico.nome.includes('Infantil')) precoFinal = 60;
+                }
+
+                // Se precisar de 2 slots, verificar disponibilidade do próximo horário
+                if (slotsNeeded > 1) {
+                    const index = horariosBase.indexOf(state.hora);
+                    const nextTime = horariosBase[index + 1];
+                    if (!nextTime) { alert("Não há horário seguinte disponível."); btn.innerText = "CONFIRMAR AGENDAMENTO"; btn.disabled = false; return; }
+
+                    const q = query(collection(db, "agendamentos"), where("data", "==", state.data));
+                    const snap = await getDocs(q);
+                    const occupied = [];
+                    snap.forEach(d => {
+                        const data = d.data();
+                        const idx = horariosBase.indexOf(data.hora);
+                        for (let s = 0; s < (data.slots || 1); s++) {
+                            if (horariosBase[idx + s]) occupied.push(horariosBase[idx + s]);
+                        }
+                    });
+                    if (occupied.includes(nextTime)) { alert("O próximo horário está ocupado."); btn.innerText = "CONFIRMAR AGENDAMENTO"; btn.disabled = false; return; }
+                }
 
                 await addDoc(collection(db, "agendamentos"), {
                     userId: state.user.uid,
+                    nome: nomeCliente,
                     cliente: nomeCliente,
                     servico: servicoFinal,
                     data: state.data,
                     hora: state.hora,
-                    slots: state.servico.slots,
-                    preco: state.servico.preco,
+                    slots: slotsNeeded,
+                    preco: precoFinal,
                     autismo: state.autismo,
                     observacoes: document.getElementById('observations').value,
+                    status: 'confirmed',
                     timestamp: new Date()
                 });
 
@@ -616,17 +655,58 @@
             lista.innerHTML = snap.empty ? "Nenhum agendamento ativo." : "";
             snap.forEach(d => {
                 const dt = d.data();
+                // Salvamos os dados em string para usar no cancelamento
+                const dadosAgendamento = JSON.stringify({
+                    servico: dt.servico,
+                    data: dt.data,
+                    hora: dt.hora,
+                    cliente: dt.cliente
+                }).replace(/"/g, '&quot;');
+
                 lista.innerHTML += `<div style="border-bottom: 1px solid #222; padding: 10px 0;">
                     <b>${dt.servico}</b><br>${dt.data.split('-').reverse().join('/')} às ${dt.hora}h
-                    <br><button style="background:#e53e3e; color:#fff; border:none; padding:4px 8px; border-radius:4px; margin-top:5px; cursor:pointer;" onclick="cancelMyBooking('${d.id}')">CANCELAR</button>
+                    <br><button style="background:#e53e3e; color:#fff; border:none; padding:4px 8px; border-radius:4px; margin-top:5px; cursor:pointer;" onclick="cancelMyBooking('${d.id}', '${dadosAgendamento}')">CANCELAR</button>
                 </div>`;
             });
         }
 
-        window.cancelMyBooking = async (id) => {
-            if (!confirm('Deseja cancelar?')) return;
-            await deleteDoc(doc(db, 'agendamentos', id));
-            loadUserAppointments(state.user.uid);
+        window.cancelMyBooking = async (id, dadosRaw) => {
+            const dados = JSON.parse(dadosRaw);
+            
+            // --- TRAVA DE 2 HORAS ---
+            const agora = new Date();
+            const [horaS, minS] = dados.hora.split(':').map(Number);
+            const dataAgendamento = new Date(dados.data + 'T00:00:00');
+            dataAgendamento.setHours(horaS, minS, 0, 0);
+
+            const diferencaMs = dataAgendamento - agora;
+            const diferencaHoras = diferencaMs / (1000 * 60 * 60);
+
+            if (diferencaHoras < 2) {
+                alert("Não é possível cancelar com menos de 2 horas de antecedência. Entre em contato direto com a barbearia.");
+                return;
+            }
+
+            if (!confirm('Deseja realmente cancelar este agendamento?')) return;
+            
+            try {
+                await deleteDoc(doc(db, 'agendamentos', id));
+                
+                // --- MENSAGEM DE CANCELAMENTO VIA WHATSAPP ---
+                const msgCancelamento = encodeURIComponent(
+                    `🚫 *CANCELAMENTO DE AGENDAMENTO*\n\n` +
+                    `👤 Cliente: ${dados.cliente}\n` +
+                    `✂️ Serviço: ${dados.servico}\n` +
+                    `📅 Data: ${dados.data.split('-').reverse().join('/')}\n` +
+                    `⏰ Hora: ${dados.hora}h\n\n`
+                );
+                
+                alert("Agendamento removido. Informando o barbeiro...");
+                window.open(`https://api.whatsapp.com/send?phone=5528999082741&text=${msgCancelamento}`);
+                loadUserAppointments(state.user.uid);
+            } catch (e) {
+                alert("Erro: " + e.message);
+            }
         };
     </script>
 </body>
