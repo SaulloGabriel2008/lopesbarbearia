@@ -110,7 +110,7 @@
             width: 100%;
         }
 
-        /* Toggle Autismo */
+        /* Toggle Autismo e Cortesia */
         .autismo-toggle { display: flex; gap: 8px; margin-top: 5px; }
         .toggle-btn { 
             flex: 1; padding: 10px; border: 1px solid var(--border); background: #000; color: var(--text-muted); 
@@ -118,6 +118,22 @@
         }
         .toggle-btn.active-yes { background: var(--success); color: white; border-color: var(--success); }
         .toggle-btn.active-no { background: var(--danger); color: white; border-color: var(--danger); }
+        .toggle-btn.active-primary { background: var(--primary); color: white; border-color: var(--primary); }
+
+        /* Estilo Financeiro Toggle */
+        .finance-toggle { display: flex; margin-bottom: 1.5rem; background: var(--border); padding: 4px; border-radius: 0.75rem; width: fit-content; }
+        .finance-toggle button { background: none; border: none; padding: 0.6rem 1.5rem; color: var(--text-muted); border-radius: 0.5rem; cursor: pointer; font-weight: 700; transition: 0.2s; }
+        .finance-toggle button.active { background: var(--bg-card); color: var(--primary); box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+
+        /* Estilo Lançamento Rápido */
+        .quick-launch-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
+        .btn-quick { padding: 15px; border-radius: 10px; border: none; color: white; font-weight: bold; cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+        .btn-quick:active { transform: scale(0.95); }
+
+        /* Status Badge */
+        .status-badge { padding: 4px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; }
+        .status-pago { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+        .status-pendente { background: rgba(245, 158, 11, 0.2); color: var(--warn); }
     </style>
 </head>
 <body>
@@ -139,7 +155,7 @@
                 <div class="nav-item active" onclick="switchTab('dashboard')"><i data-lucide="layout-dashboard"></i> Dashboard</div>
                 <div class="nav-item" onclick="switchTab('agendamentos')"><i data-lucide="calendar"></i> Agenda</div>
                 <div class="nav-item" onclick="switchTab('clientes')"><i data-lucide="users"></i> Clientes</div>
-                <div class="nav-item" onclick="switchTab('financas')"><i data-lucide="wallet"></i> Finanças</div>
+                <div class="nav-item" onclick="switchTab('finanças')"><i data-lucide="wallet"></i> Finanças</div>
             </nav>
             <button class="btn-action" onclick="logout()" style="margin-top: auto; background: var(--danger); color: white; border: none;"><i data-lucide="log-out"></i> SAIR</button>
         </aside>
@@ -228,6 +244,7 @@
                                         <option value="Barba Completa|40|1">Barba (R$ 40 - 40min)</option>
                                         <option value="Combo Corte + Barba|75|2">Combo (R$ 75 - 80min)</option>
                                         <option value="Corte Infantil|40|1">Corte Infantil (R$ 40 - 40min)</option>
+                                        <option value="Cortesia|0|1">Cortesia (R$ 0)</option>
                                     </select>
                                 </div>
                                 <div id="autismo-container" style="display: none;">
@@ -235,6 +252,13 @@
                                     <div class="autismo-toggle">
                                         <button id="autismo-yes" class="toggle-btn" onclick="setAutismo(true)">✅</button>
                                         <button id="autismo-no" class="toggle-btn" onclick="setAutismo(false)">⛔</button>
+                                    </div>
+                                </div>
+                                <div id="cortesia-slots-container" style="display: none;">
+                                    <label>Quantos horários para a Cortesia?</label>
+                                    <div class="autismo-toggle">
+                                        <button id="cortesia-1" class="toggle-btn" onclick="setCortesiaSlots(1)">1 Horário</button>
+                                        <button id="cortesia-2" class="toggle-btn" onclick="setCortesiaSlots(2)">2 Horários</button>
                                     </div>
                                 </div>
                                 <div>
@@ -248,7 +272,10 @@
                                     <button class="btn-action" onclick="saveBooking()">SALVAR</button>
                                     <button class="btn-action" style="background: #333; color: white;" onclick="toggleBlockSlot()">BLOQUEAR</button>
                                 </div>
-                                <button id="btn-cancel-booking" style="background: var(--danger); color: white; border: none; padding: 0.8rem; border-radius: 0.5rem; font-weight: 700; cursor: pointer; display: none;" onclick="cancelBooking()">CANCELAR AGENDAMENTO</button>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                    <button id="btn-complete-booking" style="background: var(--success); color: white; border: none; padding: 0.8rem; border-radius: 0.5rem; font-weight: 700; cursor: pointer; display: none;" onclick="completeBooking()">CONCLUIR ATENDIMENTO</button>
+                                    <button id="btn-cancel-booking" style="background: var(--danger); color: white; border: none; padding: 0.8rem; border-radius: 0.5rem; font-weight: 700; cursor: pointer; display: none;" onclick="cancelBooking()">CANCELAR AGENDAMENTO</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -261,6 +288,7 @@
                         <thead>
                             <tr>
                                 <th>Cliente</th>
+                                <th>Contato / Email</th>
                                 <th>Última Visita</th>
                                 <th>Total Gasto</th>
                                 <th style="cursor:pointer" onclick="toggleClientSort()">Dias sem ir ⬍</th>
@@ -272,14 +300,28 @@
                 </div>
             </div>
 
-            <div id="tab-financas" class="tab-content">
-                <div class="admin-section">
-                    <h4 style="margin-bottom: 1rem;">Lançar Nova Despesa</h4>
+            <div id="tab-finanças" class="tab-content">
+                <div class="finance-toggle">
+                    <button id="toggle-despesas" class="active" onclick="switchFinanceMode('despesas')">DESPESAS</button>
+                    <button id="toggle-entradas" onclick="switchFinanceMode('entradas')">ENTRADAS (PRODUTOS)</button>
+                </div>
+
+                <div class="admin-section" id="section-finance-form">
+                    <h4 id="finance-form-title" style="margin-bottom: 1rem;">Lançar Nova Despesa</h4>
+                    
+                    <div id="quick-products-container" style="display: none;">
+                        <div class="quick-launch-grid">
+                            <button class="btn-quick" style="background: #e67e22;" onclick="quickAdd('Cremes / Pomadas')"><i data-lucide="package"></i>CREME</button>
+                            <button class="btn-quick" style="background: #27ae60;" onclick="quickAdd('Chips / Snacks')"><i data-lucide="cookie"></i>CHIPS</button>
+                            <button class="btn-quick" style="background: #2980b9;" onclick="quickAdd('Refrigerantes')"><i data-lucide="cup-soda"></i>REFRI</button>
+                        </div>
+                    </div>
+
                     <div class="form-row">
-                        <div><label>Descrição</label><input type="text" id="exp-desc" placeholder="Ex: Energia"></div>
+                        <div id="col-desc"><label>Descrição</label><input type="text" id="exp-desc" placeholder="Ex: Energia"></div>
                         <div><label>Valor (R$)</label><input type="number" id="exp-val" step="0.01"></div>
                         <div><label>Data</label><input type="date" id="exp-date"></div>
-                        <div>
+                        <div id="recurrence-container">
                             <label>Recorrência</label>
                             <select id="exp-recurrence">
                                 <option value="">Nenhuma</option>
@@ -288,42 +330,31 @@
                                 <option value="yearly">Anual</option>
                             </select>
                         </div>
-                        <div>
+                        <div id="col-cat">
                             <label>Categoria</label>
                             <select id="exp-category">
-                                <option value="Produtos">Produtos / Insumos</option>
-                                <option value="Aluguel">Aluguel / Fixos</option>
-                                <option value="Marketing">Marketing / Tráfego</option>
-                                <option value="Manutenção">Manutenção de Equipamento</option>
-                                <option value="Utilidades">Luz / Água / Internet</option>
-                                <option value="Pessoal">Comissões / Salários</option>
-                                <option value="Outros">Outros</option>
-                            </select>
+                                </select>
                         </div>
-                        <button class="btn-action" style="background: var(--danger); color: white;" onclick="addExpense()">ADICIONAR</button>
+                        <div style="display: flex; gap: 8px;">
+                            <button id="btn-finance-add" class="btn-action" style="background: var(--danger); color: white;" onclick="addFinanceRecord(false)">ADICIONAR</button>
+                            <button id="btn-finance-add-paid" class="btn-action" style="background: var(--success); color: white;" onclick="addFinanceRecord(true)">Lançar Pago ✅</button>
+                        </div>
                     </div>
                 </div>
 
                 <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem; background: var(--bg-card); padding: 1.2rem; border-radius: 0.75rem; border: 1px solid var(--border); flex-wrap: wrap;">
                     <div style="flex: 1; min-width: 200px;">
                         <label>Filtrar por Categoria</label>
-                        <select id="filter-category" onchange="renderExpenses()">
+                        <select id="filter-category" onchange="renderFinanceTable()">
                             <option value="all">Todas as Categorias</option>
-                            <option value="Produtos">Produtos / Insumos</option>
-                            <option value="Aluguel">Aluguel / Fixos</option>
-                            <option value="Marketing">Marketing / Tráfego</option>
-                            <option value="Manutenção">Manutenção de Equipamento</option>
-                            <option value="Utilidades">Luz / Água / Internet</option>
-                            <option value="Pessoal">Pessoal</option>
-                            <option value="Outros">Outros</option>
-                        </select>
+                            </select>
                     </div>
                     <div style="flex: 2; min-width: 250px;">
                         <label>Buscar por Descrição</label>
-                        <input type="text" id="filter-search" placeholder="Ex: Conta de luz..." oninput="renderExpenses()">
+                        <input type="text" id="filter-search" placeholder="Buscar..." oninput="renderFinanceTable()">
                     </div>
                     <div style="background: #0d0d0d; padding: 10px 15px; border-radius: 8px; border: 1px solid var(--border);">
-                        <span style="font-size: 0.75rem; color: var(--text-muted); display: block;">Total Filtrado</span>
+                        <span id="label-total-filtrado" style="font-size: 0.75rem; color: var(--text-muted); display: block;">Total Despesas</span>
                         <strong id="filtered-total" style="color: var(--warn); font-size: 1.1rem;">R$ 0,00</strong>
                     </div>
                 </div>
@@ -333,14 +364,15 @@
                         <thead>
                             <tr>
                                 <th>Data</th>
-                                <th>Recorrência</th>
+                                <th class="col-recurrence">Recorrência</th>
                                 <th>Categoria</th>
                                 <th>Descrição</th>
+                                <th class="col-status">Status</th>
                                 <th>Valor</th>
                                 <th style="text-align: right;">Ações</th>
                             </tr>
                         </thead>
-                        <tbody id="list-expenses"></tbody>
+                        <tbody id="list-finance"></tbody>
                     </table>
                 </div>
             </div>
@@ -371,6 +403,7 @@
             "Barba Completa": "#d0ff00",      // Amarelo
             "Combo Corte + Barba": "#3cff00", // Verdão
             "Corte Infantil": "#10b981",      // Verde
+            "Cortesia": "#a0a0a0",            // Cinza
             "Bloqueio": "#ef4444",            // Vermelho
             "Outros": "#3b82f6"               // Azul claro
         };
@@ -378,10 +411,19 @@
         let agendamentosData = [];
         let configDiasData = {};
         let despesasData = [];
+        let entradasData = [];
+        let financeMode = 'despesas'; // 'despesas' ou 'entradas'
+
+        const financeCategories = {
+            despesas: ["Produtos", "Aluguel", "Marketing", "Manutenção", "Utilidades", "Pessoal", "Outros"],
+            entradas: ["Refrigerantes", "Chips / Snacks", "Cremes / Pomadas", "Outros Produtos"]
+        };
+
         let currentCalendarDate = new Date();
         let selectedDateISO = new Date().toISOString().split('T')[0];
         let selectedSlot = null;
-        let isAutismo = false; // Estado para o toggle
+        let isAutismo = false; 
+        let cortesiaSlots = 1; // Estado para os slots da Cortesia
         let mainChart = null; 
         let pieChart = null;
         let sortClientsByInactivity = true; 
@@ -389,7 +431,7 @@
         const baseSlots = ["09:00", "09:40", "10:20", "11:00", "11:40", "13:00", "13:40", "14:20", "15:00", "15:40", "16:20", "17:00", "17:40", "18:20"];
 
         // Função Global para o Toggle Autismo
-window.setAutismo = (val) => {
+        window.setAutismo = (val) => {
             isAutismo = val;
             const btnYes = document.getElementById('autismo-yes');
             const btnNo = document.getElementById('autismo-no');
@@ -403,12 +445,25 @@ window.setAutismo = (val) => {
                     btnYes.classList.remove('active-yes');
                 }
             }
+            updateWarning();
+        };
+
+        // Função Global para os Slots da Cortesia
+        window.setCortesiaSlots = (num) => {
+            cortesiaSlots = num;
+            const btn1 = document.getElementById('cortesia-1');
+            const btn2 = document.getElementById('cortesia-2');
             
-            // Apenas atualiza o aviso de 2 horários, sem entrar em loop
-            const servRaw = document.getElementById('edit-service').value.split('|');
-            const slotsNeeded = isAutismo ? 2 : parseInt(servRaw[2]);
-            const warning = document.getElementById('warning-double');
-            if(warning) warning.style.display = (slotsNeeded > 1) ? 'block' : 'none';
+            if(btn1 && btn2) {
+                if(num === 1) {
+                    btn1.classList.add('active-primary');
+                    btn2.classList.remove('active-primary');
+                } else {
+                    btn2.classList.add('active-primary');
+                    btn1.classList.remove('active-primary');
+                }
+            }
+            updateWarning();
         };
 
         window.notifyInactive = (nome, telefone, dias) => {
@@ -440,6 +495,7 @@ window.setAutismo = (val) => {
             }
             if(tab === 'agendamentos') renderCalendar();
             if(tab === 'clientes') renderClients();
+            if(tab === 'finanças') switchFinanceMode('despesas');
         };
 
         onAuthStateChanged(auth, user => {
@@ -505,12 +561,12 @@ window.setAutismo = (val) => {
 
                             let match = options.find(o => o.name.toLowerCase() === target || o.name.toLowerCase().includes(target) || target.includes(o.name.toLowerCase()));
 
-                            if (!match && out.preco) {
+                            if (!match && out.preco !== undefined) {
                                 match = options.find(o => Math.abs((o.price || 0) - Number(out.preco || 0)) < 0.01);
                             }
 
                             if (match) {
-                                if (!out.preco || out.preco === 0) out.preco = match.price;
+                                if (out.preco === undefined || out.preco === 0) out.preco = match.price;
                                 const hasAutismo = out.autismo === true || /autis/i.test(originalServ);
                                 out.servico = match.name + (hasAutismo ? ' (Autismo)' : '');
                             }
@@ -537,7 +593,13 @@ window.setAutismo = (val) => {
 
             onSnapshot(collection(db, "despesas"), snap => {
                 despesasData = snap.docs.map(d => ({id: d.id, ...d.data()}));
-                renderExpenses();
+                if(financeMode === 'despesas') renderFinanceTable();
+                updateDashboard();
+            });
+
+            onSnapshot(collection(db, "entradas_produtos"), snap => {
+                entradasData = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                if(financeMode === 'entradas') renderFinanceTable();
                 updateDashboard();
             });
         }
@@ -564,6 +626,7 @@ window.setAutismo = (val) => {
                 const [y, m, dayNum] = iso.split('-').map(Number);
                 const dayOfWeek = new Date(y, m - 1, dayNum).getDay();
 
+                // ALTERAÇÃO SOLICITADA: Todos os domingos são fechados por padrão, exceto se houver uma configuração salva.
                 const config = configDiasData[iso] || { status: (dayOfWeek === 0 ? 'closed' : 'open') };
                 const dayAgends = agendamentosData.filter(a => a.data === iso);
 
@@ -610,7 +673,10 @@ window.setAutismo = (val) => {
                 btn.className = `slot-btn ${agend ? (agend.status === 'blocked' ? 'blocked' : 'occupied') : ''} ${isPartOfLong ? 'part-of-long' : ''} ${isEditing ? 'active-editing' : ''}`;
                 
                 if (agend) {
-                    const displayName = agend.nome || agend.cliente || '...';
+                    let displayName = agend.nome || agend.cliente || '...';
+                    if(agend.status === 'completed') {
+                        displayName += ' ✅';
+                    }
                     btn.innerText = `${time} - ${agend.status === 'blocked' ? 'BLOQUEADO' : displayName}`;
                     const baseService = (agend.servico || "").replace(" (Autismo)", "");
                     const sColor = agend.status === 'blocked' ? serviceColors["Bloqueio"] : (serviceColors[baseService] || serviceColors["Outros"]);
@@ -655,11 +721,12 @@ window.setAutismo = (val) => {
                 }
             }
 
-            // Atualizar o Toggle Autismo ao abrir
             setAutismo(agend?.autismo || false);
+            setCortesiaSlots(agend?.slots || 1);
 
             document.getElementById('edit-observations').value = agend?.observacoes || '';
             document.getElementById('btn-cancel-booking').style.display = agend ? 'block' : 'none';
+            document.getElementById('btn-complete-booking').style.display = (agend && agend.status !== 'completed' && agend.status !== 'blocked') ? 'block' : 'none';
             
             const btnWhatsapp = document.getElementById('btn-whatsapp-client');
             if (agend && agend.status !== 'blocked') {
@@ -685,20 +752,20 @@ window.setAutismo = (val) => {
 
             const servRaw = serviceSelect.value.split('|');
             const isInfantil = servRaw[0].includes("Infantil");
-            const autismoContainer = document.getElementById('autismo-container');
+            const isCortesia = servRaw[0].includes("Cortesia");
             
-            if (isInfantil) {
-                autismoContainer.style.display = 'block';
-                // Mantém o estado atual de isAutismo ao trocar de serviço infantil
-                // Se quiser que sempre resete ao trocar de serviço, use: setAutismo(false);
-            } else {
-                autismoContainer.style.display = 'none';
-                if(isAutismo) {
-                    setAutismo(false); // Reseta apenas se estiver marcado como true
-                }
-            }
+            const autismoContainer = document.getElementById('autismo-container');
+            const cortesiaContainer = document.getElementById('cortesia-slots-container');
+            
+            autismoContainer.style.display = isInfantil ? 'block' : 'none';
+            cortesiaContainer.style.display = isCortesia ? 'block' : 'none';
 
-            const slotsNeeded = isAutismo ? 2 : parseInt(servRaw[2]);
+            if (!isInfantil && isAutismo) setAutismo(false);
+
+            let slotsNeeded = parseInt(servRaw[2]);
+            if (isAutismo) slotsNeeded = 2;
+            if (isCortesia) slotsNeeded = cortesiaSlots;
+
             const warning = document.getElementById('warning-double');
             if(warning) warning.style.display = (slotsNeeded > 1) ? 'block' : 'none';
         }
@@ -710,14 +777,18 @@ window.setAutismo = (val) => {
             const observacoes = document.getElementById('edit-observations').value || '';
             const servRaw = document.getElementById('edit-service').value.split('|');
             
-            // Lógica: Se marcado Autismo, usa 2 slots e o preço de 60 se for corte infantil
-            const slotsNeeded = isAutismo ? 2 : parseInt(servRaw[2]);
+            let slotsNeeded = parseInt(servRaw[2]);
             let precoFinal = parseFloat(servRaw[1]);
             let servicoFinal = servRaw[0];
 
             if(isAutismo) {
+                slotsNeeded = 2;
                 servicoFinal += " (Autismo)";
                 if(servRaw[0].includes("Infantil")) precoFinal = 60;
+            }
+
+            if(servRaw[0].includes("Cortesia")) {
+                slotsNeeded = cortesiaSlots;
             }
 
             if(!nome) return alert('Insira o nome do cliente');
@@ -736,7 +807,7 @@ window.setAutismo = (val) => {
                 servico: servicoFinal, preco: precoFinal,
                 autismo: isAutismo,
                 slots: slotsNeeded,
-                status: 'confirmed', timestamp: new Date()
+                status: selectedSlot.agend?.status || 'confirmed', timestamp: new Date()
             };
 
             try {
@@ -746,6 +817,18 @@ window.setAutismo = (val) => {
                 selectedSlot = null;
                 renderSlots();
             } catch(e) { alert("Erro ao salvar: " + e.message); }
+        };
+
+        window.completeBooking = async () => {
+            if(!selectedSlot || !selectedSlot.agend) return;
+            if(confirm('Confirmar que o cliente compareceu e finalizar atendimento? (O valor entrará na receita bruta)')){
+                try {
+                    await updateDoc(doc(db, "agendamentos", selectedSlot.agend.id), { status: 'completed' });
+                    document.getElementById('slot-editor').style.display = 'none';
+                    selectedSlot = null;
+                    renderSlots();
+                } catch(e) { alert("Erro ao finalizar: " + e.message); }
+            }
         };
 
         window.cancelBooking = async () => {
@@ -773,7 +856,11 @@ window.setAutismo = (val) => {
         };
 
         window.toggleDayStatus = async (status) => {
-            await setDoc(doc(db, "config_dias", selectedDateISO), { status }, { merge: true });
+            try {
+                await setDoc(doc(db, "config_dias", selectedDateISO), { status, updatedAt: new Date() }, { merge: true });
+                renderSlots(); // Atualiza a UI imediatamente
+                alert(`Dia ${selectedDateISO} atualizado para: ${status}`);
+            } catch (e) { alert('Erro ao atualizar status do dia: ' + e.message); }
         };
 
         window.addExtraSlot = async () => {
@@ -832,13 +919,22 @@ window.setAutismo = (val) => {
             let rev = 0; 
             const sMap = {};
 
+            // Agendamentos Concluídos
             agendamentosData.forEach(a => { 
-                if(a.status === 'confirmed' && (a.nome || a.cliente) !== 'BLOQUEADO') {
+                if(a.status === 'completed' && (a.nome || a.cliente) !== 'BLOQUEADO') {
                     const dt = new Date(a.data + 'T00:00:00');
                     if (dt >= range.start && dt < range.end) {
                         rev += Number(a.preco || 0);
                         sMap[a.servico] = (sMap[a.servico] || 0) + 1;
                     }
+                }
+            });
+
+            // Vendas de Produtos
+            entradasData.forEach(e => {
+                const dt = new Date(e.data + 'T00:00:00');
+                if (dt >= range.start && dt < range.end) {
+                    rev += Number(e.valor || 0);
                 }
             });
 
@@ -887,12 +983,11 @@ window.setAutismo = (val) => {
                 const labels = Object.keys(sMap);
                 const data = Object.values(sMap);
                 
-                // Adiciona a quantidade ao lado do nome do serviço na legenda
                 const labelsWithValues = labels.map((label, index) => `${label}: ${data[index]}`);
 
                 const backgroundColors = labels.map(label => {
-                    const baseService = label.replace(" (Autismo)", "");
-                    return serviceColors[baseService] || serviceColors["Outros"];
+                    const cleanLabel = label.replace(" (Autismo)", "").replace("Venda: ", "");
+                    return serviceColors[cleanLabel] || serviceColors["Outros"];
                 });
 
                 if(pieChart) pieChart.destroy();
@@ -930,13 +1025,32 @@ window.setAutismo = (val) => {
             b.innerHTML = '';
             const m = {}; 
             
+            // Filtra agendamentos válidos e agrupa por Nome + Telefone + Email
             agendamentosData.filter(a => (a.nome || a.cliente) && ((a.nome || a.cliente) !== 'BLOQUEADO')).forEach(a => {
-                const key = a.nome || a.cliente;
-                if(!m[key]) m[key] = { last: a.data, total: 0, count: 0 };
-                if(a.status === 'confirmed') {
-                    m[key].total += Number(a.preco || 0); 
-                    m[key].count++;
-                    if(new Date(a.data) > new Date(m[key].last)) m[key].last = a.data;
+                const nome = a.nome || a.cliente;
+                const fone = (a.telefone || '').trim();
+                const email = (a.email || '').trim();
+                
+                // Chave única para diferenciar clientes com mesmo nome mas dados diferentes
+                const uniqueKey = `${nome.toLowerCase()}_${fone}_${email.toLowerCase()}`;
+
+                if(!m[uniqueKey]) {
+                    m[uniqueKey] = { 
+                        nome: nome,
+                        contato: fone,
+                        email: email,
+                        last: a.data, 
+                        total: 0, 
+                        count: 0 
+                    };
+                }
+                
+                if(a.status === 'completed') {
+                    m[uniqueKey].total += Number(a.preco || 0); 
+                    m[uniqueKey].count++;
+                    if(new Date(a.data) > new Date(m[uniqueKey].last)) {
+                        m[uniqueKey].last = a.data;
+                    }
                 }
             });
 
@@ -948,15 +1062,18 @@ window.setAutismo = (val) => {
                 const c = m[k];
                 const lastDate = new Date(c.last + 'T00:00:00'); 
                 const diffDays = Math.floor((new Date() - lastDate) / (1000 * 60 * 60 * 24)); 
-                const phone = agendamentosData.find(a => (a.nome === k || a.cliente === k) && a.telefone)?.telefone; 
 
-                const btnWhatsapp = phone 
-                    ? `<button class="btn-action" style="padding:4px 8px;font-size:0.7rem" onclick="notifyInactive('${k}','${phone}',${diffDays})">📲 Avisar</button>`
+                const btnWhatsapp = c.contato 
+                    ? `<button class="btn-action" style="padding:4px 8px;font-size:0.7rem" onclick="notifyInactive('${c.nome}','${c.contato}',${diffDays})">📲 Avisar</button>`
                     : '-';
 
                 b.innerHTML += `
                     <tr>
-                        <td><b>${k}</b></td>
+                        <td><b>${c.nome}</b></td>
+                        <td>
+                            <div style="font-size:0.8rem; color:var(--text-muted)">${c.contato || 'Sem Telefone'}</div>
+                            <div style="font-size:0.7rem; color:var(--primary)">${c.email || ''}</div>
+                        </td>
                         <td>${c.last.split('-').reverse().join('/')}</td>
                         <td style="color:var(--primary)">R$ ${c.total.toFixed(2)}</td>
                         <td>${diffDays} dias</td>
@@ -966,63 +1083,177 @@ window.setAutismo = (val) => {
             lucide.createIcons();
         }
 
-        window.addExpense = async () => {
-            const desc = document.getElementById('exp-desc').value;
-            const rawVal = document.getElementById('exp-val').value || '';
-            const valor = parseFloat(rawVal);
+        /* --- SISTEMA FINANCEIRO INTEGRADO --- */
+        window.switchFinanceMode = (mode) => {
+            financeMode = mode;
+            const btnDesp = document.getElementById('toggle-despesas');
+            const btnEntr = document.getElementById('toggle-entradas');
+            const btnAdd = document.getElementById('btn-finance-add');
+            const btnAddPaid = document.getElementById('btn-finance-add-paid');
+            const formTitle = document.getElementById('finance-form-title');
+            const recurrenceContainer = document.getElementById('recurrence-container');
+            const recurrenceCol = document.querySelector('.col-recurrence');
+            const statusCol = document.querySelector('.col-status');
+            const labelTotal = document.getElementById('label-total-filtrado');
+            const totalVal = document.getElementById('filtered-total');
+            const quickContainer = document.getElementById('quick-products-container');
+            const colDesc = document.getElementById('col-desc');
+            const colCat = document.getElementById('col-cat');
+
+            // Reset Data para hoje
+            document.getElementById('exp-date').value = new Date().toISOString().split('T')[0];
+
+            if(mode === 'despesas') {
+                btnDesp.classList.add('active');
+                btnEntr.classList.remove('active');
+                btnAdd.style.backgroundColor = 'var(--danger)';
+                btnAddPaid.style.display = 'flex';
+                formTitle.innerText = 'Lançar Nova Despesa';
+                recurrenceContainer.style.display = 'block';
+                recurrenceCol.style.display = 'table-cell';
+                statusCol.style.display = 'table-cell';
+                labelTotal.innerText = 'Total Despesas';
+                totalVal.style.color = 'var(--warn)';
+                quickContainer.style.display = 'none';
+                colDesc.style.display = 'block';
+                colCat.style.display = 'block';
+            } else {
+                btnEntr.classList.add('active');
+                btnDesp.classList.remove('active');
+                btnAdd.style.backgroundColor = 'var(--success)';
+                btnAddPaid.style.display = 'none';
+                formTitle.innerText = 'Lançamento Rápido de Venda';
+                recurrenceContainer.style.display = 'none';
+                recurrenceCol.style.display = 'none';
+                statusCol.style.display = 'none';
+                labelTotal.innerText = 'Total Entradas';
+                totalVal.style.color = 'var(--success)';
+                quickContainer.style.display = 'block';
+                colDesc.style.display = 'none'; 
+                colCat.style.display = 'none';  
+            }
+
+            const selectCat = document.getElementById('exp-category');
+            selectCat.innerHTML = financeCategories[mode].map(c => `<option value="${c}">${c}</option>`).join('');
+
+            const filterCat = document.getElementById('filter-category');
+            filterCat.innerHTML = `<option value="all">Todas as Categorias</option>` + 
+                financeCategories[mode].map(c => `<option value="${c}">${c}</option>`).join('');
+
+            renderFinanceTable();
+        };
+
+        window.quickAdd = async (cat) => {
+            const valor = parseFloat(document.getElementById('exp-val').value);
             const data = document.getElementById('exp-date').value;
-            const recurrence = document.getElementById('exp-recurrence').value || '';
-            const category = document.getElementById('exp-category')?.value || 'Outros';
-            if(!desc || isNaN(valor) || !data) return alert('Preencha descrição, valor válido e data.');
-            await addDoc(collection(db, "despesas"), { descricao: desc, valor, data, recurrence, category });
-            alert('Despesa adicionada!');
-        };    
+            if(isNaN(valor) || !data) return alert('Insira o valor da venda');
 
-        window.deleteExpense = async (id) => { if(confirm('Excluir?')) await deleteDoc(doc(db, "despesas", id)); };
+            try {
+                await addDoc(collection(db, 'entradas_produtos'), { 
+                    descricao: cat, 
+                    valor, 
+                    data, 
+                    category: cat, 
+                    timestamp: new Date() 
+                });
+                document.getElementById('exp-val').value = '';
+            } catch(e) { alert("Erro: " + e.message); }
+        };
 
-        window.renderExpenses = function() {
-            const b = document.getElementById('list-expenses'); 
-            if(!b) return; 
+        window.addFinanceRecord = async (isPaid) => {
+            const desc = document.getElementById('exp-desc').value;
+            const valor = parseFloat(document.getElementById('exp-val').value);
+            const data = document.getElementById('exp-date').value;
+            const recurrence = document.getElementById('exp-recurrence').value;
+            const category = document.getElementById('exp-category').value;
+
+            if(isNaN(valor) || !data) return alert('Preencha os campos obrigatórios.');
+
+            const collectionName = financeMode === 'despesas' ? 'despesas' : 'entradas_produtos';
+            const payload = { 
+                descricao: financeMode === 'despesas' ? desc : category, 
+                valor, 
+                data, 
+                category, 
+                timestamp: new Date() 
+            };
+            if(financeMode === 'despesas') {
+                payload.recurrence = recurrence;
+                payload.pago = isPaid;
+            }
+
+            try {
+                await addDoc(collection(db, collectionName), payload);
+                document.getElementById('exp-desc').value = '';
+                document.getElementById('exp-val').value = '';
+            } catch(e) { alert("Erro ao salvar: " + e.message); }
+        };
+
+        window.togglePaidStatus = async (id, currentStatus) => {
+            await updateDoc(doc(db, "despesas", id), { pago: !currentStatus });
+        };
+
+        window.deleteFinanceRecord = async (id) => {
+            if(confirm('Excluir este registro permanentemente?')) {
+                const coll = financeMode === 'despesas' ? 'despesas' : 'entradas_produtos';
+                await deleteDoc(doc(db, coll, id));
+            }
+        };
+
+        window.renderFinanceTable = () => {
+            const b = document.getElementById('list-finance');
+            const catFilter = document.getElementById('filter-category').value;
+            const searchFilter = document.getElementById('filter-search').value.toLowerCase();
+            const data = financeMode === 'despesas' ? despesasData : entradasData;
             
             b.innerHTML = '';
+            let total = 0;
             const rMap = { weekly: 'Semanal', monthly: 'Mensal', yearly: 'Anual' };
-            
-            const categoryFilter = document.getElementById('filter-category').value;
-            const searchFilter = document.getElementById('filter-search').value.toLowerCase();
 
-            let totalFiltrado = 0;
-
-            const filteredData = despesasData.filter(e => {
-                const matchesCategory = categoryFilter === 'all' || e.category === categoryFilter;
-                const matchesSearch = e.descricao.toLowerCase().includes(searchFilter);
-                return matchesCategory && matchesSearch;
-            });
-
-            filteredData.sort((a,b) => b.data.localeCompare(a.data)).forEach(e => {
-                const valorNum = Number(e.valor || 0);
-                totalFiltrado += valorNum;
+            data.filter(item => {
+                const matchesCat = catFilter === 'all' || item.category === catFilter;
+                const matchesSearch = item.descricao.toLowerCase().includes(searchFilter);
+                return matchesCat && matchesSearch;
+            }).sort((a,b) => b.data.localeCompare(a.data)).forEach(item => {
+                const v = Number(item.valor || 0);
+                total += v;
+                const rLabel = item.recurrence ? (rMap[item.recurrence] || item.recurrence) : '-';
                 
-                const rLabel = e.recurrence ? (rMap[e.recurrence] || e.recurrence) : '-';
-                const cat = e.category || 'Outros';
-                
+                let statusHtml = '';
+                let actionsHtml = '';
+
+                if (financeMode === 'despesas') {
+                    const isPaid = item.pago === true;
+                    statusHtml = `<td><span class="status-badge ${isPaid ? 'status-pago' : 'status-pendente'}">${isPaid ? 'Pago' : 'Pendente'}</span></td>`;
+                    actionsHtml = `
+                        <button class="btn-action" style="background:none; color:${isPaid ? 'var(--warn)' : 'var(--success)'}; padding:0;" onclick="togglePaidStatus('${item.id}', ${isPaid})" title="${isPaid ? 'Marcar como Pendente' : 'Marcar como Pago'}">
+                            <i data-lucide="${isPaid ? 'rotate-ccw' : 'check-circle-2'}"></i>
+                        </button>
+                    `;
+                }
+
                 b.innerHTML += `
                     <tr>
-                        <td>${e.data.split('-').reverse().join('/')}</td>
-                        <td><span style="font-size: 0.8rem; opacity: 0.7">${rLabel}</span></td>
-                        <td><span style="background: #1a1a1a; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; border: 1px solid var(--border)">${cat}</span></td>
-                        <td>${e.descricao}</td>
-                        <td style="color:var(--warn)">R$ ${valorNum.toLocaleString('pt-BR', {minimumFractionDigits:2})}</td>
-                        <td style="text-align: right;">
-                            <button class="btn-action" style="background:none; color:var(--danger); padding:0;" onclick="deleteExpense('${e.id}')">
+                        <td>${item.data.split('-').reverse().join('/')}</td>
+                        <td class="col-recurrence" style="${financeMode === 'entradas' ? 'display:none' : ''}">
+                            <span style="font-size: 0.8rem; opacity: 0.7">${rLabel}</span>
+                        </td>
+                        <td><span style="background: #1a1a1a; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; border: 1px solid var(--border)">${item.category || 'Outros'}</span></td>
+                        <td>${item.descricao}</td>
+                        ${statusHtml}
+                        <td style="color:${financeMode === 'despesas' ? 'var(--warn)' : 'var(--success)'}">R$ ${v.toLocaleString('pt-BR', {minimumFractionDigits:2})}</td>
+                        <td style="text-align: right; display: flex; justify-content: flex-end; gap: 12px;">
+                            ${actionsHtml}
+                            <button class="btn-action" style="background:none; color:var(--danger); padding:0;" onclick="deleteFinanceRecord('${item.id}')">
                                 <i data-lucide="trash-2"></i>
                             </button>
                         </td>
                     </tr>`;
             });
 
-            document.getElementById('filtered-total').innerText = `R$ ${totalFiltrado.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            document.getElementById('filtered-total').innerText = `R$ ${total.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
             lucide.createIcons();
-        }
+        };
 
     </script>
 </body>

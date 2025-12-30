@@ -438,8 +438,15 @@
             if(!state.data) return;
             
             const dataSelecionada = new Date(state.data + 'T00:00:00');
-            if (dataSelecionada.getDay() === 0) {
-                grid.innerHTML = "<p style='color: #ff4d4d; grid-column: 1/-1;'>Fechado aos domingos.</p>";
+
+            // Verifica configurações específicas do dia no Firestore (config_dias)
+            const configRef = doc(db, "config_dias", state.data);
+            const configSnap = await getDoc(configRef);
+
+            // Fechamento padrão: domingos fechados por padrão, a menos que exista doc com status 'open'
+            const isSunday = dataSelecionada.getDay() === 0;
+            if ((configSnap.exists() && configSnap.data().status === 'closed') || (isSunday && (!configSnap.exists() || configSnap.data().status !== 'open'))) {
+                grid.innerHTML = "<p style='color: #ff4d4d; grid-column: 1/-1;'>Dia fechado para agendamentos.</p>";
                 return;
             }
 
@@ -572,6 +579,17 @@
 
             if (state.data < hoje || (state.data === hoje && agora > dataHoraSelecionada)) {
                 alert("O horário selecionado já passou. Por favor, escolha outro horário.");
+                renderHorarios();
+                return;
+            }
+
+            // Segurança: verifica se o dia não foi fechado pelo admin antes de salvar
+            const confRef = doc(db, "config_dias", state.data);
+            const confSnap = await getDoc(confRef);
+            const dataSelecionadaConf = new Date(state.data + 'T00:00:00');
+            const isSundayConf = dataSelecionadaConf.getDay() === 0;
+            if ((confSnap.exists() && confSnap.data().status === 'closed') || (isSundayConf && (!confSnap.exists() || confSnap.data().status !== 'open'))) {
+                alert("Não é possível agendar para esta data: dia fechado pelo administrador.");
                 renderHorarios();
                 return;
             }
