@@ -364,11 +364,11 @@
                         <thead>
                             <tr>
                                 <th>Data</th>
-                                <th class="col-recurrence">Recorrência</th>
-                                <th>Categoria</th>
+                                <th class="col-recurrence" style="cursor:pointer" onclick="toggleFinanceSort('recurrence')">Recorrência ⬍</th>
+                                <th style="cursor:pointer" onclick="toggleFinanceSort('category')">Categoria ⬍</th>
                                 <th>Descrição</th>
                                 <th class="col-status">Status</th>
-                                <th>Valor</th>
+                                <th style="cursor:pointer" onclick="toggleFinanceSort('valor')">Valor ⬍</th>
                                 <th style="text-align: right;">Ações</th>
                             </tr>
                         </thead>
@@ -403,6 +403,7 @@
             "Barba Completa": "#d0ff00",      // Amarelo
             "Combo Corte + Barba": "#3cff00", // Verdão
             "Corte Infantil": "#10b981",      // Verde
+            "Corte Infantil (Autismo)": "#10b981", // Verde (Igual para agrupar)
             "Cortesia": "#a0a0a0",            // Cinza
             "Bloqueio": "#ef4444",            // Vermelho
             "Outros": "#3b82f6"               // Azul claro
@@ -427,6 +428,7 @@
         let mainChart = null; 
         let pieChart = null;
         let sortClientsByInactivity = true; 
+        let financeSort = { column: 'data', direction: 'desc' };
 
         const baseSlots = ["09:00", "09:40", "10:20", "11:00", "11:40", "13:00", "13:40", "14:20", "15:00", "15:40", "16:20", "17:00", "17:40", "18:20"];
 
@@ -481,6 +483,16 @@
         window.toggleClientSort = () => {
             sortClientsByInactivity = !sortClientsByInactivity;
             renderClients();
+        };
+
+        window.toggleFinanceSort = (column) => {
+            if (financeSort.column === column) {
+                financeSort.direction = financeSort.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                financeSort.column = column;
+                financeSort.direction = 'desc';
+            }
+            renderFinanceTable();
         };
 
         window.switchTab = (tab) => {
@@ -732,7 +744,7 @@
             if (agend && agend.status !== 'blocked') {
                 btnWhatsapp.style.display = 'flex';
                 btnWhatsapp.onclick = () => {
-                    const telefone = agend.telefone || prompt("Insira o número de WhatsApp do cliente (com DDD):", "28999082741");
+                    const telefone = agend.telefone || prompt("Insira o número de WhatsApp do cliente (com DDD):", "2899082741");
                     if(!telefone) return;
                     const cleanPhone = telefone.replace(/\D/g, "");
                     const fullPhone = cleanPhone.startsWith("55") ? cleanPhone : "55" + cleanPhone;
@@ -980,13 +992,19 @@
 
             const c2 = document.getElementById('pieChart')?.getContext('2d');
             if(c2) {
-                const labels = Object.keys(sMap);
-                const data = Object.values(sMap);
+                // Ordenação específica para Corte Infantil e Autismo ficarem juntos
+                const labels = Object.keys(sMap).sort((a, b) => {
+                    const order = ["Corte Masculino", "Barba Completa", "Combo Corte + Barba", "Corte Infantil", "Corte Infantil (Autismo)", "Cortesia"];
+                    const indexA = order.findIndex(o => a === o);
+                    const indexB = order.findIndex(o => b === o);
+                    return (indexA === -1 ? 99 : indexA) - (indexB === -1 ? 99 : indexB);
+                });
                 
+                const data = labels.map(label => sMap[label]);
                 const labelsWithValues = labels.map((label, index) => `${label}: ${data[index]}`);
 
                 const backgroundColors = labels.map(label => {
-                    const cleanLabel = label.replace(" (Autismo)", "").replace("Venda: ", "");
+                    const cleanLabel = label.replace("Venda: ", "");
                     return serviceColors[cleanLabel] || serviceColors["Outros"];
                 });
 
@@ -1204,17 +1222,43 @@
             const b = document.getElementById('list-finance');
             const catFilter = document.getElementById('filter-category').value;
             const searchFilter = document.getElementById('filter-search').value.toLowerCase();
-            const data = financeMode === 'despesas' ? despesasData : entradasData;
+            const data = financeMode === 'despesas' ? [...despesasData] : [...entradasData];
             
             b.innerHTML = '';
             let total = 0;
             const rMap = { weekly: 'Semanal', monthly: 'Mensal', yearly: 'Anual' };
 
-            data.filter(item => {
+            const filteredData = data.filter(item => {
                 const matchesCat = catFilter === 'all' || item.category === catFilter;
-                const matchesSearch = item.descricao.toLowerCase().includes(searchFilter);
+                const matchesSearch = (item.descricao || '').toLowerCase().includes(searchFilter);
                 return matchesCat && matchesSearch;
-            }).sort((a,b) => b.data.localeCompare(a.data)).forEach(item => {
+            });
+
+            filteredData.sort((a, b) => {
+                let valA, valB;
+                const col = financeSort.column;
+                const dir = financeSort.direction === 'asc' ? 1 : -1;
+
+                if (col === 'valor') {
+                    valA = Number(a.valor || 0);
+                    valB = Number(b.valor || 0);
+                } else if (col === 'data') {
+                    valA = a.data || '';
+                    valB = b.data || '';
+                } else if (col === 'recurrence') {
+                    valA = a.recurrence || '';
+                    valB = b.recurrence || '';
+                } else if (col === 'category') {
+                    valA = a.category || '';
+                    valB = b.category || '';
+                }
+
+                if (valA < valB) return -1 * dir;
+                if (valA > valB) return 1 * dir;
+                return 0;
+            });
+
+            filteredData.forEach(item => {
                 const v = Number(item.valor || 0);
                 total += v;
                 const rLabel = item.recurrence ? (rMap[item.recurrence] || item.recurrence) : '-';
