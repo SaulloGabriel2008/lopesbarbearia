@@ -201,13 +201,7 @@
             font-weight: bold;
         }
 
-        @media (max-width: 900px) {
-            .main-layout { grid-template-columns: 1fr; }
-            .summary-card { position: static; }
-            .services-grid { grid-template-columns: 1fr; }
-            header { flex-direction: column; gap: 20px; }
-            .auth-container { margin: 20px auto; }
-        }
+@media (max-width: 900px) { .main-layout { grid-template-columns: 1fr; } .summary-card { position: static; } .services-grid { grid-template-columns: 1fr; } header { flex-direction: column; gap: 20px; } .auth-container { margin: 20px auto; } .logo-area h1 { font-size: 1rem; } .nav-buttons { flex-wrap: wrap; justify-content: center; } .nav-btn { padding: 8px 12px; font-size: 0.75rem; } .section-title { font-size: 1.2rem; } .horarios-grid { grid-template-columns: repeat(3, 1fr); } .service-card { padding: 15px; } .service-card h3 { font-size: 0.95rem; } .summary-card { padding: 20px; } .total-price { font-size: 1.8rem; } }
     </style>
 </head>
 <body>
@@ -353,7 +347,7 @@
 
     <div id="section-assinaturas" style="display: none; max-width: 1200px; margin: 0 auto; padding: 20px;">
         <div class="section-title" style="text-align: center; margin-bottom: 40px; color: var(--primary); font-size: 2rem;">Escolha seu Plano de Assinatura</div>
-        <p style="text-align: center; color: var(--text-muted); margin-bottom: 50px; font-size: 1.1rem;">Planos flexíveis para manter seu visual sempre impecável</p>
+        <p style="text-align: center; color: var(-@med-text-muted); margin-bottom: 50px; font-size: 1.1rem;">Planos flexíveis para manter seu visual sempre impecável</p>
         
         <div class="services-grid" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px;">
             <div class="service-card subscription-card" onclick="selectSubscription('sempre-alinhado')" style="border: 2px solid var(--border); transition: all 0.3s ease; position: relative;">
