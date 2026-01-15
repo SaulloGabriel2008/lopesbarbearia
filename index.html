@@ -52,7 +52,11 @@
             padding: 20px; border-radius: 12px; cursor: pointer; transition: 0.3s;
         }
         .service-card:hover { border-color: var(--primary); }
-        .service-card.selected { border-color: var(--primary); box-shadow: 0 0 15px rgba(30,144,255,0.2); }
+        .service-card.selected { 
+            border-color: var(--primary); 
+            box-shadow: 0 0 15px rgba(30,144,255,0.2);
+            background: var(--card-bg);
+        }
         .service-card h3 { margin: 0 0 8px 0; font-size: 1rem; }
         .service-card p { font-size: 0.8rem; color: var(--text-muted); margin: 0 0 15px 0; min-height: 40px; }
         .service-meta { display: flex; justify-content: space-between; align-items: center; }
@@ -162,6 +166,41 @@
         }
         .map-link:hover { background: var(--primary); color: #000; }
 
+        /* Estilos para Assinaturas */
+        .subscription-card {
+            border: 2px solid var(--border);
+            transition: all 0.3s ease;
+        }
+        .subscription-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-8px);
+            box-shadow: 0 15px 35px rgba(30, 144, 255, 0.15);
+        }
+        .subscription-card.selected {
+            border-color: var(--primary);
+            box-shadow: 0 0 25px rgba(30, 144, 255, 0.4);
+            transform: scale(1.02);
+        }
+        .subscription-card h3 {
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+        .subscription-card ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .subscription-card li {
+            padding: 3px 0;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        .subscription-card li:before {
+            content: "✓ ";
+            color: var(--primary);
+            font-weight: bold;
+        }
+
         @media (max-width: 900px) {
             .main-layout { grid-template-columns: 1fr; }
             .summary-card { position: static; }
@@ -180,6 +219,8 @@
         </div>
         <div class="nav-buttons">
             <button class="nav-btn active" id="btn-nav-agendamento" onclick="showSection('agendamento')">Agendar</button>
+            <button class="nav-btn" id="btn-nav-assinaturas" onclick="showSection('assinaturas')">Assinaturas</button>
+            <button class="nav-btn" id="btn-nav-minha-assinatura" onclick="showSection('minha-assinatura')">Minha Assinatura</button>
             <button class="nav-btn" id="btn-nav-cliente" onclick="showSection('cliente')">Meus Agendamentos</button>
         </div>
     </header>
@@ -188,36 +229,60 @@
         <div class="content-side">
             <div class="section-title"><span class="section-num">1</span> Escolha o Serviço</div>
             <div class="services-grid">
-                <div class="service-card" onclick="selectService(this, 'Corte Masculino', 40, 40)">
+                <div class="service-card" onclick="selectService(this, 'Corte Masculino', 30, 25)">
                     <h3>Corte de Cabelo</h3>
                     <p>Corte tradicional com acabamento premium e lavagem.</p>
                     <div class="service-meta">
-                        <span class="service-time">⏱ 40 MIN</span>
-                        <span class="service-price">R$ 40</span>
+                        <span class="service-time">⏱ 30 MIN</span>
+                        <span class="service-price">R$ 25</span>
                     </div>
                 </div>
-                <div class="service-card" onclick="selectService(this, 'Barba Completa', 40, 40)">
+                <div class="service-card" onclick="selectService(this, 'Barba Completa', 30, 25)">
                     <h3>Barba</h3>
                     <p>Design de barba com toalha quente e terapia de óleos.</p>
                     <div class="service-meta">
-                        <span class="service-time">⏱ 40 MIN</span>
-                        <span class="service-price">R$ 40</span>
+                        <span class="service-time">⏱ 30 MIN</span>
+                        <span class="service-price">R$ 25</span>
                     </div>
                 </div>
-                <div class="service-card" onclick="selectService(this, 'Combo Corte + Barba', 80, 75)">
-                    <h3>Combo Cabelo e Barba</h3>
-                    <p>O pacote completo para o cavalheiro moderno.</p>
+                <div class="service-card" onclick="selectService(this, 'Combos', 60, 45)">
+                    <h3>Combos</h3>
+                    <p>Pacotes completos para o cavalheiro moderno.</p>
                     <div class="service-meta">
-                        <span class="service-time">⏱ 80 MIN</span>
-                        <span class="service-price">R$ 75</span>
+                        <span class="service-time">⏱ 60 MIN</span>
+                        <span class="service-price">A partir de R$ 45</span>
                     </div>
                 </div>
-                <div class="service-card" onclick="selectService(this, 'Corte Infantil', 40, 40)">
+                <div class="service-card" onclick="selectService(this, 'Corte Infantil', 30, 35)">
                     <h3>Corte Infantil</h3>
                     <p>Atendimento humanizado e paciente para crianças.</p>
                     <div class="service-meta">
-                        <span class="service-time">⏱ 40 MIN</span>
-                        <span class="service-price">R$ 40</span>
+                        <span class="service-time">⏱ 30 MIN</span>
+                        <span class="service-price">R$ 35</span>
+                    </div>
+                </div>
+                <div class="service-card" onclick="selectService(this, 'Sobrancelha', 15, 15)">
+                    <h3>Sobrancelha</h3>
+                    <p>Design e limpeza das sobrancelhas.</p>
+                    <div class="service-meta">
+                        <span class="service-time">⏱ 15 MIN</span>
+                        <span class="service-price">R$ 15</span>
+                    </div>
+                </div>
+                <div class="service-card" onclick="selectService(this, 'Pigmentação', 20, 25)">
+                    <h3>Pigmentação</h3>
+                    <p>Tingimento e pigmentação capilar.</p>
+                    <div class="service-meta">
+                        <span class="service-time">⏱ 20 MIN</span>
+                        <span class="service-price">R$ 25</span>
+                    </div>
+                </div>
+                <div class="service-card" onclick="selectService(this, 'Depilação Nariz/Orelha', 10, 10)">
+                    <h3>Depilação Nariz/Orelha</h3>
+                    <p>Limpeza e depilação de pelos indesejados.</p>
+                    <div class="service-meta">
+                        <span class="service-time">⏱ 10 MIN</span>
+                        <span class="service-price">R$ 10</span>
                     </div>
                 </div>
             </div>
@@ -246,6 +311,22 @@
                     </div>
                 </div>
 
+                <div id="corte-area" style="display:none; margin-bottom:12px;">
+                    <span class="summary-label">Tipo de corte?</span>
+                    <div style="display: flex; gap: 8px; margin-top: 8px;">
+                        <button class="time-btn" style="flex:1" onclick="setCorteType('tesoura')">Só Tesoura</button>
+                        <button class="time-btn" style="flex:1" onclick="setCorteType('maquina')">Só Máquina</button>
+                    </div>
+                </div>
+
+                <div id="combo-area" style="display:none; margin-bottom:12px;">
+                    <span class="summary-label">Qual combo?</span>
+                    <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
+                        <button class="time-btn" onclick="setComboType('basico')">Cabelo + Barba (R$ 45)</button>
+                        <button class="time-btn" onclick="setComboType('completo')">Cabelo + Barba + Sobrancelha (R$ 50)</button>
+                    </div>
+                </div>
+
                 <div class="summary-row">
                     <span class="summary-label">Data e Hora</span>
                     <span class="summary-value" id="resumoDataHora">---</span>
@@ -267,6 +348,100 @@
                     CONFIRMAR AGENDAMENTO
                 </button>
             </div>
+        </div>
+    </div>
+
+    <div id="section-assinaturas" style="display: none; max-width: 1200px; margin: 0 auto; padding: 20px;">
+        <div class="section-title" style="text-align: center; margin-bottom: 40px; color: var(--primary); font-size: 2rem;">Escolha seu Plano de Assinatura</div>
+        <p style="text-align: center; color: var(--text-muted); margin-bottom: 50px; font-size: 1.1rem;">Planos flexíveis para manter seu visual sempre impecável</p>
+        
+        <div class="services-grid" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px;">
+            <div class="service-card subscription-card" onclick="selectSubscription('sempre-alinhado')" style="border: 2px solid var(--border); transition: all 0.3s ease; position: relative;">
+                <div style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: var(--primary); color: white; padding: 5px 15px; border-radius: 15px; font-size: 0.8rem; font-weight: bold;">POPULAR</div>
+                <h3 style="color: var(--primary); margin-bottom: 10px; text-align: center;">Sempre Alinhado</h3>
+                <p style="font-size: 0.9rem; margin-bottom: 15px;">Foco em manutenção semanal para visual impecável.</p>
+                <ul style="list-style: none; padding: 0; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">
+                    <li>• Até 4 "Pezinhos" por mês (1/semana)</li>
+                    <li>• Até 2 Barbas por mês</li>
+                    <li>• 1 Sobrancelha inclusa</li>
+                </ul>
+                <div class="service-meta">
+                    <span class="service-price" style="font-size: 1.2rem; color: var(--primary);">R$ 79,90/mês</span>
+                </div>
+                <button class="btn-confirm" style="width: 100%; margin-top: 15px; background: var(--primary); color: white; border: none;" onclick="subscribePlan('sempre-alinhado')">ASSINAR</button>
+            </div>
+
+            <div class="service-card subscription-card" onclick="selectSubscription('combo-executivo')">
+                <h3>Combo Executivo</h3>
+                <p style="font-size: 0.9rem; margin-bottom: 15px;">Corte + Barba a cada 15 dias com sobrancelhas ilimitadas.</p>
+                <ul style="list-style: none; padding: 0; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">
+                    <li>• 2 Cortes por mês</li>
+                    <li>• 2 Barbas por mês</li>
+                    <li>• Sobrancelha ilimitada</li>
+                </ul>
+                <div class="service-meta">
+                    <span class="service-price" style="font-size: 1.2rem; color: var(--primary);">R$ 119,90/mês</span>
+                </div>
+                <button class="btn-confirm" style="width: 100%; margin-top: 15px; background: var(--primary); color: white; border: none;" onclick="subscribePlan('combo-executivo')">ASSINAR</button>
+            </div>
+
+            <div class="service-card subscription-card" onclick="selectSubscription('vip-premium')">
+                <h3>VIP Premium</h3>
+                <p style="font-size: 0.9rem; margin-bottom: 15px;">Experiência completa com serviços ilimitados.</p>
+                <ul style="list-style: none; padding: 0; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">
+                    <li>• Cortes ilimitados (1/semana min.)</li>
+                    <li>• Barba ilimitada</li>
+                    <li>• Sobrancelha e Pigmentação</li>
+                    <li>• Depilação sempre que necessário</li>
+                </ul>
+                <div class="service-meta">
+                    <span class="service-price" style="font-size: 1.2rem; color: var(--primary);">R$ 159,90/mês</span>
+                </div>
+                <button class="btn-confirm" style="width: 100%; margin-top: 15px; background: var(--primary); color: white; border: none;" onclick="subscribePlan('vip-premium')">ASSINAR</button>
+            </div>
+        </div>
+
+        <div id="subscription-details" style="display: none; margin-top: 40px; background: var(--card-bg); padding: 30px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+            <h3 id="selected-plan-title" style="margin-bottom: 20px; color: var(--primary); text-align: center; font-size: 1.5rem;"></h3>
+            <div id="selected-plan-description" style="margin-bottom: 25px; line-height: 1.6;"></div>
+            <div style="text-align: center;">
+                <button class="btn-confirm" style="background: var(--success); color: white; border: none; padding: 15px 30px; font-size: 1.1rem; font-weight: bold;" onclick="confirmSubscription()">CONFIRMAR ASSINATURA</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="section-minha-assinatura" style="display: none; max-width: 1200px; margin: 0 auto; padding: 20px;">
+        <div class="section-title" style="text-align: center; margin-bottom: 40px;">Minha Assinatura</div>
+        
+        <div id="subscription-info" style="display: none;">
+            <div class="summary-card" style="margin-bottom: 30px;">
+                <div class="summary-row">
+                    <span class="summary-label">Plano Ativo</span>
+                    <span class="summary-value" id="current-plan-name">---</span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-label">Valor Mensal</span>
+                    <span class="summary-value" id="current-plan-price">---</span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-label">Próxima Cobrança</span>
+                    <span class="summary-value" id="next-billing-date">---</span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-label">Status</span>
+                    <span class="summary-value" id="subscription-status">---</span>
+                </div>
+            </div>
+
+            <div style="text-align: center;">
+                <button class="btn-confirm" style="background: var(--primary);" onclick="contactBarber()">FALAR COM O BARBEIRO</button>
+            </div>
+        </div>
+
+        <div id="no-subscription" style="text-align: center; padding: 50px;">
+            <h3 style="color: var(--text-muted);">Você não possui uma assinatura ativa</h3>
+            <p style="color: var(--text-muted); margin: 20px 0;">Clique em "Assinaturas" para conhecer nossos planos!</p>
+            <button class="btn-confirm" onclick="showSection('assinaturas')">VER PLANOS</button>
         </div>
     </div>
 
@@ -338,15 +513,23 @@
         inputData.setAttribute('min', hojeISO);
 
         let state = { servico: null, data: null, hora: null, user: null, autismo: false };
-        const horariosBase = ["09:00", "09:40", "10:20", "11:00", "11:40", "13:00", "13:40", "14:20", "15:00", "15:40", "16:20", "17:00", "17:40", "18:20"];
+        const horariosBase = ["09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00", "18:30"];
 
         // FUNÇÃO AJUSTADA APENAS PARA EXIBIR BLOCK NO MOBILE
         window.showSection = (name) => {
             document.getElementById('section-agendamento').style.display = name === 'agendamento' ? 'grid' : 'none';
+            document.getElementById('section-assinaturas').style.display = name === 'assinaturas' ? 'block' : 'none';
+            document.getElementById('section-minha-assinatura').style.display = name === 'minha-assinatura' ? 'block' : 'none';
             document.getElementById('section-cliente').style.display = name === 'cliente' ? 'block' : 'none';
             document.getElementById('btn-nav-agendamento').classList.toggle('active', name === 'agendamento');
+            document.getElementById('btn-nav-assinaturas').classList.toggle('active', name === 'assinaturas');
+            document.getElementById('btn-nav-minha-assinatura').classList.toggle('active', name === 'minha-assinatura');
             document.getElementById('btn-nav-cliente').classList.toggle('active', name === 'cliente');
             window.scrollTo(0, 0); // Garante que a tela comece do topo ao trocar
+            
+            if (name === 'minha-assinatura') {
+                loadUserSubscription();
+            }
         };
 
         window.toggleAuthMode = (mode) => {
@@ -357,7 +540,7 @@
         window.selectService = (el, nome, duracao, preco) => {
             document.querySelectorAll('.service-card').forEach(c => c.classList.remove('selected'));
             el.classList.add('selected');
-            const slots = Math.max(1, Math.ceil(duracao / 40));
+            const slots = Math.max(1, Math.ceil(duracao / 30));
             // armazenar valores originais para restaurar caso o toggle Autismo seja desmarcado
             state.servico = { nome, duracao, preco, slots, original: { duracao, preco, slots } };
             state.autismo = false;
@@ -371,9 +554,23 @@
 
             if(nome === 'Corte Infantil') {
                 document.getElementById('autismo-area').style.display = 'block';
+                document.getElementById('corte-area').style.display = 'none';
+                document.getElementById('combo-area').style.display = 'none';
+                document.getElementById('observations-area').style.display = 'none';
+            } else if(nome === 'Corte Masculino') {
+                document.getElementById('autismo-area').style.display = 'none';
+                document.getElementById('corte-area').style.display = 'block';
+                document.getElementById('combo-area').style.display = 'none';
+                document.getElementById('observations-area').style.display = 'none';
+            } else if(nome === 'Combos') {
+                document.getElementById('autismo-area').style.display = 'none';
+                document.getElementById('corte-area').style.display = 'none';
+                document.getElementById('combo-area').style.display = 'block';
                 document.getElementById('observations-area').style.display = 'none';
             } else {
                 document.getElementById('autismo-area').style.display = 'none';
+                document.getElementById('corte-area').style.display = 'none';
+                document.getElementById('combo-area').style.display = 'none';
                 document.getElementById('observations-area').style.display = 'none';
             }
             
@@ -388,7 +585,7 @@
             if (val) {
                 // Autismo demanda 2 slots; preço R$60 só para Corte Infantil
                 state.servico.slots = 2;
-                state.servico.duracao = 2 * 40;
+                state.servico.duracao = 2 * 30;
                 if (state.servico.nome && state.servico.nome.includes('Infantil')) state.servico.preco = 60;
             } else {
                 // restaurar valores originais
@@ -397,13 +594,54 @@
                     state.servico.preco = state.servico.original.preco;
                     state.servico.slots = state.servico.original.slots;
                 } else {
-                    state.servico.duracao = 40; state.servico.preco = 40; state.servico.slots = 1;
+                    state.servico.duracao = 30; state.servico.preco = 40; state.servico.slots = 1;
                 }
             }
 
             document.getElementById('resumoPreco').innerHTML = `R$ ${state.servico.preco} <span id="resumoTempo" style="font-size:0.8rem; color:var(--text-muted); font-weight:500;"> • ⏱ ${state.servico.duracao} min </span>`;
 
             document.querySelectorAll('#autismo-area .time-btn').forEach(b => b.classList.remove('selected'));
+            event.target.classList.add('selected');
+            document.getElementById('observations-area').style.display = 'block';
+
+            if (state.data) renderHorarios();
+            updateUI();
+        };
+
+        window.setCorteType = (type) => {
+            if (!state.servico || state.servico.nome !== 'Corte Masculino') return;
+
+            if (type === 'tesoura') {
+                state.servico.preco = 35;
+            } else if (type === 'maquina') {
+                state.servico.preco = 25;
+            }
+
+            document.getElementById('resumoPreco').innerHTML = `R$ ${state.servico.preco} <span id="resumoTempo" style="font-size:0.8rem; color:var(--text-muted); font-weight:500;"> • ⏱ ${state.servico.duracao} min </span>`;
+
+            document.querySelectorAll('#corte-area .time-btn').forEach(b => b.classList.remove('selected'));
+            event.target.classList.add('selected');
+            document.getElementById('observations-area').style.display = 'block';
+
+            if (state.data) renderHorarios();
+            updateUI();
+        };
+
+        window.setComboType = (type) => {
+            if (!state.servico || state.servico.nome !== 'Combos') return;
+
+            if (type === 'basico') {
+                state.servico.preco = 45;
+                state.servico.nome = 'Combo Corte + Barba';
+            } else if (type === 'completo') {
+                state.servico.preco = 50;
+                state.servico.nome = 'Combo Completo: Cabelo, Barba e Sombrancelha';
+            }
+
+            document.getElementById('resumoServico').innerText = `${state.servico.nome} (2 slots)`;
+            document.getElementById('resumoPreco').innerHTML = `R$ ${state.servico.preco} <span id="resumoTempo" style="font-size:0.8rem; color:var(--text-muted); font-weight:500;"> • ⏱ ${state.servico.duracao} min </span>`;
+
+            document.querySelectorAll('#combo-area .time-btn').forEach(b => b.classList.remove('selected'));
             event.target.classList.add('selected');
             document.getElementById('observations-area').style.display = 'block';
 
@@ -549,10 +787,17 @@
             state.user = user;
             if (user) {
                 let nomeExibicao = user.displayName || user.email;
+                let userPhone = '';
                 try {
                     const userDoc = await getDoc(doc(db, 'users', user.uid));
-                    if (userDoc.exists() && userDoc.data().nome) nomeExibicao = userDoc.data().nome;
+                    if (userDoc.exists()) {
+                        const userData = userDoc.data();
+                        if (userData.nome) nomeExibicao = userData.nome;
+                        if (userData.phone) userPhone = userData.phone;
+                    }
                 } catch (e) {}
+
+                state.user.phone = userPhone;
 
                 document.getElementById('user-logged-info').style.display = "block";
                 document.getElementById('auth-login').style.display = "none";
@@ -726,6 +971,163 @@
             } catch (e) {
                 alert("Erro: " + e.message);
             }
+        };
+
+        // Funções para Assinaturas
+        const subscriptionPlans = {
+            'sempre-alinhado': {
+                name: 'Sempre Alinhado',
+                price: 79.90,
+                description: 'Foco em manutenção semanal para visual impecável. Até 4 "Pezinhos" por mês (1/semana), até 2 Barbas por mês, 1 Sobrancelha inclusa.',
+                benefits: ['Até 4 Pezinhos/mês', 'Até 2 Barbas/mês', '1 Sobrancelha inclusa']
+            },
+            'combo-executivo': {
+                name: 'Combo Executivo',
+                price: 119.90,
+                description: 'Corte + Barba a cada 15 dias com sobrancelhas ilimitadas. 2 Cortes por mês, 2 Barbas por mês, Sobrancelha ilimitada.',
+                benefits: ['2 Cortes/mês', '2 Barbas/mês', 'Sobrancelha ilimitada']
+            },
+            'vip-premium': {
+                name: 'VIP Premium',
+                price: 159.90,
+                description: 'Experiência completa com serviços ilimitados. Cortes ilimitados (1/semana min.), Barba ilimitada, Sobrancelha e Pigmentação, Depilação sempre que necessário.',
+                benefits: ['Cortes ilimitados', 'Barba ilimitada', 'Sobrancelha + Pigmentação', 'Depilação incluída']
+            }
+        };
+
+        let selectedPlan = null;
+
+        window.selectSubscription = (planId) => {
+            document.querySelectorAll('.subscription-card').forEach(c => c.classList.remove('selected'));
+            // Encontrar o card clicado
+            const clickedCard = document.querySelector(`[onclick="selectSubscription('${planId}')"]`);
+            if (clickedCard) clickedCard.classList.add('selected');
+            selectedPlan = planId;
+            
+            const plan = subscriptionPlans[planId];
+            document.getElementById('selected-plan-title').innerText = plan.name;
+            document.getElementById('selected-plan-description').innerHTML = `
+                <strong>Preço: R$ ${plan.price.toFixed(2)}/mês</strong><br><br>
+                ${plan.description}<br><br>
+                <strong>Benefícios:</strong><br>
+                <ul>${plan.benefits.map(b => `<li>${b}</li>`).join('')}</ul>
+            `;
+            document.getElementById('subscription-details').style.display = 'block';
+            document.getElementById('subscription-details').scrollIntoView({ behavior: 'smooth' });
+        };
+
+        window.subscribePlan = (planId) => {
+            if (!state.user) {
+                alert('Você precisa estar logado para assinar um plano.');
+                showSection('cliente');
+                return;
+            }
+            selectSubscription(planId);
+            document.getElementById('subscription-details').scrollIntoView({ behavior: 'smooth' });
+        };
+
+        window.confirmSubscription = async () => {
+            if (!selectedPlan || !state.user) {
+                alert('Erro: Plano não selecionado ou usuário não logado.');
+                return;
+            }
+
+            const confirmButton = document.querySelector('#subscription-details button');
+            const originalText = confirmButton.innerText;
+            confirmButton.innerText = 'PROCESSANDO...';
+            confirmButton.disabled = true;
+
+            try {
+                // Verificar se já existe assinatura ativa no mês atual
+                const now = new Date();
+                const currentMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+                
+                const q = query(
+                    collection(db, "assinaturas"), 
+                    where("clientId", "==", state.user.uid),
+                    where("status", "==", "active")
+                );
+                const existingSubs = await getDocs(q);
+                
+                const hasActiveThisMonth = existingSubs.docs.some(doc => {
+                    const data = doc.data();
+                    const startMonth = data.startDate.substring(0, 7); // YYYY-MM
+                    return startMonth === currentMonth;
+                });
+                
+                if (hasActiveThisMonth) {
+                    alert('Você já possui uma assinatura ativa este mês. Aguarde o próximo mês para assinar novamente.');
+                    return;
+                }
+
+                const plan = subscriptionPlans[selectedPlan];
+                const startDate = new Date().toISOString().split('T')[0];
+                const nextBilling = new Date();
+                nextBilling.setMonth(nextBilling.getMonth() + 1);
+
+                await addDoc(collection(db, "assinaturas"), {
+                    client: state.user.displayName || state.user.email,
+                    clientPhone: state.user.phone || '',
+                    clientId: state.user.uid,
+                    plan: selectedPlan,
+                    planName: plan.name,
+                    value: plan.price,
+                    startDate,
+                    nextBilling: nextBilling.toISOString().split('T')[0],
+                    status: 'active',
+                    createdAt: new Date()
+                });
+
+                alert(`✅ Assinatura do plano "${plan.name}" confirmada com sucesso!\n\nVocê será cobrado R$ ${plan.price.toFixed(2)} mensalmente.\nPróxima cobrança: ${nextBilling.toLocaleDateString('pt-BR')}`);
+                selectedPlan = null;
+                document.getElementById('subscription-details').style.display = 'none';
+                document.querySelectorAll('.subscription-card').forEach(c => c.classList.remove('selected'));
+                
+                // Redirecionar para "Minha Assinatura" para mostrar a assinatura ativa
+                showSection('minha-assinatura');
+            } catch (e) {
+                alert("❌ Erro ao confirmar assinatura: " + e.message);
+            } finally {
+                confirmButton.innerText = originalText;
+                confirmButton.disabled = false;
+            }
+        };
+
+        // Funções para Minha Assinatura
+        async function loadUserSubscription() {
+            if (!state.user) {
+                showSection('cliente');
+                return;
+            }
+
+            try {
+                const q = query(collection(db, "assinaturas"), where("clientId", "==", state.user.uid), where("status", "==", "active"));
+                const querySnapshot = await getDocs(q);
+                
+                if (!querySnapshot.empty) {
+                    const sub = querySnapshot.docs[0].data();
+                    document.getElementById('current-plan-name').innerText = sub.planName;
+                    document.getElementById('current-plan-price').innerText = `R$ ${sub.value.toFixed(2)}`;
+                    document.getElementById('next-billing-date').innerText = new Date(sub.nextBilling).toLocaleDateString('pt-BR');
+                    document.getElementById('subscription-status').innerText = 'Ativa';
+                    
+                    document.getElementById('subscription-info').style.display = 'block';
+                    document.getElementById('no-subscription').style.display = 'none';
+                } else {
+                    document.getElementById('subscription-info').style.display = 'none';
+                    document.getElementById('no-subscription').style.display = 'block';
+                }
+            } catch (e) {
+                console.error("Erro ao carregar assinatura:", e);
+                document.getElementById('subscription-info').style.display = 'none';
+                document.getElementById('no-subscription').style.display = 'block';
+            }
+        }
+
+        window.contactBarber = () => {
+            const phone = "5528999082741"; // Número do barbeiro
+            const message = encodeURIComponent("Olá! Gostaria de falar sobre minha assinatura.");
+            window.open(`https://api.whatsapp.com/send?phone=${phone}&text=${message}`);
         };
     </script>
 </body>

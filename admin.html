@@ -155,6 +155,7 @@
                 <div class="nav-item active" onclick="switchTab('dashboard')"><i data-lucide="layout-dashboard"></i> Dashboard</div>
                 <div class="nav-item" onclick="switchTab('agendamentos')"><i data-lucide="calendar"></i> Agenda</div>
                 <div class="nav-item" onclick="switchTab('clientes')"><i data-lucide="users"></i> Clientes</div>
+                <div class="nav-item" onclick="switchTab('assinaturas')"><i data-lucide="credit-card"></i> Assinaturas</div>
                 <div class="nav-item" onclick="switchTab('finanças')"><i data-lucide="wallet"></i> Finanças</div>
             </nav>
             <button class="btn-action" onclick="logout()" style="margin-top: auto; background: var(--danger); color: white; border: none;"><i data-lucide="log-out"></i> SAIR</button>
@@ -204,7 +205,7 @@
                             <button class="btn-action" style="padding: 5px 10px;" onclick="changeMonth(-1)"><i data-lucide="chevron-left"></i></button>
                             <h3 id="calendar-month-year">...</h3>
                             <button class="btn-action" style="padding: 5px 10px;" onclick="changeMonth(1)"><i data-lucide="chevron-right"></i></button>                        </div>
-                        <div style="display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; background: #0d0d0d; padding: 10px 0; font-size: 0.7rem; color: var(--text-muted); font-weight: bold;">
+                        <div style="grid-template-columns: repeat(7, 1fr); text-align: center; background: #0d0d0d; padding: 10px 0; font-size: 0.7rem; color: var(--text-muted); font-weight: bold; display: grid;">
                             <div>DOM</div><div>SEG</div><div>TER</div><div>QUA</div><div>QUI</div><div>SEX</div><div>SAB</div>
                         </div>
                         <div class="calendar-grid" id="calendar-body"></div>
@@ -240,10 +241,13 @@
                                 <div>
                                     <label>Serviço</label>
                                     <select id="edit-service">
-                                        <option value="Corte Masculino|40|1">Corte Masculino (R$ 40 - 40min)</option>
-                                        <option value="Barba Completa|40|1">Barba (R$ 40 - 40min)</option>
-                                        <option value="Combo Corte + Barba|75|2">Combo (R$ 75 - 80min)</option>
-                                        <option value="Corte Infantil|40|1">Corte Infantil (R$ 40 - 40min)</option>
+                                        <option value="Corte Masculino|25|1">Corte Masculino (R$ 25 - 30min)</option>
+                                        <option value="Barba Completa|25|1">Barba (R$ 25 - 30min)</option>
+                                        <option value="Combos|45|2">Combos (R$ 45-50 - 60min)</option>
+                                        <option value="Corte Infantil|35|1">Corte Infantil (R$ 35 - 30min)</option>
+                                        <option value="Sobrancelha|15|1">Sobrancelha (R$ 15 - 15min)</option>
+                                        <option value="Pigmentação|25|1">Pigmentação (R$ 25 - 20min)</option>
+                                        <option value="Depilação Nariz/Orelha|10|1">Depilação Nariz/Orelha (R$ 10 - 10min)</option>
                                         <option value="Cortesia|0|1">Cortesia (R$ 0)</option>
                                     </select>
                                 </div>
@@ -376,6 +380,50 @@
                     </table>
                 </div>
             </div>
+
+            <div id="tab-assinaturas" class="tab-content">
+                <div class="admin-section">
+                    <h4 style="margin-bottom: 1rem;">Gerenciar Assinaturas</h4>
+                    
+                    <div class="form-row">
+                        <div><label>Cliente</label><input type="text" id="sub-client" placeholder="Nome do cliente"></div>
+                        <div><label>Telefone</label><input type="tel" id="sub-phone" placeholder="28999999999"></div>
+                        <div><label>Plano</label><select id="sub-service" onchange="updatePlanDetails()">
+                            <option value="">Selecione um plano...</option>
+                            <option value="sempre-alinhado">Sempre Alinhado - R$ 79,90/mês</option>
+                            <option value="combo-executivo">Combo Executivo - R$ 119,90/mês</option>
+                            <option value="vip-premium">VIP Premium - R$ 159,90/mês</option>
+                        </select></div>
+                        <div><label>Valor (R$)</label><input type="number" id="sub-value" step="0.01" readonly></div>
+                        <div><label>Data Início</label><input type="date" id="sub-start-date"></div>
+                        <div><label>Status</label><select id="sub-status">
+                            <option value="active">Ativa</option>
+                            <option value="inactive">Inativa</option>
+                        </select></div>
+                        <div style="display: flex; align-items: end;">
+                            <button class="btn-action" onclick="addSubscription()">ADICIONAR ASSINATURA</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Cliente</th>
+                                <th>Telefone</th>
+                                <th>Plano</th>
+                                <th>Valor</th>
+                                <th>Data Início</th>
+                                <th>Próxima Cobrança</th>
+                                <th>Status</th>
+                                <th style="text-align: right;">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="list-subscriptions"></tbody>
+                    </table>
+                </div>
+            </div>
         </main>
     </div>
 
@@ -401,7 +449,9 @@
         const serviceColors = {
             "Corte Masculino": "#0800ff",     // Azul
             "Barba Completa": "#d0ff00",      // Amarelo
-            "Combo Corte + Barba": "#3cff00", // Verdão
+            "Combos": "#3cff00", // Verdão
+            "Combo Corte + Barba": "#3cff00", // Verdão (igual para combos)
+            "Combo Completo: Cabelo, Barba e Sombrancelha": "#ff6b00", // Laranja
             "Corte Infantil": "#10b981",      // Verde
             "Corte Infantil (Autismo)": "#10b981", // Verde (Igual para agrupar)
             "Cortesia": "#a0a0a0",            // Cinza
@@ -429,8 +479,9 @@
         let pieChart = null;
         let sortClientsByInactivity = true; 
         let financeSort = { column: 'data', direction: 'desc' };
+        let subscriptionsData = [];
 
-        const baseSlots = ["09:00", "09:40", "10:20", "11:00", "11:40", "13:00", "13:40", "14:20", "15:00", "15:40", "16:20", "17:00", "17:40", "18:20"];
+        const baseSlots = ["09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00", "18:30"];
 
         // Função Global para o Toggle Autismo
         window.setAutismo = (val) => {
@@ -507,6 +558,7 @@
             }
             if(tab === 'agendamentos') renderCalendar();
             if(tab === 'clientes') renderClients();
+            if(tab === 'assinaturas') renderSubscriptions();
             if(tab === 'finanças') switchFinanceMode('despesas');
         };
 
@@ -614,6 +666,11 @@
                 if(financeMode === 'entradas') renderFinanceTable();
                 updateDashboard();
             });
+
+            onSnapshot(collection(db, "assinaturas"), snap => {
+                subscriptionsData = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                renderSubscriptions();
+            });
         }
 
         window.changeMonth = (v) => { currentCalendarDate.setMonth(currentCalendarDate.getMonth() + v); renderCalendar(); };
@@ -637,8 +694,6 @@
                 const iso = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
                 const [y, m, dayNum] = iso.split('-').map(Number);
                 const dayOfWeek = new Date(y, m - 1, dayNum).getDay();
-
-                // ALTERAÇÃO SOLICITADA: Todos os domingos são fechados por padrão, exceto se houver uma configuração salva.
                 const config = configDiasData[iso] || { status: (dayOfWeek === 0 ? 'closed' : 'open') };
                 const dayAgends = agendamentosData.filter(a => a.data === iso);
 
@@ -870,7 +925,7 @@
         window.toggleDayStatus = async (status) => {
             try {
                 await setDoc(doc(db, "config_dias", selectedDateISO), { status, updatedAt: new Date() }, { merge: true });
-                renderSlots(); // Atualiza a UI imediatamente
+                renderSlots();
                 alert(`Dia ${selectedDateISO} atualizado para: ${status}`);
             } catch (e) { alert('Erro ao atualizar status do dia: ' + e.message); }
         };
@@ -931,7 +986,6 @@
             let rev = 0; 
             const sMap = {};
 
-            // Agendamentos Concluídos
             agendamentosData.forEach(a => { 
                 if(a.status === 'completed' && (a.nome || a.cliente) !== 'BLOQUEADO') {
                     const dt = new Date(a.data + 'T00:00:00');
@@ -942,7 +996,6 @@
                 }
             });
 
-            // Vendas de Produtos
             entradasData.forEach(e => {
                 const dt = new Date(e.data + 'T00:00:00');
                 if (dt >= range.start && dt < range.end) {
@@ -992,7 +1045,6 @@
 
             const c2 = document.getElementById('pieChart')?.getContext('2d');
             if(c2) {
-                // Ordenação específica para Corte Infantil e Autismo ficarem juntos
                 const labels = Object.keys(sMap).sort((a, b) => {
                     const order = ["Corte Masculino", "Barba Completa", "Combo Corte + Barba", "Corte Infantil", "Corte Infantil (Autismo)", "Cortesia"];
                     const indexA = order.findIndex(o => a === o);
@@ -1043,23 +1095,15 @@
             b.innerHTML = '';
             const m = {}; 
             
-            // Filtra agendamentos válidos e agrupa por Nome + Telefone + Email
             agendamentosData.filter(a => (a.nome || a.cliente) && ((a.nome || a.cliente) !== 'BLOQUEADO')).forEach(a => {
                 const nome = a.nome || a.cliente;
                 const fone = (a.telefone || '').trim();
                 const email = (a.email || '').trim();
-                
-                // Chave única para diferenciar clientes com mesmo nome mas dados diferentes
                 const uniqueKey = `${nome.toLowerCase()}_${fone}_${email.toLowerCase()}`;
 
                 if(!m[uniqueKey]) {
                     m[uniqueKey] = { 
-                        nome: nome,
-                        contato: fone,
-                        email: email,
-                        last: a.data, 
-                        total: 0, 
-                        count: 0 
+                        nome: nome, contato: fone, email: email, last: a.data, total: 0, count: 0 
                     };
                 }
                 
@@ -1101,7 +1145,6 @@
             lucide.createIcons();
         }
 
-        /* --- SISTEMA FINANCEIRO INTEGRADO --- */
         window.switchFinanceMode = (mode) => {
             financeMode = mode;
             const btnDesp = document.getElementById('toggle-despesas');
@@ -1118,7 +1161,6 @@
             const colDesc = document.getElementById('col-desc');
             const colCat = document.getElementById('col-cat');
 
-            // Reset Data para hoje
             document.getElementById('exp-date').value = new Date().toISOString().split('T')[0];
 
             if(mode === 'despesas') {
@@ -1153,7 +1195,6 @@
 
             const selectCat = document.getElementById('exp-category');
             selectCat.innerHTML = financeCategories[mode].map(c => `<option value="${c}">${c}</option>`).join('');
-
             const filterCat = document.getElementById('filter-category');
             filterCat.innerHTML = `<option value="all">Todas as Categorias</option>` + 
                 financeCategories[mode].map(c => `<option value="${c}">${c}</option>`).join('');
@@ -1168,11 +1209,7 @@
 
             try {
                 await addDoc(collection(db, 'entradas_produtos'), { 
-                    descricao: cat, 
-                    valor, 
-                    data, 
-                    category: cat, 
-                    timestamp: new Date() 
+                    descricao: cat, valor, data, category: cat, timestamp: new Date() 
                 });
                 document.getElementById('exp-val').value = '';
             } catch(e) { alert("Erro: " + e.message); }
@@ -1190,10 +1227,7 @@
             const collectionName = financeMode === 'despesas' ? 'despesas' : 'entradas_produtos';
             const payload = { 
                 descricao: financeMode === 'despesas' ? desc : category, 
-                valor, 
-                data, 
-                category, 
-                timestamp: new Date() 
+                valor, data, category, timestamp: new Date() 
             };
             if(financeMode === 'despesas') {
                 payload.recurrence = recurrence;
@@ -1238,21 +1272,10 @@
                 let valA, valB;
                 const col = financeSort.column;
                 const dir = financeSort.direction === 'asc' ? 1 : -1;
-
-                if (col === 'valor') {
-                    valA = Number(a.valor || 0);
-                    valB = Number(b.valor || 0);
-                } else if (col === 'data') {
-                    valA = a.data || '';
-                    valB = b.data || '';
-                } else if (col === 'recurrence') {
-                    valA = a.recurrence || '';
-                    valB = b.recurrence || '';
-                } else if (col === 'category') {
-                    valA = a.category || '';
-                    valB = b.category || '';
-                }
-
+                if (col === 'valor') { valA = Number(a.valor || 0); valB = Number(b.valor || 0); }
+                else if (col === 'data') { valA = a.data || ''; valB = b.data || ''; }
+                else if (col === 'recurrence') { valA = a.recurrence || ''; valB = b.recurrence || ''; }
+                else if (col === 'category') { valA = a.category || ''; valB = b.category || ''; }
                 if (valA < valB) return -1 * dir;
                 if (valA > valB) return 1 * dir;
                 return 0;
@@ -1262,42 +1285,127 @@
                 const v = Number(item.valor || 0);
                 total += v;
                 const rLabel = item.recurrence ? (rMap[item.recurrence] || item.recurrence) : '-';
-                
                 let statusHtml = '';
                 let actionsHtml = '';
 
                 if (financeMode === 'despesas') {
                     const isPaid = item.pago === true;
                     statusHtml = `<td><span class="status-badge ${isPaid ? 'status-pago' : 'status-pendente'}">${isPaid ? 'Pago' : 'Pendente'}</span></td>`;
-                    actionsHtml = `
-                        <button class="btn-action" style="background:none; color:${isPaid ? 'var(--warn)' : 'var(--success)'}; padding:0;" onclick="togglePaidStatus('${item.id}', ${isPaid})" title="${isPaid ? 'Marcar como Pendente' : 'Marcar como Pago'}">
-                            <i data-lucide="${isPaid ? 'rotate-ccw' : 'check-circle-2'}"></i>
-                        </button>
-                    `;
+                    actionsHtml = `<button class="btn-action" style="background:none; color:${isPaid ? 'var(--warn)' : 'var(--success)'}; padding:0;" onclick="togglePaidStatus('${item.id}', ${isPaid})" title="${isPaid ? 'Marcar como Pendente' : 'Marcar como Pago'}"><i data-lucide="${isPaid ? 'rotate-ccw' : 'check-circle-2'}"></i></button>`;
                 }
 
-                b.innerHTML += `
-                    <tr>
-                        <td>${item.data.split('-').reverse().join('/')}</td>
-                        <td class="col-recurrence" style="${financeMode === 'entradas' ? 'display:none' : ''}">
-                            <span style="font-size: 0.8rem; opacity: 0.7">${rLabel}</span>
-                        </td>
-                        <td><span style="background: #1a1a1a; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; border: 1px solid var(--border)">${item.category || 'Outros'}</span></td>
-                        <td>${item.descricao}</td>
-                        ${statusHtml}
-                        <td style="color:${financeMode === 'despesas' ? 'var(--warn)' : 'var(--success)'}">R$ ${v.toLocaleString('pt-BR', {minimumFractionDigits:2})}</td>
-                        <td style="text-align: right; display: flex; justify-content: flex-end; gap: 12px;">
-                            ${actionsHtml}
-                            <button class="btn-action" style="background:none; color:var(--danger); padding:0;" onclick="deleteFinanceRecord('${item.id}')">
-                                <i data-lucide="trash-2"></i>
-                            </button>
-                        </td>
-                    </tr>`;
+                b.innerHTML += `<tr><td>${item.data.split('-').reverse().join('/')}</td><td class="col-recurrence" style="${financeMode === 'entradas' ? 'display:none' : ''}"><span style="font-size: 0.8rem; opacity: 0.7">${rLabel}</span></td><td><span style="background: #1a1a1a; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; border: 1px solid var(--border)">${item.category || 'Outros'}</span></td><td>${item.descricao}</td>${statusHtml}<td style="color:${financeMode === 'despesas' ? 'var(--warn)' : 'var(--success)'}">R$ ${v.toLocaleString('pt-BR', {minimumFractionDigits:2})}</td><td style="text-align: right; display: flex; justify-content: flex-end; gap: 12px;">${actionsHtml}<button class="btn-action" style="background:none; color:var(--danger); padding:0;" onclick="deleteFinanceRecord('${item.id}')"><i data-lucide="trash-2"></i></button></td></tr>`;
             });
 
             document.getElementById('filtered-total').innerText = `R$ ${total.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
             lucide.createIcons();
         };
+
+        const adminSubscriptionPlans = {
+            'sempre-alinhado': { name: 'Sempre Alinhado', price: 79.90, frequency: 'monthly' },
+            'combo-executivo': { name: 'Combo Executivo', price: 119.90, frequency: 'monthly' },
+            'vip-premium': { name: 'VIP Premium', price: 159.90, frequency: 'monthly' }
+        };
+
+        window.updatePlanDetails = () => {
+            const planId = document.getElementById('sub-service').value;
+            const valueInput = document.getElementById('sub-value');
+            if (planId && adminSubscriptionPlans[planId]) valueInput.value = adminSubscriptionPlans[planId].price;
+            else valueInput.value = '';
+        };
+
+        window.addSubscription = async () => {
+            const client = document.getElementById('sub-client').value.trim();
+            const telefone = document.getElementById('sub-phone').value.trim();
+            const planId = document.getElementById('sub-service').value;
+            const value = parseFloat(document.getElementById('sub-value').value);
+            const startDate = document.getElementById('sub-start-date').value;
+            const status = document.getElementById('sub-status').value;
+
+            if (!client || !planId || !value || !startDate) return alert('Preencha os campos obrigatórios!');
+
+            const plan = adminSubscriptionPlans[planId];
+            const nextBilling = new Date(startDate);
+            nextBilling.setMonth(nextBilling.getMonth() + 1);
+
+            await addDoc(collection(db, "assinaturas"), {
+                client, telefone, plan: planId, planName: plan.name, frequency: plan.frequency,
+                value, startDate, nextBilling: nextBilling.toISOString().split('T')[0], status, createdAt: new Date()
+            });
+
+            document.getElementById('sub-client').value = '';
+            document.getElementById('sub-phone').value = '';
+            document.getElementById('sub-service').value = '';
+            document.getElementById('sub-value').value = '';
+        };
+
+        window.toggleSubscriptionStatus = async (id, currentStatus) => {
+            const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+            await updateDoc(doc(db, "assinaturas", id), { status: newStatus });
+        };
+
+        window.deleteSubscription = async (id) => {
+            if (confirm('Tem certeza que deseja excluir esta assinatura?')) await deleteDoc(doc(db, "assinaturas", id));
+        };
+
+        window.sendPaymentRequest = (clientName, telefone, amount) => {
+            if(!telefone) {
+                telefone = prompt("Telefone não encontrado. Digite o WhatsApp do cliente (com DDD):", "2899");
+                if(!telefone) return;
+            }
+            const clean = telefone.toString().replace(/\D/g, "");
+            const fullPhone = clean.startsWith("55") ? clean : "55" + clean;
+            const msg = encodeURIComponent(
+                `Olá, ${clientName}! 👋\n\n` +
+                `Estou passando para lembrá-lo da sua assinatura na *Lopes Barbearia*! ✂️\n\n` +
+                `Valor: *R$ ${amount.toLocaleString('pt-BR', {minimumFractionDigits: 2})}*\n` +
+                `PIX: *28999082741*\n\n` +
+                `Pode nos enviar o comprovante após o pagamento? 😉`
+            );
+            window.open(`https://api.whatsapp.com/send?phone=${fullPhone}&text=${msg}`);
+        };
+
+        function renderSubscriptions() {
+            const tbody = document.getElementById('list-subscriptions');
+            if (!tbody) return;
+
+            tbody.innerHTML = subscriptionsData.map(sub => {
+                const statusBadge = sub.status === 'active' 
+                    ? '<span class="status-badge status-pago">Ativa</span>' 
+                    : '<span class="status-badge status-pendente">Inativa</span>';
+
+                const targetPhone = (sub.clientPhone || sub.telefone || sub.phone || '').toString();
+                const escapedClient = (sub.client || '').replace(/'/g, "\\'");
+
+                return `<tr>
+                    <td><b>${sub.client}</b></td>
+                    <td>${targetPhone || '-'}</td>
+                    <td>${sub.planName || sub.service || 'N/A'}</td>
+                    <td style="color:var(--primary)">R$ ${sub.value.toLocaleString('pt-BR', {minimumFractionDigits:2})}</td>
+                    <td>${sub.startDate.split('-').reverse().join('/')}</td>
+                    <td>${sub.nextBilling.split('-').reverse().join('/')}</td>
+                    <td>${statusBadge}</td>
+                    <td style="text-align: right; display: flex; justify-content: flex-end; gap: 8px;">
+                        <button class="btn-action" style="background: #25d366; padding: 4px 8px;" onclick="sendPaymentRequest('${escapedClient}', '${targetPhone}', ${sub.value})">
+                            <i data-lucide="message-circle"></i> Cobrar
+                        </button>
+                        <button class="btn-action" style="background: var(--primary); padding: 4px 8px;" onclick="toggleSubscriptionStatus('${sub.id}', '${sub.status}')">
+                            ${sub.status === 'active' ? 'Desativar' : 'Ativar'}
+                        </button>
+                        <button class="btn-action" style="background: var(--danger); padding: 4px 8px;" onclick="deleteSubscription('${sub.id}')">
+                            <i data-lucide="trash-2"></i>
+                        </button>
+                    </td>
+                </tr>`;
+            }).join('');
+            lucide.createIcons();
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const today = new Date().toISOString().split('T')[0];
+            const subStart = document.getElementById('sub-start-date');
+            if(subStart) subStart.value = today;
+        });
 
     </script>
 </body>
