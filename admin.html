@@ -12,10 +12,10 @@
         :root {
             --primary: #1e90ff; 
             --primary-hover: #1c86ee;
-            --bg-dark: #0f0f0f; /* Ajustado para um pouco mais claro */
-            --bg-card: #1a1a1a; /* Ajustado para melhor contraste */
+            --bg-dark: #0f0f0f;
+            --bg-card: #1a1a1a;
             --text-main: #ffffff;
-            --text-muted: #b0b0b0; /* Mais claro para melhor legibilidade */
+            --text-muted: #b0b0b0;
             --border: #333333;
             --success: #10b981;
             --danger: #ef4444;
@@ -46,98 +46,121 @@
             border: 1px solid var(--border);
         }
 
-        /* Layout Mobile */
+        /* Layout Principal */
         #admin-panel { 
             display: none; 
-            grid-template-columns: 1fr;
             min-height: 100vh;
+            position: relative;
         }
         
-        /* Menu Hamburguer Mobile */
-        .mobile-header {
-            display: none;
-            background: var(--bg-card);
-            padding: 1rem;
-            border-bottom: 1px solid var(--border);
+        /* Header com menu hambúrguer */
+        .main-header {
+            display: flex;
             justify-content: space-between;
             align-items: center;
+            padding: 1rem 1.5rem;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
             position: sticky;
             top: 0;
             z-index: 1000;
         }
         
-        .mobile-menu-btn {
+        .menu-btn {
             background: none;
             border: none;
             color: var(--primary);
             font-size: 1.5rem;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            transition: background 0.2s;
         }
         
-        aside { 
-            background: var(--bg-card); 
-            border-right: 1px solid var(--border); 
-            padding: 1rem; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 1rem; 
+        .menu-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .header-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+        
+        .logo {
+            color: var(--primary);
+            font-weight: 900;
+            font-size: 1.3rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        /* Modal de navegação */
+        .nav-modal {
+            display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            height: 100vh;
-            width: 260px;
-            transform: translateX(-100%);
-            transition: transform 0.3s ease;
-            z-index: 1001;
-            overflow-y: auto;
+            top: 70px;
+            left: 1rem;
+            right: 1rem;
+            background: var(--bg-card);
+            border-radius: 1rem;
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            overflow: hidden;
+            max-width: 400px;
+            margin: 0 auto;
         }
         
-        aside.active {
-            transform: translateX(0);
+        .nav-modal.active {
+            display: block;
+            animation: slideDown 0.3s ease;
         }
         
-        .nav-brand { 
-            color: var(--primary); 
-            font-weight: 900; 
-            font-size: 1.1rem; 
-            text-align: center; 
-            margin-bottom: 0.5rem; 
-            letter-spacing: 1px; 
-            text-transform: uppercase; 
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
         
-        .nav-menu { 
-            display: flex; 
-            flex-direction: column; 
-            gap: 0.25rem; 
+        .nav-modal-content {
+            padding: 1rem 0;
         }
         
-        .nav-item { 
-            display: flex; 
-            align-items: center; 
-            gap: 0.75rem; 
-            padding: 0.75rem; 
-            border-radius: 0.5rem; 
-            color: var(--text-muted); 
-            cursor: pointer; 
-            transition: 0.2s; 
-            font-size: 0.9rem;
+        .nav-modal-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem 1.5rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: 0.2s;
+            border-left: 3px solid transparent;
+            font-size: 0.95rem;
         }
         
-        .nav-item:hover, .nav-item.active { 
-            background: #222222; 
-            color: var(--primary); 
+        .nav-modal-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--primary);
+            border-left-color: var(--primary);
         }
-
-        main { 
-            padding: 1rem; 
-            width: 100%; 
-            max-width: 100%;
-            overflow-x: hidden;
+        
+        .nav-modal-item.active {
+            color: var(--primary);
+            background: rgba(30, 144, 255, 0.1);
+            border-left-color: var(--primary);
         }
-
-        /* Overlay para menu */
-        .menu-overlay {
+        
+        .nav-modal-overlay {
             display: none;
             position: fixed;
             top: 0;
@@ -145,46 +168,53 @@
             right: 0;
             bottom: 0;
             background: rgba(0, 0, 0, 0.7);
-            z-index: 1000;
+            z-index: 1999;
         }
         
-        .menu-overlay.active {
+        .nav-modal-overlay.active {
             display: block;
         }
 
-        /* Stats - Mobile */
+        main { 
+            padding: 1.5rem; 
+            width: 100%; 
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Stats */
         .stats-grid { 
             display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); 
-            gap: 0.75rem; 
-            margin-bottom: 1.5rem; 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 1rem; 
+            margin-bottom: 2rem; 
         }
         
         .stat-card { 
             background: var(--bg-card); 
-            padding: 1rem; 
-            border-radius: 0.75rem; 
+            padding: 1.5rem; 
+            border-radius: 1rem; 
             border: 1px solid var(--border); 
         }
         
         .stat-value { 
-            font-size: 1.3rem; 
+            font-size: 1.8rem; 
             font-weight: 700; 
             color: var(--text-main); 
-            margin-top: 0.25rem; 
+            margin-top: 0.5rem; 
         }
 
-        /* Agenda - Mobile */
+        /* Agenda */
         .calendar-wrapper { 
-            display: flex; 
-            flex-direction: column;
-            gap: 1rem; 
-            align-items: stretch; 
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 1.5rem; 
+            align-items: start; 
         }
         
         .calendar-card { 
             background: var(--bg-card); 
-            border-radius: 0.75rem; 
+            border-radius: 1rem; 
             border: 1px solid var(--border); 
             overflow: hidden; 
             width: 100%;
@@ -194,7 +224,7 @@
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
-            padding: 1rem; 
+            padding: 1rem 1.5rem; 
             background: #111111; 
         }
         
@@ -207,43 +237,46 @@
         
         .calendar-day { 
             background: var(--bg-card); 
-            min-height: 60px; 
-            padding: 0.25rem; 
+            min-height: 80px; 
+            padding: 0.5rem; 
             cursor: pointer; 
             transition: 0.2s; 
             position: relative; 
-            font-size: 0.8rem;
+            font-size: 0.9rem;
         }
         
         .calendar-day:hover { background: #222222; }
         .calendar-day.selected { border: 2px solid var(--primary); z-index: 10; }
         .calendar-day.closed { opacity: 0.4; background: #0a0a0a; }
-        .day-number { font-weight: bold; font-size: 0.8rem; margin-bottom: 2px; }
+        .day-number { font-weight: bold; font-size: 0.9rem; margin-bottom: 2px; }
         
         .slots-container { 
             background: var(--bg-card); 
-            border-radius: 0.75rem; 
+            border-radius: 1rem; 
             border: 1px solid var(--border); 
-            padding: 1rem; 
+            padding: 1.5rem; 
             width: 100%;
+            height: fit-content;
+            position: sticky;
+            top: 90px;
         }
         
         .slots-grid { 
             display: grid; 
             grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); 
-            gap: 8px; 
-            margin-top: 1rem; 
+            gap: 10px; 
+            margin-top: 1.5rem; 
         }
         
         .slot-btn { 
-            padding: 10px; 
+            padding: 12px; 
             border: 1px solid var(--border); 
             background: #111111; 
             color: white; 
             border-radius: 8px; 
             cursor: pointer; 
             text-align: center; 
-            font-size: 0.8rem; 
+            font-size: 0.9rem; 
             transition: 0.2s;
             position: relative;
         }
@@ -258,20 +291,20 @@
             transform: translateY(-2px);
         }
 
-        /* Form Estilizado - Mobile */
+        /* Form Estilizado */
         .admin-section { 
             background: var(--bg-card); 
-            padding: 1rem; 
-            border-radius: 0.75rem; 
+            padding: 1.5rem; 
+            border-radius: 1rem; 
             border: 1px solid var(--border); 
             margin-bottom: 1.5rem; 
         }
         
         .form-row { 
-            display: flex; 
-            flex-direction: column;
-            gap: 0.75rem; 
-            margin-bottom: 1rem; 
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem; 
+            margin-bottom: 1.5rem; 
         }
         
         input, select, textarea { 
@@ -290,7 +323,7 @@
         label { 
             font-size: 0.8rem; 
             color: var(--text-muted); 
-            margin-bottom: 0.25rem; 
+            margin-bottom: 0.5rem; 
             display: block; 
         }
         
@@ -298,20 +331,19 @@
             background: var(--primary); 
             color: white; 
             border: none; 
-            padding: 0.75rem 1rem; 
+            padding: 0.75rem 1.5rem; 
             border-radius: 0.5rem; 
             font-weight: 600; 
             cursor: pointer; 
             transition: 0.2s; 
-            display: flex; 
+            display: inline-flex; 
             align-items: center; 
             justify-content: center; 
             gap: 6px; 
-            font-size: 0.85rem;
-            width: 100%;
+            font-size: 0.9rem;
         }
         
-        .btn-action:hover { background: var(--primary-hover); opacity: 0.9; }
+        .btn-action:hover { background: var(--primary-hover); }
 
         .btn-whatsapp { 
             background: var(--whatsapp); 
@@ -328,12 +360,12 @@
         
         .btn-whatsapp:hover { opacity: 0.8; }
 
-        /* Tabelas - Mobile */
+        /* Tabelas */
         .table-wrapper { 
             width: 100%; 
             overflow-x: auto; 
             background: var(--bg-card); 
-            border-radius: 0.75rem; 
+            border-radius: 1rem; 
             border: 1px solid var(--border);
             -webkit-overflow-scrolling: touch;
         }
@@ -342,22 +374,21 @@
             width: 100%; 
             border-collapse: collapse; 
             text-align: left; 
-            min-width: 600px;
         }
         
         th { 
-            padding: 0.75rem; 
+            padding: 1rem; 
             background: #111111; 
             color: var(--text-muted); 
-            font-size: 0.7rem; 
+            font-size: 0.75rem; 
             text-transform: uppercase; 
             letter-spacing: 0.5px; 
         }
         
         td { 
-            padding: 0.75rem; 
+            padding: 1rem; 
             border-bottom: 1px solid var(--border); 
-            font-size: 0.8rem; 
+            font-size: 0.9rem; 
         }
         
         tr:last-child td { border: none; }
@@ -366,40 +397,40 @@
         .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
         
         @keyframes fadeIn { 
-            from { opacity: 0; transform: translateY(5px); } 
+            from { opacity: 0; transform: translateY(10px); } 
             to { opacity: 1; transform: translateY(0); } 
         }
 
         .charts-container { 
-            display: flex; 
-            flex-direction: column;
-            gap: 1rem; 
-            margin-top: 1.5rem; 
+            display: grid; 
+            grid-template-columns: 1.5fr 1fr;
+            gap: 1.5rem; 
+            margin-top: 2rem; 
         }
         
         .chart-box {
             position: relative;
-            height: 200px;
+            height: 300px;
             width: 100%;
         }
 
         /* Toggle Autismo e Cortesia */
         .autismo-toggle { 
             display: flex; 
-            gap: 6px; 
+            gap: 8px; 
             margin-top: 5px; 
         }
         
         .toggle-btn { 
             flex: 1; 
-            padding: 8px; 
+            padding: 10px; 
             border: 1px solid var(--border); 
             background: #111111; 
             color: var(--text-muted); 
             border-radius: 6px; 
             cursor: pointer; 
             transition: 0.2s; 
-            font-size: 0.8rem; 
+            font-size: 0.9rem; 
             text-align: center; 
         }
         
@@ -410,27 +441,24 @@
         /* Estilo Financeiro Toggle */
         .finance-toggle { 
             display: flex; 
-            flex-wrap: wrap;
-            margin-bottom: 1rem; 
+            margin-bottom: 1.5rem; 
             background: var(--border); 
-            padding: 3px; 
+            padding: 4px; 
             border-radius: 0.75rem; 
             width: 100%; 
-            gap: 2px;
         }
         
         .finance-toggle button { 
             background: none; 
             border: none; 
-            padding: 0.5rem; 
+            padding: 0.75rem 1rem; 
             color: var(--text-muted); 
             border-radius: 0.5rem; 
             cursor: pointer; 
             font-weight: 600; 
             transition: 0.2s; 
             flex: 1;
-            font-size: 0.75rem;
-            min-width: 80px;
+            font-size: 0.85rem;
         }
         
         .finance-toggle button.active { 
@@ -442,13 +470,13 @@
         /* Estilo Lançamento Rápido */
         .quick-launch-grid { 
             display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); 
-            gap: 8px; 
-            margin-bottom: 15px; 
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); 
+            gap: 10px; 
+            margin-bottom: 20px; 
         }
         
         .btn-quick { 
-            padding: 12px; 
+            padding: 15px; 
             border-radius: 8px; 
             border: none; 
             color: white; 
@@ -458,17 +486,17 @@
             display: flex; 
             flex-direction: column; 
             align-items: center; 
-            gap: 3px; 
-            font-size: 0.7rem;
+            gap: 5px; 
+            font-size: 0.8rem;
         }
         
-        .btn-quick:active { transform: scale(0.95); }
+        .btn-quick:hover { transform: translateY(-2px); }
 
         /* Status Badge */
         .status-badge { 
-            padding: 3px 6px; 
+            padding: 5px 10px; 
             border-radius: 10px; 
-            font-size: 0.65rem; 
+            font-size: 0.75rem; 
             font-weight: bold; 
             text-transform: uppercase; 
             display: inline-block;
@@ -480,146 +508,49 @@
         /* Botões de ação em linha */
         .action-buttons {
             display: flex;
-            gap: 6px;
+            gap: 8px;
             flex-wrap: wrap;
         }
         
         .action-buttons .btn-action {
-            width: auto;
-            padding: 6px 10px;
-            font-size: 0.75rem;
+            padding: 8px 12px;
+            font-size: 0.8rem;
         }
         
-        /* Melhorias para formulários em mobile */
-        .form-group {
-            margin-bottom: 0.75rem;
-        }
-        
-        /* Ajustes para telas maiores - CORREÇÃO IMPORTANTE */
-        @media (min-width: 768px) {
-            body { font-size: 16px; }
-            
-            #admin-panel { 
-                grid-template-columns: 260px 1fr;
-                display: grid !important; /* Força a exibição no desktop */
-            }
-            
-            .mobile-header {
-                display: none !important;
-            }
-            
-            aside {
-                position: sticky;
-                top: 0;
-                left: 0;
-                transform: translateX(0) !important; /* Garante que fique visível */
-                height: 100vh;
-                z-index: 100;
-            }
-            
-            main {
-                padding: 1.5rem;
-                margin-left: 0;
-            }
-            
-            .menu-overlay {
-                display: none !important;
-            }
-            
+        /* Ajustes para mobile */
+        @media (max-width: 768px) {
             .calendar-wrapper {
-                display: grid;
-                grid-template-columns: 1fr 350px;
-            }
-            
-            .form-row {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                gap: 1rem;
-            }
-            
-            .stats-grid {
-                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            }
-            
-            .slots-grid {
-                grid-template-columns: repeat(2, 1fr);
+                grid-template-columns: 1fr;
             }
             
             .charts-container {
-                display: grid;
-                grid-template-columns: 1.5fr 1fr;
+                grid-template-columns: 1fr;
             }
             
-            .btn-action {
-                width: auto;
+            .form-row {
+                grid-template-columns: 1fr;
             }
             
-            table {
-                min-width: auto;
+            .stats-grid {
+                grid-template-columns: 1fr;
             }
             
-            /* Remove qualquer comportamento mobile no desktop */
-            .mobile-menu-btn {
-                display: none;
+            .nav-modal {
+                left: 1rem;
+                right: 1rem;
+                top: 60px;
             }
-        }
-        
-        @media (min-width: 1024px) {
+            
+            .main-header {
+                padding: 0.75rem 1rem;
+            }
+            
             main {
-                padding: 2rem;
-                max-width: 1400px;
-                margin: 0 auto;
+                padding: 1rem;
             }
             
-            .calendar-wrapper {
-                grid-template-columns: 1fr 400px;
-            }
-            
-            .slots-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 10px;
-            }
-        }
-        
-        /* Ajustes para iPhone SE e telas muito pequenas */
-        @media (max-width: 374px) {
-            .calendar-day {
-                min-height: 50px;
-                font-size: 0.7rem;
-            }
-            
-            .day-number {
-                font-size: 0.7rem;
-            }
-            
-            .slot-btn {
-                font-size: 0.75rem;
-                padding: 8px;
-            }
-            
-            .btn-action {
-                padding: 0.6rem 0.8rem;
-                font-size: 0.8rem;
-            }
-            
-            .stat-card {
-                padding: 0.75rem;
-            }
-            
-            .stat-value {
-                font-size: 1.1rem;
-            }
-        }
-        
-        /* Melhorias para orientação paisagem */
-        @media (max-height: 500px) and (orientation: landscape) {
-            aside {
-                overflow-y: auto;
-                padding-top: 3rem;
-            }
-            
-            .calendar-day {
-                min-height: 40px;
+            .slots-container {
+                position: static;
             }
         }
         
@@ -630,8 +561,8 @@
             right: 20px;
             background: var(--primary);
             color: white;
-            width: 40px;
-            height: 40px;
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -641,6 +572,7 @@
             transition: opacity 0.3s;
             z-index: 999;
             border: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
         
         .back-to-top:hover {
@@ -650,26 +582,6 @@
         /* Scroll suave */
         html {
             scroll-behavior: smooth;
-        }
-        
-        /* Ajustes para inputs em mobile */
-        input[type="date"],
-        input[type="time"],
-        select {
-            -webkit-appearance: none;
-            appearance: none;
-        }
-        
-        /* Espaçamento seguro para iPhone X+ */
-        @supports (padding: max(0px)) {
-            body, .login-card, .admin-section, .stat-card {
-                padding-left: max(1rem, env(safe-area-inset-left));
-                padding-right: max(1rem, env(safe-area-inset-right));
-            }
-            
-            .mobile-header {
-                padding-top: max(1rem, env(safe-area-inset-top));
-            }
         }
         
         /* Estilo para toast/notificações */
@@ -687,6 +599,7 @@
             max-width: 90%;
             text-align: center;
             font-size: 0.9rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
         
         .toast.show {
@@ -705,63 +618,33 @@
             }
         }
         
-        /* Estilo para modal em mobile */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 2000;
-            align-items: center;
-            justify-content: center;
-            padding: 1rem;
-        }
-        
-        .modal-content {
-            background: var(--bg-card);
-            border-radius: 1rem;
-            padding: 1.5rem;
-            max-width: 500px;
-            width: 100%;
-            max-height: 80vh;
-            overflow-y: auto;
-            border: 1px solid var(--border);
-        }
-        
-        .modal-header {
+        /* Indicador de período */
+        .period-indicator {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
+            gap: 10px;
+            margin-bottom: 1.5rem;
+            background: var(--bg-card);
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            width: fit-content;
         }
         
-        .modal-close {
+        .period-btn {
             background: none;
-            border: none;
+            border: 1px solid var(--border);
             color: var(--text-muted);
-            font-size: 1.5rem;
+            padding: 8px 16px;
+            border-radius: 6px;
             cursor: pointer;
-            line-height: 1;
+            font-size: 0.9rem;
+            transition: 0.2s;
         }
         
-        /* Classe para desktop - garante que o aside fique visível */
-        .desktop-visible {
-            transform: translateX(0) !important;
-        }
-        
-        /* Ajuste específico para o problema do menu no desktop */
-        @media (min-width: 768px) {
-            #admin-panel {
-                display: grid !important;
-            }
-            
-            aside {
-                display: flex !important;
-                transform: translateX(0) !important;
-            }
+        .period-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
         }
     </style>
 </head>
@@ -778,68 +661,65 @@
     </div>
 
     <div id="admin-panel">
-        <!-- Header Mobile -->
-        <div class="mobile-header">
-            <button class="mobile-menu-btn" onclick="toggleMenu()">
+        <!-- Header com menu -->
+        <header class="main-header">
+            <button class="menu-btn" onclick="toggleNavModal()">
                 <i data-lucide="menu"></i>
             </button>
-            <div class="nav-brand" style="font-size: 1rem;">Lopes Barbearia</div>
-            <div style="width: 40px;"></div> <!-- Espaço para alinhamento -->
-        </div>
-        
-        <!-- Overlay para menu -->
-        <div class="menu-overlay" onclick="toggleMenu()"></div>
-        
-        <!-- Sidebar -->
-        <aside class="desktop-visible">
-            <div class="nav-brand">Lopes Barbearia</div>
-            <nav class="nav-menu">
-                <div class="nav-item active" onclick="switchTab('dashboard'); closeMenu();">
-                    <i data-lucide="layout-dashboard"></i> Dashboard
-                </div>
-                <div class="nav-item" onclick="switchTab('agendamentos'); closeMenu();">
-                    <i data-lucide="calendar"></i> Agenda
-                </div>
-                <div class="nav-item" onclick="switchTab('clientes'); closeMenu();">
-                    <i data-lucide="users"></i> Clientes
-                </div>
-                <div class="nav-item" onclick="switchTab('assinaturas'); closeMenu();">
-                    <i data-lucide="credit-card"></i> Assinaturas
-                </div>
-                <div class="nav-item" onclick="switchTab('finanças'); closeMenu();">
-                    <i data-lucide="wallet"></i> Finanças
-                </div>
-                <div class="nav-item" onclick="switchTab('configurações'); closeMenu();">
-                    <i data-lucide="settings"></i> Configurações
-                </div>
-            </nav>
-            <button class="btn-action" onclick="logout()" style="margin-top: auto; background: var(--danger); color: white; border: none;">
+            <div class="header-title">
+                <span class="logo">LOPES BARBEARIA</span>
+                <span id="current-tab" style="margin-left: 10px; color: var(--text-muted); font-size: 0.9rem;">Dashboard</span>
+            </div>
+            <button class="btn-action" onclick="logout()" style="background: var(--danger); padding: 8px 16px; font-size: 0.85rem;">
                 <i data-lucide="log-out"></i> SAIR
             </button>
-        </aside>
+        </header>
+        
+        <!-- Modal de navegação -->
+        <div class="nav-modal-overlay" onclick="toggleNavModal()"></div>
+        <div class="nav-modal" id="nav-modal">
+            <div class="nav-modal-content">
+                <div class="nav-modal-item active" onclick="switchTab('dashboard'); toggleNavModal();">
+                    <i data-lucide="layout-dashboard"></i> Dashboard
+                </div>
+                <div class="nav-modal-item" onclick="switchTab('agendamentos'); toggleNavModal();">
+                    <i data-lucide="calendar"></i> Agenda
+                </div>
+                <div class="nav-modal-item" onclick="switchTab('clientes'); toggleNavModal();">
+                    <i data-lucide="users"></i> Clientes
+                </div>
+                <div class="nav-modal-item" onclick="switchTab('assinaturas'); toggleNavModal();">
+                    <i data-lucide="credit-card"></i> Assinaturas
+                </div>
+                <div class="nav-modal-item" onclick="switchTab('finanças'); toggleNavModal();">
+                    <i data-lucide="wallet"></i> Finanças
+                </div>
+                <div class="nav-modal-item" onclick="switchTab('configurações'); toggleNavModal();">
+                    <i data-lucide="settings"></i> Configurações
+                </div>
+            </div>
+        </div>
 
         <main>
-            <h2 id="view-title" style="margin-bottom: 1rem; font-size: 1.3rem;">Dashboard</h2>
-
             <div id="tab-dashboard" class="tab-content active">
                 <div class="stats-grid">
                     <div class="stat-card">
-                        <span style="color:var(--text-muted); font-size: 0.85rem;">Receita Bruta</span>
+                        <span style="color:var(--text-muted); font-size: 0.9rem;">Receita Bruta</span>
                         <div class="stat-value" id="dash-revenue" style="color: var(--primary)">R$ 0,00</div>
                     </div>
                     <div class="stat-card">
-                        <span style="color:var(--text-muted); font-size: 0.85rem;">Despesas</span>
+                        <span style="color:var(--text-muted); font-size: 0.9rem;">Despesas</span>
                         <div class="stat-value" id="dash-expense" style="color: var(--warn)">R$ 0,00</div>
                     </div>
                     <div class="stat-card">
-                        <span style="color:var(--text-muted); font-size: 0.85rem;">Saldo</span>
+                        <span style="color:var(--text-muted); font-size: 0.9rem;">Saldo</span>
                         <div class="stat-value" id="dash-profit" style="color: var(--success)">R$ 0,00</div>
                     </div>
                 </div>
-                <div style="display:flex; justify-content:flex-end; gap:6px; margin-bottom:12px; overflow-x: auto; padding-bottom: 5px;">
-                    <button id="period-month" class="btn-action" style="padding:6px 12px; font-size: 0.8rem;">Mês</button>
-                    <button id="period-week" class="btn-action" style="padding:6px 12px; font-size: 0.8rem;">Semana</button>
-                    <button id="period-year" class="btn-action" style="padding:6px 12px; font-size: 0.8rem;">Ano</button>
+                <div class="period-indicator">
+                    <button id="period-month" class="period-btn active">Mês</button>
+                    <button id="period-week" class="period-btn">Semana</button>
+                    <button id="period-year" class="period-btn">Ano</button>
                 </div>
                 <div class="charts-container">
                     <div class="stat-card">
@@ -859,41 +739,41 @@
                 <div class="calendar-wrapper">
                     <div class="calendar-card">
                         <div class="calendar-header">
-                            <button class="btn-action" style="padding: 5px 8px; font-size: 0.8rem;" onclick="changeMonth(-1)">
+                            <button class="btn-action" style="padding: 8px 12px; font-size: 0.9rem;" onclick="changeMonth(-1)">
                                 <i data-lucide="chevron-left"></i>
                             </button>
-                            <h3 id="calendar-month-year" style="font-size: 0.9rem;">...</h3>
-                            <button class="btn-action" style="padding: 5px 8px; font-size: 0.8rem;" onclick="changeMonth(1)">
+                            <h3 id="calendar-month-year" style="font-size: 1rem;">...</h3>
+                            <button class="btn-action" style="padding: 8px 12px; font-size: 0.9rem;" onclick="changeMonth(1)">
                                 <i data-lucide="chevron-right"></i>
                             </button>
                         </div>
-                        <div style="grid-template-columns: repeat(7, 1fr); text-align: center; background: #111111; padding: 8px 0; font-size: 0.65rem; color: var(--text-muted); font-weight: bold; display: grid;">
+                        <div style="grid-template-columns: repeat(7, 1fr); text-align: center; background: #111111; padding: 12px 0; font-size: 0.75rem; color: var(--text-muted); font-weight: bold; display: grid;">
                             <div>DOM</div><div>SEG</div><div>TER</div><div>QUA</div><div>QUI</div><div>SEX</div><div>SAB</div>
                         </div>
                         <div class="calendar-grid" id="calendar-body"></div>
                         
-                        <div style="padding: 1rem; background: #111111; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px;">
-                            <div style="display: flex; gap: 8px;">
-                                <button class="btn-action" style="background: var(--danger); color: white; font-size: 0.8rem;" onclick="toggleDayStatus('closed')">FECHAR DIA</button>
-                                <button class="btn-action" style="background: var(--success); color: white; font-size: 0.8rem;" onclick="toggleDayStatus('open')">ABRIR DIA</button>
+                        <div style="padding: 1.5rem; background: #111111; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px;">
+                            <div style="display: flex; gap: 10px;">
+                                <button class="btn-action" style="background: var(--danger); color: white; font-size: 0.9rem;" onclick="toggleDayStatus('closed')">FECHAR DIA</button>
+                                <button class="btn-action" style="background: var(--success); color: white; font-size: 0.9rem;" onclick="toggleDayStatus('open')">ABRIR DIA</button>
                             </div>
-                            <button class="btn-action" style="background: var(--primary); color: white; font-size: 0.8rem;" onclick="addExtraSlot()">+ HORÁRIO EXTRA</button>
+                            <button class="btn-action" style="background: var(--primary); color: white; font-size: 0.9rem;" onclick="addExtraSlot()">+ HORÁRIO EXTRA</button>
                         </div>
                     </div>
 
                     <div class="slots-container">
-                        <h4 id="selected-date-label" style="font-size: 1rem;">Data</h4>
+                        <h4 id="selected-date-label" style="font-size: 1.1rem; margin-bottom: 1rem;">Data</h4>
                         <div class="slots-grid" id="slots-grid"></div>
                         
                         <div id="slot-editor" style="display: none; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                                <h5 id="editor-title" style="color: var(--primary); font-size: 0.9rem;">Horário</h5>
+                                <h5 id="editor-title" style="color: var(--primary); font-size: 1rem;">Horário</h5>
                                 <button id="btn-whatsapp-client" class="btn-whatsapp" title="Enviar Mensagem no WhatsApp" style="display: none;">
                                     <i data-lucide="message-circle"></i>
                                 </button>
                             </div>
                             
-                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <div style="display: flex; flex-direction: column; gap: 15px;">
                                 <div>
                                     <label>Nome do Cliente</label>
                                     <input type="text" id="edit-client" placeholder="Nome do Cliente">
@@ -931,18 +811,18 @@
                                 </div>
                                 <div>
                                     <label>Observações (Atendimento especializado)</label>
-                                    <textarea id="edit-observations" placeholder="Preferências sensoriais, notas" style="width:100%; height:70px; margin-top:8px; padding:8px; background:#111111; color:#fff; border:1px solid var(--border); border-radius:6px; font-size: 0.9rem;"></textarea>
+                                    <textarea id="edit-observations" placeholder="Preferências sensoriais, notas" style="width:100%; height:80px; margin-top:8px; padding:12px; background:#111111; color:#fff; border:1px solid var(--border); border-radius:8px; font-size: 0.9rem;"></textarea>
                                 </div>
-                                <div id="warning-double" style="display:none; color: var(--danger); font-size: 0.7rem; font-weight: bold;">
+                                <div id="warning-double" style="display:none; color: var(--danger); font-size: 0.8rem; font-weight: bold;">
                                     ⚠️ Este serviço requer 2 horários seguidos.
                                 </div>
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                                     <button class="btn-action" onclick="saveBooking()">SALVAR</button>
                                     <button class="btn-action" style="background: #333; color: white;" onclick="toggleBlockSlot()">BLOQUEAR</button>
                                 </div>
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                                    <button id="btn-complete-booking" style="background: var(--success); color: white; border: none; padding: 0.7rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; display: none;" onclick="completeBooking()">CONCLUIR</button>
-                                    <button id="btn-cancel-booking" style="background: var(--danger); color: white; border: none; padding: 0.7rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; display: none;" onclick="cancelBooking()">CANCELAR</button>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                    <button id="btn-complete-booking" style="background: var(--success); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; display: none;" onclick="completeBooking()">CONCLUIR</button>
+                                    <button id="btn-cancel-booking" style="background: var(--danger); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; display: none;" onclick="cancelBooking()">CANCELAR</button>
                                 </div>
                             </div>
                         </div>
@@ -976,7 +856,7 @@
                 </div>
 
                 <div class="admin-section" id="section-finance-form">
-                    <h4 id="finance-form-title" style="margin-bottom: 1rem; font-size: 1rem;">Lançar Nova Despesa</h4>
+                    <h4 id="finance-form-title" style="margin-bottom: 1rem; font-size: 1.1rem;">Lançar Nova Despesa</h4>
                     
                     <div id="quick-products-container" style="display: none;">
                         <div class="quick-launch-grid">
@@ -1009,7 +889,7 @@
                             <label>Categoria</label>
                             <select id="exp-category"></select>
                         </div>
-                        <div style="display: flex; gap: 8px;">
+                        <div style="display: flex; gap: 10px;">
                             <button id="btn-finance-add" class="btn-action" style="background: var(--danger); color: white;" onclick="addFinanceRecord(false)">ADICIONAR</button>
                             <button id="btn-finance-add-paid" class="btn-action" style="background: var(--success); color: white;" onclick="addFinanceRecord(true)">PAGO ✅</button>
                         </div>
@@ -1029,9 +909,9 @@
                             <input type="text" id="filter-search" placeholder="Buscar..." oninput="renderFinanceTable()">
                         </div>
                     </div>
-                    <div style="background: #111111; padding: 10px; border-radius: 8px; border: 1px solid var(--border); margin-top: 10px;">
-                        <span id="label-total-filtrado" style="font-size: 0.7rem; color: var(--text-muted); display: block;">Total Despesas</span>
-                        <strong id="filtered-total" style="color: var(--warn); font-size: 1rem;">R$ 0,00</strong>
+                    <div style="background: #111111; padding: 15px; border-radius: 10px; border: 1px solid var(--border); margin-top: 15px;">
+                        <span id="label-total-filtrado" style="font-size: 0.8rem; color: var(--text-muted); display: block;">Total Despesas</span>
+                        <strong id="filtered-total" style="color: var(--warn); font-size: 1.2rem;">R$ 0,00</strong>
                     </div>
                 </div>
                 
@@ -1054,8 +934,8 @@
 
                 <div id="section-relatorios" style="display: none;">
                     <div class="admin-section">
-                        <h4 style="margin-bottom: 1rem; font-size: 1rem;">Relatório Fiscal - Serviços Concluídos e Vendas</h4>
-                        <p style="color: var(--text-muted); margin-bottom: 1rem; font-size: 0.85rem;">
+                        <h4 style="margin-bottom: 1rem; font-size: 1.1rem;">Relatório Fiscal - Serviços Concluídos e Vendas</h4>
+                        <p style="color: var(--text-muted); margin-bottom: 1rem; font-size: 0.9rem;">
                             Como seu sistema ajuda na emissão de notas fiscais:<br>
                             <strong>Fonte de Dados Confiável:</strong> Na Agenda, toda vez que você marca um atendimento como "Concluído", ele já registra data, cliente, serviço e valor. 
                             Na aba Finanças > Entradas, as vendas de produtos também ficam registradas.<br>
@@ -1109,8 +989,8 @@
 
                         <div id="report-results" style="display: none; margin-top: 1.5rem;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px;">
-                                <h5 style="font-size: 0.9rem;">Resultado do Período</h5>
-                                <button class="btn-action" onclick="exportFiscalReport()" style="background: var(--success); padding: 6px 12px; font-size: 0.75rem;">EXPORTAR CSV</button>
+                                <h5 style="font-size: 1rem;">Resultado do Período</h5>
+                                <button class="btn-action" onclick="exportFiscalReport()" style="background: var(--success); padding: 8px 16px; font-size: 0.85rem;">EXPORTAR CSV</button>
                             </div>
                             
                             <div class="table-wrapper">
@@ -1128,12 +1008,12 @@
                                 </table>
                             </div>
                             
-                            <div style="margin-top: 1rem; padding: 1rem; background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border);">
+                            <div style="margin-top: 1rem; padding: 1.5rem; background: var(--bg-card); border-radius: 10px; border: 1px solid var(--border);">
                                 <div>
-                                    <strong id="report-total" style="color: var(--primary); font-size: 1rem;">Total do período: R$ 0,00</strong><br>
-                                    <span id="report-summary" style="color: var(--text-muted); font-size: 0.75rem;">0 serviços + 0 produtos</span>
+                                    <strong id="report-total" style="color: var(--primary); font-size: 1.2rem;">Total do período: R$ 0,00</strong><br>
+                                    <span id="report-summary" style="color: var(--text-muted); font-size: 0.85rem;">0 serviços + 0 produtos</span>
                                 </div>
-                                <div id="report-period-info" style="color: var(--text-muted); font-size: 0.75rem; margin-top: 5px;">
+                                <div id="report-period-info" style="color: var(--text-muted); font-size: 0.85rem; margin-top: 5px;">
                                     Período: -
                                 </div>
                             </div>
@@ -1144,7 +1024,7 @@
 
             <div id="tab-assinaturas" class="tab-content">
                 <div class="admin-section">
-                    <h4 style="margin-bottom: 1rem; font-size: 1rem;">Gerenciar Assinaturas</h4>
+                    <h4 style="margin-bottom: 1rem; font-size: 1.1rem;">Gerenciar Assinaturas</h4>
                     
                     <div class="form-row">
                         <div><label>Cliente</label><input type="text" id="sub-client" placeholder="Nome do cliente"></div>
@@ -1192,8 +1072,8 @@
 
             <div id="tab-configurações" class="tab-content">
                 <div class="admin-section">
-                    <h4 style="margin-bottom: 1rem; font-size: 1rem;">Configurar Serviços</h4>
-                    <p style="color: var(--text-muted); margin-bottom: 1rem; font-size: 0.85rem;">Edite os preços e durações dos serviços. As mudanças serão aplicadas automaticamente no site.</p>
+                    <h4 style="margin-bottom: 1rem; font-size: 1.1rem;">Configurar Serviços</h4>
+                    <p style="color: var(--text-muted); margin-bottom: 1rem; font-size: 0.9rem;">Edite os preços e durações dos serviços. As mudanças serão aplicadas automaticamente no site.</p>
                     
                     <div id="services-list" class="table-wrapper">  
                         <table>
@@ -1278,6 +1158,31 @@
 
         const baseSlots = ["09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00", "18:30"];
 
+        // Função para mostrar/ocultar modal de navegação
+        window.toggleNavModal = () => {
+            const modal = document.getElementById('nav-modal');
+            const overlay = document.querySelector('.nav-modal-overlay');
+            
+            modal.classList.toggle('active');
+            overlay.classList.toggle('active');
+            
+            // Atualizar ícones quando modal abre
+            if (modal.classList.contains('active')) {
+                setTimeout(() => {
+                    lucide.createIcons();
+                }, 10);
+            }
+        };
+
+        // Fechar modal de navegação
+        function closeNavModal() {
+            const modal = document.getElementById('nav-modal');
+            const overlay = document.querySelector('.nav-modal-overlay');
+            
+            modal.classList.remove('active');
+            overlay.classList.remove('active');
+        }
+
         // Função para mostrar toast
         function showToast(message, type = 'info') {
             const toast = document.getElementById('toast');
@@ -1300,38 +1205,6 @@
             setTimeout(() => {
                 toast.classList.remove('show');
             }, 3000);
-        }
-
-        // Função para alternar menu mobile
-        window.toggleMenu = () => {
-            // No desktop, não faz nada
-            if (window.innerWidth >= 768) return;
-            
-            const aside = document.querySelector('aside');
-            const overlay = document.querySelector('.menu-overlay');
-            
-            aside.classList.toggle('active');
-            overlay.classList.toggle('active');
-            
-            // Prevenir scroll do body quando menu está aberto
-            if (aside.classList.contains('active')) {
-                document.body.style.overflow = 'hidden';
-            } else {
-                document.body.style.overflow = '';
-            }
-        };
-
-        // Fechar menu ao clicar em um item
-        function closeMenu() {
-            // No desktop, não fecha
-            if (window.innerWidth >= 768) return;
-            
-            const aside = document.querySelector('aside');
-            const overlay = document.querySelector('.menu-overlay');
-            
-            aside.classList.remove('active');
-            overlay.classList.remove('active');
-            document.body.style.overflow = '';
         }
 
         // Função Global para o Toggle Autismo
@@ -1399,7 +1272,7 @@
 
         window.switchTab = (tab) => {
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            document.querySelectorAll('.nav-modal-item').forEach(i => i.classList.remove('active'));
             document.getElementById('tab-' + tab).classList.add('active');
             
             // Atualizar título
@@ -1411,18 +1284,20 @@
                 'finanças': 'Finanças',
                 'configurações': 'Configurações'
             };
-            document.getElementById('view-title').innerText = titles[tab] || tab;
+            
+            const titleText = titles[tab] || tab;
+            document.getElementById('current-tab').innerText = titleText;
             
             // Ativar item do menu
-            const navItems = document.querySelectorAll('.nav-item');
+            const navItems = document.querySelectorAll('.nav-modal-item');
             navItems.forEach(item => {
-                if (item.textContent.includes(titles[tab])) {
+                if (item.textContent.includes(titleText)) {
                     item.classList.add('active');
                 }
             });
             
-            // Fechar menu no mobile
-            closeMenu();
+            // Fechar modal de navegação
+            closeNavModal();
             
             // Executar funções específicas da tab
             if(tab === 'dashboard') {
@@ -1434,27 +1309,16 @@
             if(tab === 'finanças') switchFinanceMode('despesas');
             if(tab === 'configurações') renderServices();
             
-            // Scroll para o topo no mobile
+            // Scroll para o topo
             window.scrollTo({top: 0, behavior: 'smooth'});
         };
 
         onAuthStateChanged(auth, user => {
             if (user) {
                 document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('admin-panel').style.display = 'grid';
+                document.getElementById('admin-panel').style.display = 'block';
                 initListeners();
                 showToast('Login realizado com sucesso!', 'success');
-                
-                // Garantir que o menu fique visível no desktop após login
-                setTimeout(() => {
-                    if (window.innerWidth >= 768) {
-                        const aside = document.querySelector('aside');
-                        if (aside) {
-                            aside.style.transform = 'translateX(0)';
-                            aside.style.display = 'flex';
-                        }
-                    }
-                }, 100);
             } else {
                 document.getElementById('login-screen').style.display = 'flex';
                 document.getElementById('admin-panel').style.display = 'none';
@@ -1621,10 +1485,6 @@
                     selectedDateISO = iso;
                     renderCalendar();
                     renderSlots();
-                    // Scroll para os slots no mobile
-                    if (window.innerWidth < 768) {
-                        document.querySelector('.slots-container').scrollIntoView({behavior: 'smooth'});
-                    }
                 };
                 div.innerHTML = `<div class="day-number">${d}</div>`;
                 
@@ -1669,10 +1529,6 @@
                     if(agend.status === 'completed') {
                         displayName += ' ✅';
                     }
-                    // Limitar tamanho do nome no mobile
-                    if (window.innerWidth < 768 && displayName.length > 15) {
-                        displayName = displayName.substring(0, 12) + '...';
-                    }
                     btn.innerText = `${time} - ${agend.status === 'blocked' ? 'BLOQUEADO' : displayName}`;
                     const baseService = (agend.servico || "").replace(" (Autismo)", "");
                     const sColor = agend.status === 'blocked' ? serviceColors["Bloqueio"] : (serviceColors[baseService] || serviceColors["Outros"]);
@@ -1680,10 +1536,7 @@
                 } else if (isPartOfLong) {
                     const owner = agendamentosData.find(a => a.data === selectedDateISO && a.hora === slots[index-1]);
                     const ownerName = owner ? (owner.nome || owner.cliente || '...') : '...';
-                    // Limitar tamanho no mobile
-                    const displayOwnerName = window.innerWidth < 768 && ownerName.length > 10 ? 
-                        ownerName.substring(0, 8) + '...' : ownerName;
-                    btn.innerText = `${time} - (${displayOwnerName})`;
+                    btn.innerText = `${time} - (${ownerName})`;
                     btn.style.opacity = "0.5";
                 } else {
                     btn.innerText = time;
@@ -1743,11 +1596,6 @@
                 btnWhatsapp.style.display = 'none';
             }
             updateWarning();
-            
-            // Scroll para o editor no mobile
-            if (window.innerWidth < 768) {
-                document.getElementById('slot-editor').scrollIntoView({behavior: 'smooth'});
-            }
         }
 
         function updateWarning() {
@@ -1924,11 +1772,11 @@
         let currentPeriod = 'month';
         function setDashboardPeriod(p) {
             currentPeriod = p;
-            document.getElementById('period-month').style.opacity = p === 'month' ? 1 : 0.6;
-            document.getElementById('period-week').style.opacity = p === 'week' ? 1 : 0.6;
-            document.getElementById('period-year').style.opacity = p === 'year' ? 1 : 0.6;
+            document.querySelectorAll('.period-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('period-' + p).classList.add('active');
             updateDashboard();
         }
+        
         document.getElementById('period-month').onclick = () => setDashboardPeriod('month');
         document.getElementById('period-week').onclick = () => setDashboardPeriod('week');
         document.getElementById('period-year').onclick = () => setDashboardPeriod('year');
@@ -2012,11 +1860,11 @@
                         scales: { 
                             y: { 
                                 grid: { color: '#333' }, 
-                                ticks: { color: '#aaa', font: { size: window.innerWidth < 768 ? 10 : 12 } }, 
+                                ticks: { color: '#aaa', font: { size: 12 } }, 
                                 beginAtZero: true 
                             }, 
                             x: { 
-                                ticks: { color: '#aaa', font: { size: window.innerWidth < 768 ? 10 : 12 } }, 
+                                ticks: { color: '#aaa', font: { size: 12 } }, 
                                 grid: { display: false } 
                             } 
                         } 
@@ -2057,11 +1905,11 @@
                         maintainAspectRatio: false,
                         plugins: { 
                             legend: { 
-                                position: window.innerWidth < 768 ? 'bottom' : 'right',
+                                position: 'right',
                                 labels: { 
                                     color: '#aaa', 
                                     boxWidth: 10, 
-                                    font: { size: window.innerWidth < 768 ? 9 : 11 },
+                                    font: { size: 11 },
                                     padding: 10
                                 } 
                             } 
@@ -2108,28 +1956,19 @@
                 const diffDays = Math.floor((new Date() - lastDate) / (1000 * 60 * 60 * 24)); 
 
                 const btnWhatsapp = c.contato 
-                    ? `<button class="btn-action" style="padding:4px 8px;font-size:0.7rem" onclick="notifyInactive('${c.nome}','${c.contato}',${diffDays})">📲 Avisar</button>`
+                    ? `<button class="btn-action" style="padding:6px 12px;font-size:0.8rem" onclick="notifyInactive('${c.nome}','${c.contato}',${diffDays})">📲 Avisar</button>`
                     : '-';
-
-                // Formatar nome para mobile
-                const displayName = window.innerWidth < 768 && c.nome.length > 15 ? 
-                    c.nome.substring(0, 12) + '...' : c.nome;
-                    
-                // Formatar contato para mobile
-                const displayContato = c.contato ? 
-                    (window.innerWidth < 768 ? c.contato.substring(0, 10) + '...' : c.contato) : 
-                    'Sem Telefone';
 
                 b.innerHTML += `
                     <tr>
-                        <td><b>${displayName}</b></td>
+                        <td><b>${c.nome}</b></td>
                         <td>
-                            <div style="font-size:0.75rem; color:var(--text-muted)">${displayContato}</div>
-                            <div style="font-size:0.7rem; color:var(--primary)">${c.email || ''}</div>
+                            <div style="font-size:0.85rem; color:var(--text-muted)">${c.contato || 'Sem Telefone'}</div>
+                            <div style="font-size:0.8rem; color:var(--primary)">${c.email || ''}</div>
                         </td>
-                        <td style="font-size:0.8rem;">${c.last.split('-').reverse().join('/')}</td>
-                        <td style="color:var(--primary); font-size:0.8rem;">R$ ${c.total.toFixed(2)}</td>
-                        <td style="font-size:0.8rem;">${diffDays} dias</td>
+                        <td style="font-size:0.9rem;">${c.last.split('-').reverse().join('/')}</td>
+                        <td style="color:var(--primary); font-size:0.9rem;">R$ ${c.total.toFixed(2)}</td>
+                        <td style="font-size:0.9rem;">${diffDays} dias</td>
                         <td>${btnWhatsapp}</td>
                     </tr>`;
             });
@@ -2154,6 +1993,7 @@
                 sectionRel.style.display = 'none';
                 document.getElementById('finance-form-title').innerText = 'Lançar Nova Despesa';
                 document.getElementById('label-total-filtrado').innerText = 'Total Despesas';
+                document.getElementById('quick-products-container').style.display = 'none';
             } else if(mode === 'entradas') {
                 btnEntr.classList.add('active');
                 btnDesp.classList.remove('active');
@@ -2293,27 +2133,22 @@
                     statusHtml = '<td>-</td>';
                 }
 
-                // Formatar descrição para mobile
-                const descricao = item.descricao || '';
-                const displayDescricao = window.innerWidth < 768 && descricao.length > 15 ? 
-                    descricao.substring(0, 12) + '...' : descricao;
-
                 b.innerHTML += `<tr>
-                    <td style="font-size:0.8rem;">${item.data.split('-').reverse().join('/')}</td>
-                    <td class="col-recurrence" style="${financeMode === 'entradas' ? 'display:none' : ''}; font-size:0.75rem;">
+                    <td style="font-size:0.9rem;">${item.data.split('-').reverse().join('/')}</td>
+                    <td class="col-recurrence" style="${financeMode === 'entradas' ? 'display:none' : ''}; font-size:0.85rem;">
                         <span style="opacity: 0.7">${rLabel}</span>
                     </td>
                     <td>
-                        <span style="background: #1a1a1a; padding: 3px 6px; border-radius: 4px; font-size: 0.7rem; border: 1px solid var(--border); display: inline-block;">
+                        <span style="background: #1a1a1a; padding: 5px 10px; border-radius: 6px; font-size: 0.8rem; border: 1px solid var(--border); display: inline-block;">
                             ${item.category || 'Outros'}
                         </span>
                     </td>
-                    <td style="font-size:0.8rem;">${displayDescricao}</td>
+                    <td style="font-size:0.9rem;">${item.descricao || ''}</td>
                     ${statusHtml}
-                    <td style="color:${financeMode === 'despesas' ? 'var(--warn)' : 'var(--success)'}; font-size:0.8rem;">
+                    <td style="color:${financeMode === 'despesas' ? 'var(--warn)' : 'var(--success)'}; font-size:0.9rem;">
                         R$ ${v.toLocaleString('pt-BR', {minimumFractionDigits:2})}
                     </td>
-                    <td style="text-align: right; display: flex; justify-content: flex-end; gap: 8px;">
+                    <td style="text-align: right; display: flex; justify-content: flex-end; gap: 10px;">
                         ${actionsHtml}
                         <button class="btn-action" style="background:none; color:var(--danger); padding:0; min-width: auto;" onclick="deleteFinanceRecord('${item.id}')">
                             <i data-lucide="trash-2"></i>
@@ -2421,30 +2256,24 @@
 
                 const targetPhone = (sub.clientPhone || sub.telefone || sub.phone || '').toString();
                 const escapedClient = (sub.client || '').replace(/'/g, "\\'");
-                
-                // Formatar para mobile
-                const displayClient = window.innerWidth < 768 && sub.client.length > 10 ? 
-                    sub.client.substring(0, 8) + '...' : sub.client;
-                const displayPlan = window.innerWidth < 768 && sub.planName.length > 10 ? 
-                    sub.planName.substring(0, 8) + '...' : sub.planName;
 
                 return `<tr>
-                    <td><b>${displayClient}</b></td>
-                    <td style="font-size:0.8rem;">${targetPhone || '-'}</td>
-                    <td style="font-size:0.8rem;">${displayPlan}</td>
-                    <td style="color:var(--primary); font-size:0.8rem;">R$ ${sub.value.toLocaleString('pt-BR', {minimumFractionDigits:2})}</td>
-                    <td style="font-size:0.8rem;">${sub.startDate.split('-').reverse().join('/')}</td>
-                    <td style="font-size:0.8rem;">${sub.nextBilling.split('-').reverse().join('/')}</td>
+                    <td><b>${sub.client}</b></td>
+                    <td style="font-size:0.9rem;">${targetPhone || '-'}</td>
+                    <td style="font-size:0.9rem;">${sub.planName}</td>
+                    <td style="color:var(--primary); font-size:0.9rem;">R$ ${sub.value.toLocaleString('pt-BR', {minimumFractionDigits:2})}</td>
+                    <td style="font-size:0.9rem;">${sub.startDate.split('-').reverse().join('/')}</td>
+                    <td style="font-size:0.9rem;">${sub.nextBilling.split('-').reverse().join('/')}</td>
                     <td>${statusBadge}</td>
                     <td style="text-align: right;">
                         <div class="action-buttons">
-                            <button class="btn-action" style="background: #25d366; padding: 4px 6px; font-size:0.7rem;" onclick="sendPaymentRequest('${escapedClient}', '${targetPhone}', ${sub.value})">
+                            <button class="btn-action" style="background: #25d366; padding: 8px 12px; font-size:0.85rem;" onclick="sendPaymentRequest('${escapedClient}', '${targetPhone}', ${sub.value})">
                                 <i data-lucide="message-circle"></i>
                             </button>
-                            <button class="btn-action" style="background: var(--primary); padding: 4px 6px; font-size:0.7rem;" onclick="toggleSubscriptionStatus('${sub.id}', '${sub.status}')">
+                            <button class="btn-action" style="background: var(--primary); padding: 8px 12px; font-size:0.85rem;" onclick="toggleSubscriptionStatus('${sub.id}', '${sub.status}')">
                                 ${sub.status === 'active' ? 'Desativar' : 'Ativar'}
                             </button>
-                            <button class="btn-action" style="background: var(--danger); padding: 4px 6px; font-size:0.7rem;" onclick="deleteSubscription('${sub.id}')">
+                            <button class="btn-action" style="background: var(--danger); padding: 8px 12px; font-size:0.85rem;" onclick="deleteSubscription('${sub.id}')">
                                 <i data-lucide="trash-2"></i>
                             </button>
                         </div>
@@ -2459,17 +2288,13 @@
             if (!tbody) return;
 
             tbody.innerHTML = servicesData.map(service => {
-                // Formatar nome para mobile
-                const displayName = window.innerWidth < 768 && service.name.length > 15 ? 
-                    service.name.substring(0, 12) + '...' : service.name;
-                    
                 return `
                 <tr>
-                    <td>${displayName}</td>
-                    <td><input type="number" value="${service.duration}" onchange="updateService('${service.id}', 'duration', this.value)" style="width: 60px; padding: 4px; font-size: 0.8rem;"></td>
-                    <td><input type="number" step="0.01" value="${service.price}" onchange="updateService('${service.id}', 'price', this.value)" style="width: 80px; padding: 4px; font-size: 0.8rem;"></td>
+                    <td>${service.name}</td>
+                    <td><input type="number" value="${service.duration}" onchange="updateService('${service.id}', 'duration', this.value)" style="width: 80px; padding: 8px; font-size: 0.9rem;"></td>
+                    <td><input type="number" step="0.01" value="${service.price}" onchange="updateService('${service.id}', 'price', this.value)" style="width: 100px; padding: 8px; font-size: 0.9rem;"></td>
                     <td style="text-align: right;">
-                        <button class="btn-action" onclick="saveService('${service.id}')" style="padding: 4px 8px; font-size: 0.7rem;">Salvar</button>
+                        <button class="btn-action" onclick="saveService('${service.id}')" style="padding: 8px 16px; font-size: 0.85rem;">Salvar</button>
                     </td>
                 </tr>
                 `;
@@ -2608,26 +2433,20 @@
             if (reportData.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.8rem;">
+                        <td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.9rem;">
                             Nenhum registro encontrado para o período selecionado.
                         </td>
                     </tr>
                 `;
             } else {
                 tbody.innerHTML = reportData.map(item => {
-                    // Formatar para mobile
-                    const displayCliente = window.innerWidth < 768 && item.cliente.length > 10 ? 
-                        item.cliente.substring(0, 8) + '...' : item.cliente;
-                    const displayDescricao = window.innerWidth < 768 && item.descricao.length > 15 ? 
-                        item.descricao.substring(0, 12) + '...' : item.descricao;
-                    
                     return `
                     <tr>
-                        <td style="font-size:0.8rem;">${item.data.split('-').reverse().join('/')}</td>
-                        <td style="font-size:0.8rem;"><span style="color: ${item.tipo === 'Serviço' ? 'var(--primary)' : 'var(--success)'}">${item.tipo}</span></td>
-                        <td style="font-size:0.8rem;">${displayCliente}</td>
-                        <td style="font-size:0.8rem;">${displayDescricao}</td>
-                        <td style="color: var(--primary); font-weight: bold; font-size:0.8rem;">R$ ${item.valor.toFixed(2)}</td>
+                        <td style="font-size:0.9rem;">${item.data.split('-').reverse().join('/')}</td>
+                        <td style="font-size:0.9rem;"><span style="color: ${item.tipo === 'Serviço' ? 'var(--primary)' : 'var(--success)'}">${item.tipo}</span></td>
+                        <td style="font-size:0.9rem;">${item.cliente}</td>
+                        <td style="font-size:0.9rem;">${item.descricao}</td>
+                        <td style="color: var(--primary); font-weight: bold; font-size:0.9rem;">R$ ${item.valor.toFixed(2)}</td>
                     </tr>
                     `;
                 }).join('');
@@ -2641,11 +2460,6 @@
 
             // Mostrar resultados
             document.getElementById('report-results').style.display = 'block';
-            
-            // Scroll para os resultados no mobile
-            if (window.innerWidth < 768) {
-                document.getElementById('report-results').scrollIntoView({behavior: 'smooth'});
-            }
 
             // Armazenar dados para exportação
             window.currentFiscalReportData = {
@@ -2733,10 +2547,10 @@
                 }
             });
             
-            // Fechar menu ao pressionar ESC
+            // Fechar modal ao pressionar ESC
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape') {
-                    closeMenu();
+                    closeNavModal();
                 }
             });
             
@@ -2749,26 +2563,6 @@
                 }
                 lastTouchEnd = now;
             }, false);
-            
-            // Garantir que o menu lateral fique visível no desktop
-            const checkDesktopMenu = () => {
-                if (window.innerWidth >= 768) {
-                    const aside = document.querySelector('aside');
-                    if (aside) {
-                        aside.style.transform = 'translateX(0)';
-                        aside.style.display = 'flex';
-                    }
-                    
-                    const adminPanel = document.getElementById('admin-panel');
-                    if (adminPanel && window.getComputedStyle(adminPanel).display !== 'none') {
-                        adminPanel.style.display = 'grid';
-                    }
-                }
-            };
-            
-            // Verificar ao carregar e ao redimensionar
-            checkDesktopMenu();
-            window.addEventListener('resize', checkDesktopMenu);
         });
 
     </script>
