@@ -157,6 +157,7 @@
                 <div class="nav-item" onclick="switchTab('clientes')"><i data-lucide="users"></i> Clientes</div>
                 <div class="nav-item" onclick="switchTab('assinaturas')"><i data-lucide="credit-card"></i> Assinaturas</div>
                 <div class="nav-item" onclick="switchTab('finanças')"><i data-lucide="wallet"></i> Finanças</div>
+                <div class="nav-item" onclick="switchTab('configurações')"><i data-lucide="settings"></i> Configurações</div>
             </nav>
             <button class="btn-action" onclick="logout()" style="margin-top: auto; background: var(--danger); color: white; border: none;"><i data-lucide="log-out"></i> SAIR</button>
         </aside>
@@ -424,6 +425,27 @@
                     </table>
                 </div>
             </div>
+
+            <div id="tab-configurações" class="tab-content">
+                <div class="admin-section">
+                    <h4 style="margin-bottom: 1rem;">Configurar Serviços</h4>
+                    <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Edite os preços e durações dos serviços. As mudanças serão aplicadas automaticamente no site.</p>
+                    
+                    <div id="services-list" class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Serviço</th>
+                                    <th>Duração (min)</th>
+                                    <th>Preço (R$)</th>
+                                    <th style="text-align: right;">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="list-services"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </main>
     </div>
 
@@ -480,6 +502,7 @@
         let sortClientsByInactivity = true; 
         let financeSort = { column: 'data', direction: 'desc' };
         let subscriptionsData = [];
+        let servicesData = [];
 
         const baseSlots = ["09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00", "18:30"];
 
@@ -503,6 +526,7 @@
 
         // Função Global para os Slots da Cortesia
         window.setCortesiaSlots = (num) => {
+            sortClientsByInactivity = true; // Mantendo o estado original conforme código original
             cortesiaSlots = num;
             const btn1 = document.getElementById('cortesia-1');
             const btn2 = document.getElementById('cortesia-2');
@@ -560,6 +584,7 @@
             if(tab === 'clientes') renderClients();
             if(tab === 'assinaturas') renderSubscriptions();
             if(tab === 'finanças') switchFinanceMode('despesas');
+            if(tab === 'configuracoes') renderServices();
         };
 
         onAuthStateChanged(auth, user => {
@@ -653,6 +678,25 @@
                 snap.forEach(d => configDiasData[d.id] = d.data());
                 renderCalendar();
                 renderSlots();
+            });
+
+            onSnapshot(collection(db, "services"), snap => {
+                servicesData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                if (servicesData.length === 0) {
+                    const defaultServices = [
+                        { name: "Corte Masculino", duration: 30, price: 25 },
+                        { name: "Barba Completa", duration: 30, price: 25 },
+                        { name: "Combos", duration: 60, price: 45 },
+                        { name: "Corte Infantil", duration: 30, price: 35 },
+                        { name: "Sobrancelha", duration: 15, price: 15 },
+                        { name: "Pigmentação", duration: 20, price: 25 },
+                        { name: "Depilação Nariz/Orelha", duration: 10, price: 10 }
+                    ];
+                    defaultServices.forEach(async (service) => {
+                        await addDoc(collection(db, "services"), service);
+                    });
+                }
+                renderServices();
             });
 
             onSnapshot(collection(db, "despesas"), snap => {
@@ -1399,6 +1443,45 @@
                 </tr>`;
             }).join('');
             lucide.createIcons();
+        };
+
+        function renderServices() {
+            const tbody = document.getElementById('list-services');
+            if (!tbody) return;
+
+            tbody.innerHTML = servicesData.map(service => `
+                <tr>
+                    <td>${service.name}</td>
+                    <td><input type="number" value="${service.duration}" onchange="updateService('${service.id}', 'duration', this.value)" style="width: 60px;"></td>
+                    <td><input type="number" step="0.01" value="${service.price}" onchange="updateService('${service.id}', 'price', this.value)" style="width: 80px;"></td>
+                    <td style="text-align: right;">
+                        <button class="btn-action" onclick="saveService('${service.id}')" style="padding: 6px 12px; font-size: 0.8rem;">Salvar</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        window.updateService = (id, field, value) => {
+            const service = servicesData.find(s => s.id === id);
+            if (service) {
+                service[field] = field === 'price' ? parseFloat(value) : parseInt(value);
+            }
+        };
+
+        window.saveService = async (id) => {
+            const service = servicesData.find(s => s.id === id);
+            if (!service) return;
+
+            try {
+                await updateDoc(doc(db, "services", id), {
+                    duration: service.duration,
+                    price: service.price
+                });
+                alert('Serviço atualizado com sucesso!');
+            } catch (error) {
+                console.error('Erro ao salvar serviço:', error);
+                alert('Erro ao salvar serviço.');
+            }
         };
 
         document.addEventListener('DOMContentLoaded', () => {

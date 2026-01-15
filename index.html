@@ -222,63 +222,8 @@
     <div id="section-agendamento" class="main-layout">
         <div class="content-side">
             <div class="section-title"><span class="section-num">1</span> Escolha o Serviço</div>
-            <div class="services-grid">
-                <div class="service-card" onclick="selectService(this, 'Corte Masculino', 30, 25)">
-                    <h3>Corte de Cabelo</h3>
-                    <p>Corte tradicional com acabamento premium.</p>
-                    <div class="service-meta">
-                        <span class="service-time">⏱ 30 MIN</span>
-                        <span class="service-price">R$ 25</span>
-                    </div>
-                </div>
-                <div class="service-card" onclick="selectService(this, 'Barba Completa', 30, 25)">
-                    <h3>Barba</h3>
-                    <p>Design de barba.</p>
-                    <div class="service-meta">
-                        <span class="service-time">⏱ 30 MIN</span>
-                        <span class="service-price">R$ 25</span>
-                    </div>
-                </div>
-                <div class="service-card" onclick="selectService(this, 'Combos', 60, 45)">
-                    <h3>Combos</h3>
-                    <p>Pacotes completos para o cavalheiro moderno.</p>
-                    <div class="service-meta">
-                        <span class="service-time">⏱ 60 MIN</span>
-                        <span class="service-price">A partir de R$ 45</span>
-                    </div>
-                </div>
-                <div class="service-card" onclick="selectService(this, 'Corte Infantil', 30, 35)">
-                    <h3>Corte Infantil</h3>
-                    <p>Atendimento humanizado e paciente para crianças.</p>
-                    <div class="service-meta">
-                        <span class="service-time">⏱ 30 MIN</span>
-                        <span class="service-price">R$ 35</span>
-                    </div>
-                </div>
-                <div class="service-card" onclick="selectService(this, 'Sobrancelha', 15, 15)">
-                    <h3>Sobrancelha</h3>
-                    <p>Design e limpeza das sobrancelhas.</p>
-                    <div class="service-meta">
-                        <span class="service-time">⏱ 15 MIN</span>
-                        <span class="service-price">R$ 15</span>
-                    </div>
-                </div>
-                <div class="service-card" onclick="selectService(this, 'Pigmentação', 20, 25)">
-                    <h3>Pigmentação</h3>
-                    <p>Tingimento e pigmentação capilar.</p>
-                    <div class="service-meta">
-                        <span class="service-time">⏱ 20 MIN</span>
-                        <span class="service-price">R$ 25</span>
-                    </div>
-                </div>
-                <div class="service-card" onclick="selectService(this, 'Depilação Nariz/Orelha', 10, 10)">
-                    <h3>Depilação Nariz/Orelha</h3>
-                    <p>Limpeza e depilação de pelos indesejados.</p>
-                    <div class="service-meta">
-                        <span class="service-time">⏱ 10 MIN</span>
-                        <span class="service-price">R$ 10</span>
-                    </div>
-                </div>
+            <div class="services-grid" id="services-grid">
+                <!-- Serviços carregados dinamicamente -->
             </div>
 
             <div id="dateTimeArea" style="opacity: 0.3; pointer-events: none; transition: 0.5s;">
@@ -508,6 +453,56 @@
 
         let state = { servico: null, data: null, hora: null, user: null, autismo: false };
         const horariosBase = ["09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00", "18:30"];
+
+        let servicesData = [];
+
+        // Carregar serviços do Firestore
+        async function loadServices() {
+            try {
+                const querySnapshot = await getDocs(collection(db, "services"));
+                servicesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderServices();
+            } catch (error) {
+                console.error("Erro ao carregar serviços:", error);
+                // Fallback para serviços padrão se não conseguir carregar
+                servicesData = [
+                    { name: "Corte Masculino", duration: 30, price: 25 },
+                    { name: "Barba Completa", duration: 30, price: 25 },
+                    { name: "Combos", duration: 60, price: 45 },
+                    { name: "Corte Infantil", duration: 30, price: 35 },
+                    { name: "Sobrancelha", duration: 15, price: 15 },
+                    { name: "Pigmentação", duration: 20, price: 25 },
+                    { name: "Depilação Nariz/Orelha", duration: 10, price: 10 }
+                ];
+                renderServices();
+            }
+        }
+
+        function renderServices() {
+            const grid = document.getElementById('services-grid');
+            if (!grid) return;
+
+            const serviceDescriptions = {
+                "Corte Masculino": "Corte tradicional com acabamento premium.",
+                "Barba Completa": "Design de barba.",
+                "Combos": "Pacotes completos para o cavalheiro moderno.",
+                "Corte Infantil": "Atendimento humanizado e paciente para crianças.",
+                "Sobrancelha": "Design e limpeza das sobrancelhas.",
+                "Pigmentação": "Tingimento e pigmentação capilar.",
+                "Depilação Nariz/Orelha": "Limpeza e depilação de pelos indesejados."
+            };
+
+            grid.innerHTML = servicesData.map(service => `
+                <div class="service-card" onclick="selectService(this, '${service.name}', ${service.duration}, ${service.price})">
+                    <h3>${service.name === 'Corte Masculino' ? 'Corte de Cabelo' : service.name}</h3>
+                    <p>${serviceDescriptions[service.name] || service.name}</p>
+                    <div class="service-meta">
+                        <span class="service-time">⏱ ${service.duration} MIN</span>
+                        <span class="service-price">R$ ${service.price}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
 
         // FUNÇÃO AJUSTADA APENAS PARA EXIBIR BLOCK NO MOBILE
         window.showSection = (name) => {
@@ -1123,6 +1118,9 @@
             const message = encodeURIComponent("Olá! Gostaria de falar sobre minha assinatura.");
             window.open(`https://api.whatsapp.com/send?phone=${phone}&text=${message}`);
         };
+
+        // Carregar serviços ao inicializar
+        loadServices();
     </script>
 </body>
 </html>
