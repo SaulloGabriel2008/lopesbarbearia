@@ -223,8 +223,7 @@
         <div class="content-side">
             <div class="section-title"><span class="section-num">1</span> Escolha o Serviço</div>
             <div class="services-grid" id="services-grid">
-                <!-- Serviços carregados dinamicamente -->
-            </div>
+                </div>
 
             <div id="dateTimeArea" style="opacity: 0.3; pointer-events: none; transition: 0.5s;">
                 <div class="section-title"><span class="section-num">2</span> Data & Horário</div>
@@ -461,6 +460,10 @@
             try {
                 const querySnapshot = await getDocs(collection(db, "services"));
                 servicesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                
+                // Ordenar para que Corte Masculino (Corte de Cabelo) apareça primeiro
+                servicesData.sort((a, b) => a.name === 'Corte Masculino' ? -1 : b.name === 'Corte Masculino' ? 1 : 0);
+                
                 renderServices();
             } catch (error) {
                 console.error("Erro ao carregar serviços:", error);
@@ -914,7 +917,7 @@
                     data: dt.data,
                     hora: dt.hora,
                     cliente: dt.cliente
-                }).replace(/"/g, '&quot;');
+                }).replace(/"/g, '"');
 
                 lista.innerHTML += `<div style="border-bottom: 1px solid #222; padding: 10px 0;">
                     <b>${dt.servico}</b><br>${dt.data.split('-').reverse().join('/')} às ${dt.hora}h
