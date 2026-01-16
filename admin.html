@@ -2229,14 +2229,18 @@
                 
                 if (subscription) {
                     const usedServices = subscription.usedServices || 0;
-                    const totalServices = subscription.plan === 'basic' ? 4 : subscription.plan === 'premium' ? 8 : 12;
+                    let totalServices;
+                    if (subscription.plan === 'sempre-alinhado') totalServices = 7;
+                    else if (subscription.plan === 'combo-executivo') totalServices = 4;
+                    else if (subscription.plan === 'vip-premium') totalServices = Infinity;
+                    else totalServices = 12;
                     
                     subscriptionDetails.innerHTML = `
                         <div class="subscription-usage-detail">
                             <h4>👑 Detalhes da Assinatura</h4>
                             <div class="usage-item">
                                 <span>Plano:</span>
-                                <span><strong>${subscription.plan === 'basic' ? 'Básico' : subscription.plan === 'premium' ? 'Premium' : 'VIP'}</strong></span>
+                                <span><strong>${subscription.plan === 'sempre-alinhado' ? 'Sempre Alinhado' : subscription.plan === 'combo-executivo' ? 'Combo Executivo' : 'VIP Premium'}</strong></span>
                             </div>
                             <div class="usage-item">
                                 <span>Serviços utilizados:</span>
@@ -3005,14 +3009,22 @@
 
                 // Calcular uso dos serviços
                 const usedServices = sub.usedServices || 0;
-                const totalServices = sub.plan === 'basic' ? 4 : sub.plan === 'premium' ? 8 : 12;
+                let totalServices;
+                if (sub.plan === 'sempre-alinhado') totalServices = 7; // 4 Pezinhos + 2 Barbas + 1 Sobrancelha
+                else if (sub.plan === 'combo-executivo') totalServices = 4; // 2 Cortes + 2 Barbas (sobrancelha ilimitada)
+                else if (sub.plan === 'vip-premium') totalServices = Infinity; // ilimitado
+                else totalServices = 12; // fallback
                 const usagePercentage = (usedServices / totalServices) * 100;
                 const isNearLimit = usagePercentage >= 75;
                 
                 // Barra de progresso de uso
-                const progressBar = `
+                const progressBar = totalServices === Infinity ? `
+                    <div style="font-size: 0.8rem; color: var(--success); margin-top: 5px;">
+                        Serviços ilimitados
+                    </div>
+                ` : `
                     <div class="subscription-progress">
-                        <div class="subscription-progress-bar" style="width: ${Math.min(usagePercentage, 100)}%"></div>
+                        <div class="subscription-progress-bar" style="width: ${Math.min((usedServices / totalServices) * 100, 100)}%"></div>
                     </div>
                     <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;">
                         ${usedServices}/${totalServices} serviços
@@ -3020,7 +3032,7 @@
                 `;
 
                 // Alerta de uso próximo ao limite
-                const usageAlert = isNearLimit ? `
+                const usageAlert = (totalServices !== Infinity && usagePercentage >= 75) ? `
                     <div class="subscription-alert">
                         ⚠️ ${sub.client} está próximo do limite! (${usedServices}/${totalServices} serviços)
                     </div>
@@ -3111,8 +3123,8 @@
                 );
 
                 const planName = subscription ? 
-                    (subscription.plan === 'basic' ? 'Sempre Alinhado' : 
-                     subscription.plan === 'premium' ? 'Combo Executivo' : 'VIP Premium') : 
+                    (subscription.plan === 'sempre-alinhado' ? 'Sempre Alinhado' : 
+                     subscription.plan === 'combo-executivo' ? 'Combo Executivo' : 'VIP Premium') : 
                     'N/A';
 
                 const statusBadge = booking.status === 'completed' 

@@ -566,13 +566,13 @@
         };
 
 const serviceOrder = [
-    "Cabelo na Maquina",
-    "Cabelo só tesoura", 
+    "Corte na Máquina",
+    "Corte só Tesoura", 
     "Corte Infantil",
     "Pezinho",
     "Combo Corte + Barba",
     "Combo Completo: Cabelo, Barba e Sobrancelha",
-    "Pezinho",
+    "Barba Completa",
     "Sobrancelha",
     "Pigmentação",
     "Depilação Nariz/Orelha"
@@ -611,8 +611,8 @@ const serviceOrder = [
                 } else {
                     console.log('Nenhum serviço encontrado no Firestore, usando fallback');
 servicesData = [
-    { name: "Cabelo na Maquina", duration: 20, price: 20 },
-    { name: "Cabelo só tesoura", duration: 45, price: 30 },
+    { name: "Corte na Máquina", duration: 20, price: 20 },
+    { name: "Corte só Tesoura", duration: 45, price: 30 },
     { name: "Corte Infantil", duration: 30, price: 35 },
     { name: "Pezinho", duration: 30, price: 10 },
     { name: "Combo Corte + Barba", duration: 60, price: 45 },
@@ -630,8 +630,8 @@ servicesData = [
                 console.error("Erro ao carregar serviços:", error);
                 // Fallback para serviços padrão se não conseguir carregar
 servicesData = [
-    { name: "Cabelo na Maquina", duration: 20, price: 20 },
-    { name: "Cabelo só tesoura", duration: 45, price: 30 },
+    { name: "Corte na Máquina", duration: 20, price: 20 },
+    { name: "Corte só Tesoura", duration: 45, price: 30 },
     { name: "Corte Infantil", duration: 30, price: 35 },
     { name: "Pezinho", duration: 30, price: 10 },
     { name: "Combo Corte + Barba", duration: 60, price: 45 },
@@ -703,11 +703,11 @@ servicesData = [
     let limit = null; // Inicialmente null para serviços não inclusos
     
     if (plan === 'sempre-alinhado') {
-        if (serviceName === 'Depilação Nariz/Orelha') limit = 4;
+        if (serviceName === 'Pezinho') limit = 4;
         else if (serviceName === 'Barba Completa') limit = 2;
         else if (serviceName === 'Sobrancelha') limit = 1;
     } else if (plan === 'combo-executivo') {
-        if (serviceName === 'Cabelo na Maquina' || serviceName === 'Cabelo só tesoura' || serviceName === 'Corte Masculino') limit = 2;
+        if (serviceName === 'Corte na Máquina' || serviceName === 'Corte só Tesoura') limit = 2;
         else if (serviceName === 'Barba Completa') limit = 2;
         else if (serviceName === 'Sobrancelha') limit = Infinity; // ilimitado
     } else if (plan === 'vip-premium') {
@@ -733,8 +733,8 @@ servicesData = [
     if (!servicesData || servicesData.length === 0) {
         console.warn('servicesData vazio, usando padrão');
         servicesData = [
-            { name: "Cabelo na Maquina", duration: 20, price: 20 },
-            { name: "Cabelo só tesoura", duration: 45, price: 30 },
+            { name: "Corte na Máquina", duration: 20, price: 20 },
+            { name: "Corte só Tesoura", duration: 45, price: 30 },
             { name: "Corte Infantil", duration: 30, price: 35 },
             { name: "Pezinho", duration: 30, price: 10 },
             { name: "Combo Corte + Barba", duration: 60, price: 45 },
@@ -760,8 +760,8 @@ servicesData = [
     });
     
     const serviceDescriptions = {
-        "Cabelo na Maquina": "Corte rápido e prático com máquina.",
-        "Cabelo só tesoura": "Corte exclusivo com tesoura para acabamento perfeito.",
+        "Corte na Maquina": "Corte rápido e prático com máquina.",
+        "Corte só tesoura": "Corte exclusivo com tesoura para acabamento perfeito.",
         "Corte Infantil": "Atendimento humanizado e paciente para crianças.",
         "Pezinho": "Limpeza e acabamento dos pés.",
         "Combo Corte + Barba": "Cabelo + Barba com desconto especial.",
@@ -770,9 +770,8 @@ servicesData = [
         "Sobrancelha": "Design e limpeza das sobrancelhas.",
         "Pigmentação": "Tingimento e pigmentação capilar.",
         "Depilação Nariz/Orelha": "Limpeza e depilação de pelos indesejados.",
-        "Corte Masculino": "Corte tradicional com acabamento premium.",
-        "Corte Masculino só Tesoura": "Corte exclusivo com tesoura para acabamento perfeito.",
-        "Corte Masculino só Máquina": "Corte rápido e prático com máquina.",
+        "Corte só Tesoura": "Corte exclusivo com tesoura para acabamento perfeito.",
+        "Corte na Máquina": "Corte rápido e prático com máquina.",
         "Combos": "Pacotes completos para o cavalheiro moderno.",
         "Corte Infantil (Autismo)": "Atendimento especializado para crianças com autismo."
     };
@@ -876,7 +875,7 @@ servicesData = [
         document.getElementById('corte-area').style.display = 'none';
         document.getElementById('combo-area').style.display = 'none';
         document.getElementById('observations-area').style.display = 'none';
-    } else if(nome === 'Cabelo na Maquina' || nome === 'Cabelo só tesoura') {
+    } else if(nome === 'Corte na Máquina' || nome === 'Corte só Tesoura') {
         // Remover a lógica de corte-area se não for mais necessária
         document.getElementById('autismo-area').style.display = 'none';
         document.getElementById('corte-area').style.display = 'none'; // Ou remover esta linha
@@ -938,13 +937,13 @@ servicesData = [
             if (!state.servico) return;
 
             // Para serviços de corte masculino, permitir mudança de tipo
-            if (state.servico.nome === 'Corte Masculino' || state.servico.nome === 'Corte Masculino só Tesoura' || state.servico.nome === 'Corte Masculino Máquina') {
+            if (state.servico.nome === 'Corte  só Tesoura' || state.servico.nome === 'Corte na Máquina') {
                 if (type === 'tesoura') {
-                    state.servico.nome = 'Corte Masculino só Tesoura';
+                    state.servico.nome = 'Corte  só Tesoura';
                     state.servico.preco = 30;
                     state.servico.duracao = 45;
                 } else if (type === 'maquina') {
-                    state.servico.nome = 'Corte Masculino Máquina';
+                    state.servico.nome = 'Corte na Máquina';
                     state.servico.preco = 20;
                     state.servico.duracao = 20;
                 }
@@ -1578,17 +1577,17 @@ servicesData = [
         function getPlanLimits(plan) {
     const limits = {};
     if (plan === 'sempre-alinhado') {
-        limits['Depilação Nariz/Orelha'] = 4;
+        limits['Pezinho'] = 4;
         limits['Barba Completa'] = 2;
         limits['Sobrancelha'] = 1;
     } else if (plan === 'combo-executivo') {
-        limits['Cabelo na Maquina'] = 2;
-        limits['Cabelo só tesoura'] = 2;
+        limits['Corte na Maquina'] = 2;
+        limits['Corte só tesoura'] = 2;
         limits['Barba Completa'] = 2;
         limits['Sobrancelha'] = Infinity;
     } else if (plan === 'vip-premium') {
-        limits['Cabelo na Maquina'] = Infinity;
-        limits['Cabelo só tesoura'] = Infinity;
+        limits['Corte na Maquina'] = Infinity;
+        limits['Corte só tesoura'] = Infinity;
         limits['Barba Completa'] = Infinity;
         limits['Sobrancelha'] = Infinity;
         limits['Pigmentação'] = Infinity;
