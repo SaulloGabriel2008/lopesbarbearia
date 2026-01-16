@@ -565,6 +565,19 @@
             appId: "1:546744214164:web:5bd367381afbef253d0a81",
         };
 
+const serviceOrder = [
+    "Cabelo na Maquina",
+    "Cabelo só tesoura", 
+    "Corte Infantil",
+    "Pezinho",
+    "Combo Corte + Barba",
+    "Combo Completo: Cabelo, Barba e Sobrancelha",
+    "Pezinho",
+    "Sobrancelha",
+    "Pigmentação",
+    "Depilação Nariz/Orelha"
+];
+
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
@@ -597,41 +610,37 @@
                     console.log('Serviços carregados do Firestore:', servicesData);
                 } else {
                     console.log('Nenhum serviço encontrado no Firestore, usando fallback');
-                    servicesData = [
-                        { name: "Corte Masculino", duration: 30, price: 25 },
-                        { name: "Corte Masculino só Tesoura", duration: 45, price: 30 },
-                        { name: "Corte Masculino só Máquina", duration: 20, price: 20 },
-                        { name: "Barba Completa", duration: 30, price: 25 },
-                        { name: "Combos", duration: 60, price: 45 },
-                        { name: "Corte Infantil", duration: 30, price: 35 },
-                        { name: "Corte Infantil (Autismo)", duration: 60, price: 40 },
-                        { name: "Pezinho", duration: 30, price: 10 },
-                        { name: "Sobrancelha", duration: 15, price: 15 },
-                        { name: "Pigmentação", duration: 20, price: 25 },
-                        { name: "Depilação Nariz/Orelha", duration: 10, price: 10 }
-                    ];
+servicesData = [
+    { name: "Cabelo na Maquina", duration: 20, price: 20 },
+    { name: "Cabelo só tesoura", duration: 45, price: 30 },
+    { name: "Corte Infantil", duration: 30, price: 35 },
+    { name: "Pezinho", duration: 30, price: 10 },
+    { name: "Combo Corte + Barba", duration: 60, price: 45 },
+    { name: "Combo Completo: Cabelo, Barba e Sobrancelha", duration: 75, price: 50 },
+    { name: "Barba Completa", duration: 30, price: 25 },
+    { name: "Sobrancelha", duration: 15, price: 15 },
+    { name: "Pigmentação", duration: 20, price: 25 },
+    { name: "Depilação Nariz/Orelha", duration: 10, price: 10 }
+];
                 }
-                
-                // Ordenar para que Corte Masculino (Corte de Cabelo) apareça primeiro
-                servicesData.sort((a, b) => a.name === 'Corte Masculino' ? -1 : b.name === 'Corte Masculino' ? 1 : 0);
+            
                 
                 renderServices();
             } catch (error) {
                 console.error("Erro ao carregar serviços:", error);
                 // Fallback para serviços padrão se não conseguir carregar
-                servicesData = [
-                    { name: "Corte Masculino", duration: 30, price: 25 },
-                    { name: "Corte Masculino só Tesoura", duration: 45, price: 30 },
-                    { name: "Corte Masculino só Máquina", duration: 20, price: 20 },
-                    { name: "Barba Completa", duration: 30, price: 25 },
-                    { name: "Combos", duration: 60, price: 45 },
-                    { name: "Corte Infantil", duration: 30, price: 35 },
-                    { name: "Corte Infantil (Autismo)", duration: 45, price: 40 },
-                    { name: "Pezinho", duration: 30, price: 10 },
-                    { name: "Sobrancelha", duration: 15, price: 15 },
-                    { name: "Pigmentação", duration: 20, price: 25 },
-                    { name: "Depilação Nariz/Orelha", duration: 10, price: 10 }
-                ];
+servicesData = [
+    { name: "Cabelo na Maquina", duration: 20, price: 20 },
+    { name: "Cabelo só tesoura", duration: 45, price: 30 },
+    { name: "Corte Infantil", duration: 30, price: 35 },
+    { name: "Pezinho", duration: 30, price: 10 },
+    { name: "Combo Corte + Barba", duration: 60, price: 45 },
+    { name: "Combo Completo: Cabelo, Barba e Sobrancelha", duration: 75, price: 50 },
+    { name: "Barba Completa", duration: 30, price: 25 },
+    { name: "Sobrancelha", duration: 15, price: 15 },
+    { name: "Pigmentação", duration: 20, price: 25 },
+    { name: "Depilação Nariz/Orelha", duration: 10, price: 10 }
+];
                 renderServices();
             }
         }
@@ -686,157 +695,127 @@
 
         // Calcular disponibilidade por serviço baseado na assinatura - CORRIGIDO
         function getServiceAvailability(serviceName, monthlyBookings) {
-            if (!userSubscription) return null;
+    if (!userSubscription) return null;
+    
+    const plan = userSubscription.plan;
+    const bookings = monthlyBookings[serviceName] || 0;
+    
+    let limit = null; // Inicialmente null para serviços não inclusos
+    
+    if (plan === 'sempre-alinhado') {
+        if (serviceName === 'Depilação Nariz/Orelha') limit = 4;
+        else if (serviceName === 'Barba Completa') limit = 2;
+        else if (serviceName === 'Sobrancelha') limit = 1;
+    } else if (plan === 'combo-executivo') {
+        if (serviceName === 'Cabelo na Maquina' || serviceName === 'Cabelo só tesoura' || serviceName === 'Corte Masculino') limit = 2;
+        else if (serviceName === 'Barba Completa') limit = 2;
+        else if (serviceName === 'Sobrancelha') limit = Infinity; // ilimitado
+    } else if (plan === 'vip-premium') {
+        limit = Infinity; // ilimitado para todos
+    }
+    
+    // Se não encontrou limite para o serviço, retorna null (serviço não incluso no plano)
+    if (limit === null) return null;
+    
+    const available = limit - bookings;
+    return { used: bookings, limit: limit, available: Math.max(0, available) };
+}
             
-            const plan = userSubscription.plan; // CORREÇÃO: era planId, mas no Firebase está salvo como "plan"
-            const bookings = monthlyBookings[serviceName] || 0;
-            
-            let limit = null; // Inicialmente null para serviços não inclusos
-            
-            if (plan === 'sempre-alinhado') {
-                if (serviceName === 'Depilação Nariz/Orelha') limit = 4;
-                else if (serviceName === 'Barba Completa') limit = 2;
-                else if (serviceName === 'Sobrancelha') limit = 1;
-            } else if (plan === 'combo-executivo') {
-                if (serviceName === 'Corte Masculino') limit = 2;
-                else if (serviceName === 'Barba Completa') limit = 2;
-                else if (serviceName === 'Sobrancelha') limit = Infinity; // ilimitado
-            } else if (plan === 'vip-premium') {
-                limit = Infinity; // ilimitado para todos
-            }
-            
-            // Se não encontrou limite para o serviço, retorna null (serviço não incluso no plano)
-            if (limit === null) return null;
-            
-            const available = limit - bookings;
-            return { used: bookings, limit: limit, available: Math.max(0, available) };
-        }
-
         function renderServices() {
-            const grid = document.getElementById('services-grid');
-            if (!grid) {
-                console.error('services-grid não encontrado');
-                return;
+    const grid = document.getElementById('services-grid');
+    if (!grid) {
+        console.error('services-grid não encontrado');
+        return;
+    }
+    
+    console.log('renderServices chamado, servicesData:', servicesData);
+    
+    if (!servicesData || servicesData.length === 0) {
+        console.warn('servicesData vazio, usando padrão');
+        servicesData = [
+            { name: "Cabelo na Maquina", duration: 20, price: 20 },
+            { name: "Cabelo só tesoura", duration: 45, price: 30 },
+            { name: "Corte Infantil", duration: 30, price: 35 },
+            { name: "Pezinho", duration: 30, price: 10 },
+            { name: "Combo Corte + Barba", duration: 60, price: 45 },
+            { name: "Combo Completo: Cabelo, Barba e Sobrancelha", duration: 75, price: 50 },
+            { name: "Barba Completa", duration: 30, price: 25 },
+            { name: "Sobrancelha", duration: 15, price: 15 },
+            { name: "Pigmentação", duration: 20, price: 25 },
+            { name: "Depilação Nariz/Orelha", duration: 10, price: 10 }
+        ];
+    }
+    
+    // Ordenar os serviços de acordo com a lista serviceOrder
+    const sortedServices = [...servicesData].sort((a, b) => {
+        const indexA = serviceOrder.indexOf(a.name);
+        const indexB = serviceOrder.indexOf(b.name);
+        
+        // Se um serviço não estiver na lista de ordem, colocar no final
+        if (indexA === -1 && indexB === -1) return 0;
+        if (indexA === -1) return 1;
+        if (indexB === -1) return -1;
+        
+        return indexA - indexB;
+    });
+    
+    const serviceDescriptions = {
+        "Cabelo na Maquina": "Corte rápido e prático com máquina.",
+        "Cabelo só tesoura": "Corte exclusivo com tesoura para acabamento perfeito.",
+        "Corte Infantil": "Atendimento humanizado e paciente para crianças.",
+        "Pezinho": "Limpeza e acabamento dos pés.",
+        "Combo Corte + Barba": "Cabelo + Barba com desconto especial.",
+        "Combo Completo: Cabelo, Barba e Sobrancelha": "Pacote completo para o cavalheiro moderno.",
+        "Barba Completa": "Design de barba e acabamento.",
+        "Sobrancelha": "Design e limpeza das sobrancelhas.",
+        "Pigmentação": "Tingimento e pigmentação capilar.",
+        "Depilação Nariz/Orelha": "Limpeza e depilação de pelos indesejados.",
+        "Corte Masculino": "Corte tradicional com acabamento premium.",
+        "Corte Masculino só Tesoura": "Corte exclusivo com tesoura para acabamento perfeito.",
+        "Corte Masculino só Máquina": "Corte rápido e prático com máquina.",
+        "Combos": "Pacotes completos para o cavalheiro moderno.",
+        "Corte Infantil (Autismo)": "Atendimento especializado para crianças com autismo."
+    };
+
+    grid.innerHTML = sortedServices.map(service => {
+        const displayName = service.name;
+        const availability = getServiceAvailability(service.name, state.monthlyBookings || {});
+        
+        let availabilityText = '';
+        let priceDisplay = `R$ ${service.price}`;
+        let cardClass = 'service-card';
+        let badgeHtml = '';
+        let tooltipHtml = '';
+        
+        if (availability) {
+            if (availability.available > 0) {
+                cardClass += ' subscription-included';
+                badgeHtml = '<span class="subscription-badge">👑 INCLUSO</span>';
+                priceDisplay = `<span class="subscription-free">GRÁTIS</span>`;
+                availabilityText = `<div class="subscription-usage">Você já usou <strong>${availability.used}</strong> de <strong>${availability.limit === Infinity ? '∞' : availability.limit}</strong> este mês</div>`;
+                tooltipHtml = `<div class="subscription-tooltip">💡<span class="tooltip-text">Este serviço está incluso na sua assinatura ativa. Você economiza R$ ${service.price}!</span></div>`;
+            } else {
+                availabilityText = `<div class="subscription-usage" style="background: rgba(239, 68, 68, 0.1); border-color: var(--danger);">Limite atingido este mês (${availability.used}/${availability.limit === Infinity ? '∞' : availability.limit})</div>`;
+                tooltipHtml = `<div class="subscription-tooltip">⚠️<span class="tooltip-text">Você atingiu o limite mensal deste serviço na sua assinatura.</span></div>`;
             }
-            
-            console.log('renderServices chamado, servicesData:', servicesData);
-            
-            if (!servicesData || servicesData.length === 0) {
-                console.warn('servicesData vazio, usando padrão');
-                servicesData = [
-                    { name: "Corte Masculino", duration: 30, price: 25 },
-                    { name: "Corte Masculino só Tesoura", duration: 45, price: 30 },
-                    { name: "Corte Masculino só Máquina", duration: 20, price: 20 },
-                    { name: "Barba Completa", duration: 30, price: 25 },
-                    { name: "Combos", duration: 60, price: 45 },
-                    { name: "Corte Infantil", duration: 30, price: 35 },
-                    { name: "Corte Infantil (Autismo)", duration: 45, price: 40 },
-                    { name: "Pezinho", duration: 30, price: 10 },
-                    { name: "Sobrancelha", duration: 15, price: 15 },
-                    { name: "Pigmentação", duration: 20, price: 25 },
-                    { name: "Depilação Nariz/Orelha", duration: 10, price: 10 }
-                ];
-            }
-
-            // Ordenar serviços com Pezinho visível
-            const sortedServices = [...servicesData].sort((a, b) => {
-                // Corte Masculino em primeiro
-                if (a.name === 'Corte Masculino') return -1;
-                if (b.name === 'Corte Masculino') return 1;
-                // Pezinho em segundo lugar para visibilidade
-                if (a.name === 'Pezinho') return -1;
-                if (b.name === 'Pezinho') return 1;
-                return 0;
-            });
-            
-            console.log('Serviços a renderizar:', sortedServices);
-
-            const serviceDescriptions = {
-                "Corte Masculino": "Corte tradicional com acabamento premium.",
-                "Corte Masculino só Tesoura": "Corte exclusivo com tesoura para acabamento perfeito.",
-                "Corte Masculino só Máquina": "Corte rápido e prático com máquina.",
-                "Barba Completa": "Design de barba.",
-                "Combos": "Pacotes completos para o cavalheiro moderno.",
-                "Corte Infantil": "Atendimento humanizado e paciente para crianças.",
-                "Corte Infantil (Autismo)": "Atendimento especializado para crianças com autismo.",
-                "Pezinho": "Limpeza e acabamento dos pés.",
-                "Sobrancelha": "Design e limpeza das sobrancelhas.",
-                "Pigmentação": "Tingimento e pigmentação capilar.",
-                "Depilação Nariz/Orelha": "Limpeza e depilação de pelos indesejados."
-            };
-
-            // Agrupar por categorias (usa campo 'category' se existir, senão heurística por nome)
-            const categorize = (s) => {
-                if (s.category) return s.category;
-                const name = (s.name || '').toLowerCase();
-                if (/corte|tesoura|máquina|infantil|pezinho/.test(name)) return 'Corte de Cabelo';
-                if (/combo|combos/.test(name)) return 'Combos';
-                return 'Outros';
-            };
-
-            const groups = {};
-            sortedServices.forEach(s => {
-                const cat = categorize(s);
-                groups[cat] = groups[cat] || [];
-                groups[cat].push(s);
-            });
-
-            const order = ['Corte de Cabelo', 'Combos', 'Outros'];
-
-            grid.innerHTML = order.map(cat => {
-                const list = groups[cat];
-                if (!list || list.length === 0) return '';
-
-                const cards = list.map(service => {
-                    const displayName = (service.name === 'Corte Masculino') ? 'Corte de Cabelo' : service.name;
-                    const availability = getServiceAvailability(service.name, state.monthlyBookings || {});
-
-                    let availabilityText = '';
-                    let priceDisplay = `R$ ${service.price}`;
-                    let cardClass = 'service-card';
-                    let badgeHtml = '';
-                    let tooltipHtml = '';
-
-                    if (availability) {
-                        if (availability.available > 0) {
-                            cardClass += ' subscription-included';
-                            badgeHtml = '<span class="subscription-badge">👑 INCLUSO</span>';
-                            priceDisplay = `<span class="subscription-free">GRÁTIS</span>`;
-                            availabilityText = `<div class="subscription-usage">Você já usou <strong>${availability.used}</strong> de <strong>${availability.limit === Infinity ? '∞' : availability.limit}</strong> este mês</div>`;
-                            tooltipHtml = `<div class="subscription-tooltip">💡<span class="tooltip-text">Este serviço está incluso na sua assinatura ativa. Você economiza R$ ${service.price}!</span></div>`;
-                        } else {
-                            availabilityText = `<div class="subscription-usage" style="background: rgba(239, 68, 68, 0.1); border-color: var(--danger);">Limite atingido este mês (${availability.used}/${availability.limit === Infinity ? '∞' : availability.limit})</div>`;
-                            tooltipHtml = `<div class="subscription-tooltip">⚠️<span class="tooltip-text">Você atingiu o limite mensal deste serviço na sua assinatura.</span></div>`;
-                        }
-                    } else if (userSubscription) {
-                        tooltipHtml = `<div class="subscription-tooltip">💳<span class="tooltip-text">Este serviço não está incluso na sua assinatura. Custa R$ ${service.price} avulso.</span></div>`;
-                    }
-
-                    return `
-                        <div class="${cardClass}" onclick="selectService(this, '${service.name}', ${service.duration}, ${service.price})">
-                            <h3>${displayName}${badgeHtml}${tooltipHtml}</h3>
-                            <p>${serviceDescriptions[service.name] || service.name}</p>
-                            ${availabilityText}
-                            <div class="service-meta">
-                                <span class="service-time">⏱ ${service.duration} MIN</span>
-                                <span class="service-price">${priceDisplay}</span>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-
-                return `
-                    <div class="category-block" style="margin-bottom:18px;">
-                        <div class="section-title" style="margin:6px 0 12px 0;">
-                            <span class="section-num"></span> ${cat}
-                        </div>
-                        <div class="category-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
-                            ${cards}
-                        </div>
-                    </div>
-                `;
-            }).join('');
+        } else if (userSubscription) {
+            // Serviço não incluso na assinatura
+            tooltipHtml = `<div class="subscription-tooltip">💳<span class="tooltip-text">Este serviço não está incluso na sua assinatura. Custa R$ ${service.price} avulso.</span></div>`;
         }
+        
+        return `
+            <div class="${cardClass}" onclick="selectService(this, '${service.name}', ${service.duration}, ${service.price})">
+                <h3>${displayName}${badgeHtml}${tooltipHtml}</h3>
+                <p>${serviceDescriptions[service.name] || service.name}</p>
+                ${availabilityText}
+                <div class="service-meta">
+                    <span class="service-time">⏱ ${service.duration} MIN</span>
+                    <span class="service-price">${priceDisplay}</span>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
 
         // Tornar renderServices global para ser chamada no onAuthStateChanged
         window.renderServices = renderServices;
@@ -892,27 +871,28 @@
             document.getElementById('dateTimeArea').style.opacity = "1";
             document.getElementById('dateTimeArea').style.pointerEvents = "all";
 
-            if(nome === 'Corte Infantil') {
-                document.getElementById('autismo-area').style.display = 'block';
-                document.getElementById('corte-area').style.display = 'none';
-                document.getElementById('combo-area').style.display = 'none';
-                document.getElementById('observations-area').style.display = 'none';
-            } else if(nome === 'Corte Masculino' || nome === 'Corte Masculino só Tesoura' || nome === 'Corte Masculino só Máquina') {
-                document.getElementById('autismo-area').style.display = 'none';
-                document.getElementById('corte-area').style.display = 'block';
-                document.getElementById('combo-area').style.display = 'none';
-                document.getElementById('observations-area').style.display = 'none';
-            } else if(nome === 'Combos') {
-                document.getElementById('autismo-area').style.display = 'none';
-                document.getElementById('corte-area').style.display = 'none';
-                document.getElementById('combo-area').style.display = 'block';
-                document.getElementById('observations-area').style.display = 'none';
-            } else {
-                document.getElementById('autismo-area').style.display = 'none';
-                document.getElementById('corte-area').style.display = 'none';
-                document.getElementById('combo-area').style.display = 'none';
-                document.getElementById('observations-area').style.display = 'none';
-            }
+    if(nome === 'Corte Infantil') {
+        document.getElementById('autismo-area').style.display = 'block';
+        document.getElementById('corte-area').style.display = 'none';
+        document.getElementById('combo-area').style.display = 'none';
+        document.getElementById('observations-area').style.display = 'none';
+    } else if(nome === 'Cabelo na Maquina' || nome === 'Cabelo só tesoura') {
+        // Remover a lógica de corte-area se não for mais necessária
+        document.getElementById('autismo-area').style.display = 'none';
+        document.getElementById('corte-area').style.display = 'none'; // Ou remover esta linha
+        document.getElementById('combo-area').style.display = 'none';
+        document.getElementById('observations-area').style.display = 'block';
+    } else if(nome === 'Combo Corte + Barba' || nome === 'Combo Completo: Cabelo, Barba e Sobrancelha') {
+        document.getElementById('autismo-area').style.display = 'none';
+        document.getElementById('corte-area').style.display = 'none';
+        document.getElementById('combo-area').style.display = 'none'; // Já selecionou o tipo
+        document.getElementById('observations-area').style.display = 'block';
+    } else {
+        document.getElementById('autismo-area').style.display = 'none';
+        document.getElementById('corte-area').style.display = 'none';
+        document.getElementById('combo-area').style.display = 'none';
+        document.getElementById('observations-area').style.display = 'block';
+    }
             
             if (state.data) renderHorarios();
             updateUI();
@@ -958,13 +938,13 @@
             if (!state.servico) return;
 
             // Para serviços de corte masculino, permitir mudança de tipo
-            if (state.servico.nome === 'Corte Masculino' || state.servico.nome === 'Corte Masculino só Tesoura' || state.servico.nome === 'Corte Masculino só Máquina') {
+            if (state.servico.nome === 'Corte Masculino' || state.servico.nome === 'Corte Masculino só Tesoura' || state.servico.nome === 'Corte Masculino Máquina') {
                 if (type === 'tesoura') {
                     state.servico.nome = 'Corte Masculino só Tesoura';
                     state.servico.preco = 30;
                     state.servico.duracao = 45;
                 } else if (type === 'maquina') {
-                    state.servico.nome = 'Corte Masculino só Máquina';
+                    state.servico.nome = 'Corte Masculino Máquina';
                     state.servico.preco = 20;
                     state.servico.duracao = 20;
                 }
@@ -1596,25 +1576,26 @@
         }
 
         function getPlanLimits(plan) {
-            const limits = {};
-            if (plan === 'sempre-alinhado') {
-                limits['Depilação Nariz/Orelha'] = 4;
-                limits['Barba Completa'] = 2;
-                limits['Sobrancelha'] = 1;
-            } else if (plan === 'combo-executivo') {
-                limits['Corte Masculino'] = 2;
-                limits['Barba Completa'] = 2;
-                limits['Sobrancelha'] = Infinity;
-            } else if (plan === 'vip-premium') {
-                limits['Corte Masculino'] = Infinity;
-                limits['Barba Completa'] = Infinity;
-                limits['Sobrancelha'] = Infinity;
-                limits['Pigmentação'] = Infinity;
-                limits['Depilação Nariz/Orelha'] = Infinity;
-            }
-            return limits;
-        }
-
+    const limits = {};
+    if (plan === 'sempre-alinhado') {
+        limits['Depilação Nariz/Orelha'] = 4;
+        limits['Barba Completa'] = 2;
+        limits['Sobrancelha'] = 1;
+    } else if (plan === 'combo-executivo') {
+        limits['Cabelo na Maquina'] = 2;
+        limits['Cabelo só tesoura'] = 2;
+        limits['Barba Completa'] = 2;
+        limits['Sobrancelha'] = Infinity;
+    } else if (plan === 'vip-premium') {
+        limits['Cabelo na Maquina'] = Infinity;
+        limits['Cabelo só tesoura'] = Infinity;
+        limits['Barba Completa'] = Infinity;
+        limits['Sobrancelha'] = Infinity;
+        limits['Pigmentação'] = Infinity;
+        limits['Depilação Nariz/Orelha'] = Infinity;
+    }
+    return limits;
+}
         async function loadUpcomingBenefits(subscription) {
             const container = document.getElementById('upcoming-benefits');
             const nextBilling = new Date(subscription.nextBilling);

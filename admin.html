@@ -3138,6 +3138,19 @@
             lucide.createIcons();
         };
 
+        const serviceOrder = [
+            "Cabelo na Maquina",
+            "Cabelo só tesoura", 
+            "Corte Infantil",
+            "Pezinho",
+            "Combo Corte + Barba",
+            "Combo Completo: Cabelo, Barba e Sobrancelha",
+            "Pezinho",
+            "Sobrancelha",
+            "Pigmentação",
+            "Depilação Nariz/Orelha"
+        ];
+
         // --- FUNÇÃO ATUALIZADA PARA ORDENAÇÃO DE SERVIÇOS ---
         window.renderServices = () => {
     const tbody = document.getElementById('list-services');
@@ -3155,37 +3168,23 @@
 
     // Criar uma cópia e ordenar
     const sortedServices = [...servicesData].sort((a, b) => {
-        // Se for Corte Masculino, coloca em primeiro
-        if (a.name === 'Corte Masculino') return -1;
-        if (b.name === 'Corte Masculino') return 1;
+        const indexA = serviceOrder.indexOf(a.name);
+        const indexB = serviceOrder.indexOf(b.name);
         
-        // Se for Barba, coloca em segundo
-        if (a.name === 'Barba Completa') return -1;
-        if (b.name === 'Barba Completa') return 1;
-
-        // Pezinho em posição visível
-        if (a.name === 'Pezinho') return -1;
-        if (b.name === 'Pezinho') return 1;
-
-        // O resto por ordem alfabética
-        return a.name.localeCompare(b.name);
+        // Se um serviço não estiver na lista de ordem, colocar no final
+        if (indexA === -1 && indexB === -1) return 0;
+        if (indexA === -1) return 1;
+        if (indexB === -1) return -1;
+        
+        return indexA - indexB;
     });
 
     tbody.innerHTML = sortedServices.map(service => {
-        const category = service.category || '';
         return `
         <tr>
             <td><strong>${service.name}</strong></td>
             <td><input type="number" value="${service.duration || 30}" onchange="updateService('${service.id}', 'duration', this.value)" style="width: 80px; padding: 8px; font-size: 0.9rem;"></td>
             <td><input type="number" step="0.01" value="${service.price || 0}" onchange="updateService('${service.id}', 'price', this.value)" style="width: 100px; padding: 8px; font-size: 0.9rem;"></td>
-            <td>
-                <select onchange="updateService('${service.id}', 'category', this.value)" style="padding:8px;">
-                    <option value="" ${category === '' ? 'selected' : ''}>Sem categoria</option>
-                    <option value="Corte de Cabelo" ${category === 'Corte de Cabelo' ? 'selected' : ''}>Corte de Cabelo</option>
-                    <option value="Combos" ${category === 'Combos' ? 'selected' : ''}>Combos</option>
-                    <option value="Outros" ${category === 'Outros' ? 'selected' : ''}>Outros</option>
-                </select>
-            </td>
             <td style="text-align: right;">
                 <button class="btn-action" onclick="saveService('${service.id}')" style="padding: 8px 16px; font-size: 0.85rem;">Salvar</button>
             </td>
@@ -3206,35 +3205,15 @@
 
     // Ordenar serviços de forma amigável
     const sortedServices = [...servicesData].sort((a, b) => {
-        // Ordem personalizada: Corte Masculino primeiro, depois Barba, etc.
-        const order = [
-            'Corte Masculino',
-            'Corte Masculino só Tesoura',
-            'Corte Masculino só Máquina',
-            'Barba Completa',
-            'Combos',
-            'Combo Corte + Barba',
-            'Combo Completo: Cabelo, Barba e Sombrancelha',
-            'Corte Infantil',
-            'Corte Infantil (Autismo)',
-            'Pezinho',
-            'Sobrancelha',
-            'Pigmentação',
-            'Depilação Nariz/Orelha',
-            'Cortesia'
-        ];
+        const indexA = serviceOrder.indexOf(a.name);
+        const indexB = serviceOrder.indexOf(b.name);
         
-        const indexA = order.findIndex(o => a.name === o);
-        const indexB = order.findIndex(o => b.name === o);
+        // Se um serviço não estiver na lista de ordem, colocar no final
+        if (indexA === -1 && indexB === -1) return 0;
+        if (indexA === -1) return 1;
+        if (indexB === -1) return -1;
         
-        // Se ambos estão na ordem, usa a ordem definida
-        if (indexA !== -1 && indexB !== -1) return indexA - indexB;
-        // Se apenas A está na ordem, A vem primeiro
-        if (indexA !== -1) return -1;
-        // Se apenas B está na ordem, B vem primeiro
-        if (indexB !== -1) return 1;
-        // Caso contrário, ordena alfabeticamente
-        return a.name.localeCompare(b.name);
+        return indexA - indexB;
     });
 
     // Adicionar cada serviço como uma opção
@@ -3261,11 +3240,9 @@
 
         window.updateService = (id, field, value) => {
             const service = servicesData.find(s => s.id === id);
-            if (!service) return;
-            if (field === 'price') service.price = parseFloat(value);
-            else if (field === 'duration') service.duration = parseInt(value);
-            else if (field === 'category') service.category = value;
-            else service[field] = value;
+            if (service) {
+                service[field] = field === 'price' ? parseFloat(value) : parseInt(value);
+            }
         };
 
         window.saveService = async (id) => {
@@ -3274,9 +3251,8 @@
 
             try {
                 await updateDoc(doc(db, "services", id), {
-                    duration: service.duration || 30,
-                    price: service.price || 0,
-                    category: service.category || ''
+                    duration: service.duration,
+                    price: service.price
                 });
                 showToast('Serviço atualizado com sucesso!', 'success');
             } catch (error) {
