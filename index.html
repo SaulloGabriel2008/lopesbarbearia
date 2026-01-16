@@ -481,6 +481,82 @@
             }
         }
 
+        let userSubscription = null;
+
+        // Carregar assinatura do usuário
+        async function loadUserSubscriptionForBooking() {
+            if (!state.user) return;
+            try {
+                const q = query(collection(db, "assinaturas"), where("clientId", "==", state.user.uid), where("status", "==", "active"));
+                const querySnapshot = await getDocs(q);
+                if (!querySnapshot.empty) {
+                    userSubscription = querySnapshot.docs[0].data();
+                } else {
+                    userSubscription = null;
+                }
+            } catch (e) {
+                console.error("Erro ao carregar assinatura:", e);
+                userSubscription = null;
+            }
+        }
+
+        // Calcular agendamentos do mês
+        async function getMonthlyBookings() {
+            if (!state.user) return {};
+            const now = new Date();
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+            
+            try {
+                const q = query(collection(db, "agendamentos"), 
+                    where("userId", "==", state.user.uid),
+                    where("data", ">=", startOfMonth.toISOString().split('T')[0]),
+                    where("data", "<=", endOfMonth.toISOString().split('T')[0])
+                );
+                const querySnapshot = await getDocs(q);
+                const bookings = {};
+                querySnapshot.forEach(doc => {
+                    const data = doc.data();
+                    // Extrair o nome base do serviço (remover " (Assinatura)" se existir)
+                    const serviceName = data.servico.replace(' (Assinatura)', '').split(' (')[0];
+                    if (!bookings[serviceName]) bookings[serviceName] = 0;
+                    bookings[serviceName]++;
+                });
+                return bookings;
+            } catch (e) {
+                console.error("Erro ao carregar agendamentos:", e);
+                return {};
+            }
+        }
+
+        // Calcular disponibilidade por serviço baseado na assinatura - CORRIGIDO
+        function getServiceAvailability(serviceName, monthlyBookings) {
+            if (!userSubscription) return null;
+            
+            const plan = userSubscription.plan; // CORREÇÃO: era planId, mas no Firebase está salvo como "plan"
+            const bookings = monthlyBookings[serviceName] || 0;
+            
+            let limit = null; // Inicialmente null para serviços não inclusos
+            
+            if (plan === 'sempre-alinhado') {
+                if (serviceName === 'Depilação Nariz/Orelha') limit = 4;
+                else if (serviceName === 'Barba Completa') limit = 2;
+                else if (serviceName === 'Sobrancelha') limit = 1;
+            } else if (plan === 'combo-executivo') {
+                if (serviceName === 'Corte Masculino') limit = 2;
+                else if (serviceName === 'Barba Completa') limit = 2;
+                else if (serviceName === 'Sobrancelha') limit = Infinity; // ilimitado
+            } else if (plan === 'vip-premium') {
+                limit = Infinity; // ilimitado para todos
+            }
+            
+            // Se não encontrou limite para o serviço, retorna null (serviço não incluso no plano)
+            if (limit === null) return null;
+            
+            const available = limit - bookings;
+            return { used: bookings, limit: limit, available: Math.max(0, available) };
+        }
+
         function renderServices() {
             const grid = document.getElementById('services-grid');
             if (!grid) return;
@@ -495,17 +571,37 @@
                 "Depilação Nariz/Orelha": "Limpeza e depilação de pelos indesejados."
             };
 
-            grid.innerHTML = servicesData.map(service => `
-                <div class="service-card" onclick="selectService(this, '${service.name}', ${service.duration}, ${service.price})">
-                    <h3>${service.name === 'Corte Masculino' ? 'Corte de Cabelo' : service.name}</h3>
-                    <p>${serviceDescriptions[service.name] || service.name}</p>
-                    <div class="service-meta">
-                        <span class="service-time">⏱ ${service.duration} MIN</span>
-                        <span class="service-price">R$ ${service.price}</span>
+            grid.innerHTML = servicesData.map(service => {
+                const displayName = service.name === 'Corte Masculino' ? 'Corte de Cabelo' : service.name;
+                const availability = getServiceAvailability(service.name, state.monthlyBookings || {});
+                
+                let availabilityText = '';
+                let priceDisplay = `R$ ${service.price}`;
+                
+                if (availability) {
+                    if (availability.available > 0) {
+                        availabilityText = ` (${availability.available}/${availability.limit === Infinity ? '∞' : availability.limit} disponíveis)`;
+                        priceDisplay = `R$ ${service.price} <span style="font-size:0.8rem;color:var(--primary);">(Grátis com assinatura)</span>`;
+                    } else {
+                        availabilityText = ` (Esgotado - ${availability.used}/${availability.limit === Infinity ? '∞' : availability.limit})`;
+                    }
+                }
+                
+                return `
+                    <div class="service-card" onclick="selectService(this, '${service.name}', ${service.duration}, ${service.price})">
+                        <h3>${displayName}${availabilityText}</h3>
+                        <p>${serviceDescriptions[service.name] || service.name}</p>
+                        <div class="service-meta">
+                            <span class="service-time">⏱ ${service.duration} MIN</span>
+                            <span class="service-price">${priceDisplay}</span>
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
+
+        // Tornar renderServices global para ser chamada no onAuthStateChanged
+        window.renderServices = renderServices;
 
         // FUNÇÃO AJUSTADA APENAS PARA EXIBIR BLOCK NO MOBILE
         window.showSection = (name) => {
@@ -538,8 +634,13 @@
             state.autismo = false;
             state.hora = null;
 
-            document.getElementById('resumoServico').innerText = `${nome}${slots > 1 ? ' (' + slots + ' slots)' : ''}`;
-            document.getElementById('resumoPreco').innerHTML = `R$ ${preco} <span id="resumoTempo" style="font-size:0.8rem; color:var(--text-muted); font-weight:500;"> • ⏱ ${duracao} min </span>`;
+            // Verificar se é agendamento por assinatura
+            const availability = getServiceAvailability(nome, state.monthlyBookings || {});
+            state.isSubscription = availability && availability.available > 0;
+            const finalPreco = state.isSubscription ? 0 : preco;
+
+            document.getElementById('resumoServico').innerText = `${nome}${slots > 1 ? ' (' + slots + ' slots)' : ''}${state.isSubscription ? ' (Assinatura)' : ''}`;
+            document.getElementById('resumoPreco').innerHTML = `R$ ${finalPreco} <span id="resumoTempo" style="font-size:0.8rem; color:var(--text-muted); font-weight:500;"> • ⏱ ${duracao} min </span>`;
             
             document.getElementById('dateTimeArea').style.opacity = "1";
             document.getElementById('dateTimeArea').style.pointerEvents = "all";
@@ -796,11 +897,20 @@
                 document.getElementById('auth-signup').style.display = "none";
                 document.getElementById('clientName').innerText = nomeExibicao;
                 document.getElementById('userNameLogged').innerText = `Agendando para: ${nomeExibicao}`;
+                
+                await loadUserSubscriptionForBooking();
+                state.monthlyBookings = await getMonthlyBookings();
+                // Atualizar os serviços para mostrar a disponibilidade
+                window.renderServices();
                 loadUserAppointments(user.uid);
             } else {
                 document.getElementById('user-logged-info').style.display = "none";
                 document.getElementById('auth-login').style.display = "block";
                 document.getElementById('userNameLogged').innerText = "";
+                userSubscription = null;
+                state.monthlyBookings = {};
+                // Atualizar os serviços para remover a disponibilidade
+                window.renderServices();
             }
             updateUI();
         });
@@ -843,6 +953,10 @@
                 const slotsNeeded = state.autismo ? 2 : state.servico.slots;
                 let precoFinal = Number(state.servico.preco) || 0;
                 let servicoFinal = state.servico.nome;
+                if (state.isSubscription) {
+                    precoFinal = 0;
+                    servicoFinal += ' (Assinatura)';
+                }
                 if (state.autismo) {
                     servicoFinal += ' (Autismo)';
                     if (state.servico.nome && state.servico.nome.includes('Infantil')) precoFinal = 60;
@@ -878,6 +992,7 @@
                     slots: slotsNeeded,
                     preco: precoFinal,
                     autismo: state.autismo,
+                    isSubscription: state.isSubscription || false,
                     observacoes: document.getElementById('observations').value,
                     status: 'confirmed',
                     timestamp: new Date()
