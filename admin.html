@@ -3172,11 +3172,20 @@
     });
 
     tbody.innerHTML = sortedServices.map(service => {
+        const category = service.category || '';
         return `
         <tr>
             <td><strong>${service.name}</strong></td>
             <td><input type="number" value="${service.duration || 30}" onchange="updateService('${service.id}', 'duration', this.value)" style="width: 80px; padding: 8px; font-size: 0.9rem;"></td>
             <td><input type="number" step="0.01" value="${service.price || 0}" onchange="updateService('${service.id}', 'price', this.value)" style="width: 100px; padding: 8px; font-size: 0.9rem;"></td>
+            <td>
+                <select onchange="updateService('${service.id}', 'category', this.value)" style="padding:8px;">
+                    <option value="" ${category === '' ? 'selected' : ''}>Sem categoria</option>
+                    <option value="Corte de Cabelo" ${category === 'Corte de Cabelo' ? 'selected' : ''}>Corte de Cabelo</option>
+                    <option value="Combos" ${category === 'Combos' ? 'selected' : ''}>Combos</option>
+                    <option value="Outros" ${category === 'Outros' ? 'selected' : ''}>Outros</option>
+                </select>
+            </td>
             <td style="text-align: right;">
                 <button class="btn-action" onclick="saveService('${service.id}')" style="padding: 8px 16px; font-size: 0.85rem;">Salvar</button>
             </td>
@@ -3252,9 +3261,11 @@
 
         window.updateService = (id, field, value) => {
             const service = servicesData.find(s => s.id === id);
-            if (service) {
-                service[field] = field === 'price' ? parseFloat(value) : parseInt(value);
-            }
+            if (!service) return;
+            if (field === 'price') service.price = parseFloat(value);
+            else if (field === 'duration') service.duration = parseInt(value);
+            else if (field === 'category') service.category = value;
+            else service[field] = value;
         };
 
         window.saveService = async (id) => {
@@ -3263,8 +3274,9 @@
 
             try {
                 await updateDoc(doc(db, "services", id), {
-                    duration: service.duration,
-                    price: service.price
+                    duration: service.duration || 30,
+                    price: service.price || 0,
+                    category: service.category || ''
                 });
                 showToast('Serviço atualizado com sucesso!', 'success');
             } catch (error) {
