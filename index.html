@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lopes Barbearia</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     
@@ -15,6 +16,10 @@
             --text-main: #ffffff;
             --text-muted: #a0a0a0;
             --border: #222222;
+            --subscription: #8b5cf6;
+            --subscription-light: rgba(139, 92, 246, 0.1);
+            --subscription-border: rgba(139, 92, 246, 0.3);
+            --subscription-hover: rgba(139, 92, 246, 0.2);
         }
 
         body { 
@@ -201,8 +206,110 @@
             font-weight: bold;
         }
 
+        /* Novos estilos para assinatura */
+        .service-card.subscription-included {
+            border: 2px solid var(--subscription);
+            background: var(--subscription-light);
+            position: relative;
+        }
+        .service-card.subscription-included::before {
+            content: "👑 ASSINATURA";
+            position: absolute;
+            top: -10px;
+            right: 10px;
+            background: var(--subscription);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            z-index: 1;
+        }
+        .subscription-badge {
+            background: var(--subscription);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+        .subscription-free {
+            color: var(--subscription);
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        .subscription-tooltip {
+            position: relative;
+            display: inline-block;
+        }
+        .subscription-tooltip .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background-color: var(--card-bg);
+            color: var(--text-main);
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            border: 1px solid var(--border);
+            font-size: 0.8rem;
+        }
+        .subscription-tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+        .subscription-usage {
+            background: var(--subscription-light);
+            border: 1px solid var(--subscription-border);
+            border-radius: 8px;
+            padding: 12px;
+            margin: 10px 0;
+            font-size: 0.85rem;
+        }
+        .subscription-usage strong {
+            color: var(--subscription);
+        }
+        .subscription-savings {
+            background: linear-gradient(135deg, var(--subscription), var(--primary));
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin: 8px 0;
+            text-align: center;
+        }
+        .subscription-upgrade {
+            background: var(--warn);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            margin: 8px 0;
+            text-align: center;
+            cursor: pointer;
+        }
+        .subscription-confirm {
+            background: var(--subscription);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px 0;
+            width: 100%;
+        }
+
 @media (max-width: 900px) { .main-layout { grid-template-columns: 1fr; } .summary-card { position: static; } .services-grid { grid-template-columns: 1fr; } header { flex-direction: column; gap: 20px; } .auth-container { margin: 20px auto; } .logo-area h1 { font-size: 1rem; } .nav-buttons { flex-wrap: wrap; justify-content: center; } .nav-btn { padding: 8px 12px; font-size: 0.75rem; } .section-title { font-size: 1.2rem; } .horarios-grid { grid-template-columns: repeat(3, 1fr); } .service-card { padding: 15px; } .service-card h3 { font-size: 0.95rem; } .summary-card { padding: 20px; } .total-price { font-size: 1.8rem; } }
-    </style>
+        </style>
 </head>
 <body>
 
@@ -371,6 +478,31 @@
                 </div>
             </div>
 
+            <!-- Gráfico de uso mensal -->
+            <div class="summary-card" style="margin-bottom: 30px;">
+                <h4 style="margin-bottom: 20px; color: var(--subscription);">📊 Uso Mensal dos Serviços</h4>
+                <div id="subscription-usage-chart" style="height: 200px;">
+                    <canvas id="usageChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Próximos benefícios -->
+            <div class="summary-card" style="margin-bottom: 30px;">
+                <h4 style="margin-bottom: 20px; color: var(--subscription);">🔄 Próximos Benefícios</h4>
+                <div id="upcoming-benefits">
+                    <p style="color: var(--text-muted);">Carregando...</p>
+                </div>
+            </div>
+
+            <!-- Histórico de uso -->
+            <div class="summary-card" style="margin-bottom: 30px;">
+                <h4 style="margin-bottom: 20px; color: var(--subscription);">📋 Histórico de Uso (Este Mês)</h4>
+                <div id="usage-history">
+                    <p style="color: var(--text-muted);">Carregando...</p>
+                </div>
+                <button class="btn-action" style="background: var(--subscription); margin-top: 15px;" onclick="showFullHistory()">VER HISTÓRICO COMPLETO</button>
+            </div>
+
             <div style="text-align: center;">
                 <button class="btn-confirm" style="background: var(--primary);" onclick="contactBarber()">FALAR COM O BARBEIRO</button>
             </div>
@@ -421,8 +553,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, query, where, getDocs, getDoc, setDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, where, getDocs, getDoc, setDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBLBFTLC7sqM9VUhlsypPugQ-LhcX7-0Rw",
@@ -454,12 +586,31 @@
         const horariosBase = ["09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00", "18:30"];
 
         let servicesData = [];
+        let usageChart = null; // Variável global para armazenar o gráfico de uso
 
         // Carregar serviços do Firestore
         async function loadServices() {
             try {
                 const querySnapshot = await getDocs(collection(db, "services"));
-                servicesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                if (!querySnapshot.empty) {
+                    servicesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    console.log('Serviços carregados do Firestore:', servicesData);
+                } else {
+                    console.log('Nenhum serviço encontrado no Firestore, usando fallback');
+                    servicesData = [
+                        { name: "Corte Masculino", duration: 30, price: 25 },
+                        { name: "Corte Masculino só Tesoura", duration: 45, price: 30 },
+                        { name: "Corte Masculino só Máquina", duration: 20, price: 20 },
+                        { name: "Barba Completa", duration: 30, price: 25 },
+                        { name: "Combos", duration: 60, price: 45 },
+                        { name: "Corte Infantil", duration: 30, price: 35 },
+                        { name: "Corte Infantil (Autismo)", duration: 60, price: 40 },
+                        { name: "Pezinho", duration: 30, price: 10 },
+                        { name: "Sobrancelha", duration: 15, price: 15 },
+                        { name: "Pigmentação", duration: 20, price: 25 },
+                        { name: "Depilação Nariz/Orelha", duration: 10, price: 10 }
+                    ];
+                }
                 
                 // Ordenar para que Corte Masculino (Corte de Cabelo) apareça primeiro
                 servicesData.sort((a, b) => a.name === 'Corte Masculino' ? -1 : b.name === 'Corte Masculino' ? 1 : 0);
@@ -470,9 +621,13 @@
                 // Fallback para serviços padrão se não conseguir carregar
                 servicesData = [
                     { name: "Corte Masculino", duration: 30, price: 25 },
+                    { name: "Corte Masculino só Tesoura", duration: 45, price: 30 },
+                    { name: "Corte Masculino só Máquina", duration: 20, price: 20 },
                     { name: "Barba Completa", duration: 30, price: 25 },
                     { name: "Combos", duration: 60, price: 45 },
                     { name: "Corte Infantil", duration: 30, price: 35 },
+                    { name: "Corte Infantil (Autismo)", duration: 45, price: 40 },
+                    { name: "Pezinho", duration: 30, price: 10 },
                     { name: "Sobrancelha", duration: 15, price: 15 },
                     { name: "Pigmentação", duration: 20, price: 25 },
                     { name: "Depilação Nariz/Orelha", duration: 10, price: 10 }
@@ -559,41 +714,124 @@
 
         function renderServices() {
             const grid = document.getElementById('services-grid');
-            if (!grid) return;
+            if (!grid) {
+                console.error('services-grid não encontrado');
+                return;
+            }
+            
+            console.log('renderServices chamado, servicesData:', servicesData);
+            
+            if (!servicesData || servicesData.length === 0) {
+                console.warn('servicesData vazio, usando padrão');
+                servicesData = [
+                    { name: "Corte Masculino", duration: 30, price: 25 },
+                    { name: "Corte Masculino só Tesoura", duration: 45, price: 30 },
+                    { name: "Corte Masculino só Máquina", duration: 20, price: 20 },
+                    { name: "Barba Completa", duration: 30, price: 25 },
+                    { name: "Combos", duration: 60, price: 45 },
+                    { name: "Corte Infantil", duration: 30, price: 35 },
+                    { name: "Corte Infantil (Autismo)", duration: 45, price: 40 },
+                    { name: "Pezinho", duration: 30, price: 10 },
+                    { name: "Sobrancelha", duration: 15, price: 15 },
+                    { name: "Pigmentação", duration: 20, price: 25 },
+                    { name: "Depilação Nariz/Orelha", duration: 10, price: 10 }
+                ];
+            }
+
+            // Ordenar serviços com Pezinho visível
+            const sortedServices = [...servicesData].sort((a, b) => {
+                // Corte Masculino em primeiro
+                if (a.name === 'Corte Masculino') return -1;
+                if (b.name === 'Corte Masculino') return 1;
+                // Pezinho em segundo lugar para visibilidade
+                if (a.name === 'Pezinho') return -1;
+                if (b.name === 'Pezinho') return 1;
+                return 0;
+            });
+            
+            console.log('Serviços a renderizar:', sortedServices);
 
             const serviceDescriptions = {
                 "Corte Masculino": "Corte tradicional com acabamento premium.",
+                "Corte Masculino só Tesoura": "Corte exclusivo com tesoura para acabamento perfeito.",
+                "Corte Masculino só Máquina": "Corte rápido e prático com máquina.",
                 "Barba Completa": "Design de barba.",
                 "Combos": "Pacotes completos para o cavalheiro moderno.",
                 "Corte Infantil": "Atendimento humanizado e paciente para crianças.",
+                "Corte Infantil (Autismo)": "Atendimento especializado para crianças com autismo.",
+                "Pezinho": "Limpeza e acabamento dos pés.",
                 "Sobrancelha": "Design e limpeza das sobrancelhas.",
                 "Pigmentação": "Tingimento e pigmentação capilar.",
                 "Depilação Nariz/Orelha": "Limpeza e depilação de pelos indesejados."
             };
 
-            grid.innerHTML = servicesData.map(service => {
-                const displayName = service.name === 'Corte Masculino' ? 'Corte de Cabelo' : service.name;
-                const availability = getServiceAvailability(service.name, state.monthlyBookings || {});
-                
-                let availabilityText = '';
-                let priceDisplay = `R$ ${service.price}`;
-                
-                if (availability) {
-                    if (availability.available > 0) {
-                        availabilityText = ` (${availability.available}/${availability.limit === Infinity ? '∞' : availability.limit} disponíveis)`;
-                        priceDisplay = `R$ ${service.price} <span style="font-size:0.8rem;color:var(--primary);">(Grátis com assinatura)</span>`;
-                    } else {
-                        availabilityText = ` (Esgotado - ${availability.used}/${availability.limit === Infinity ? '∞' : availability.limit})`;
+            // Agrupar por categorias (usa campo 'category' se existir, senão heurística por nome)
+            const categorize = (s) => {
+                if (s.category) return s.category;
+                const name = (s.name || '').toLowerCase();
+                if (/corte|tesoura|máquina|infantil|pezinho/.test(name)) return 'Corte de Cabelo';
+                if (/combo|combos/.test(name)) return 'Combos';
+                return 'Outros';
+            };
+
+            const groups = {};
+            sortedServices.forEach(s => {
+                const cat = categorize(s);
+                groups[cat] = groups[cat] || [];
+                groups[cat].push(s);
+            });
+
+            const order = ['Corte de Cabelo', 'Combos', 'Outros'];
+
+            grid.innerHTML = order.map(cat => {
+                const list = groups[cat];
+                if (!list || list.length === 0) return '';
+
+                const cards = list.map(service => {
+                    const displayName = (service.name === 'Corte Masculino') ? 'Corte de Cabelo' : service.name;
+                    const availability = getServiceAvailability(service.name, state.monthlyBookings || {});
+
+                    let availabilityText = '';
+                    let priceDisplay = `R$ ${service.price}`;
+                    let cardClass = 'service-card';
+                    let badgeHtml = '';
+                    let tooltipHtml = '';
+
+                    if (availability) {
+                        if (availability.available > 0) {
+                            cardClass += ' subscription-included';
+                            badgeHtml = '<span class="subscription-badge">👑 INCLUSO</span>';
+                            priceDisplay = `<span class="subscription-free">GRÁTIS</span>`;
+                            availabilityText = `<div class="subscription-usage">Você já usou <strong>${availability.used}</strong> de <strong>${availability.limit === Infinity ? '∞' : availability.limit}</strong> este mês</div>`;
+                            tooltipHtml = `<div class="subscription-tooltip">💡<span class="tooltip-text">Este serviço está incluso na sua assinatura ativa. Você economiza R$ ${service.price}!</span></div>`;
+                        } else {
+                            availabilityText = `<div class="subscription-usage" style="background: rgba(239, 68, 68, 0.1); border-color: var(--danger);">Limite atingido este mês (${availability.used}/${availability.limit === Infinity ? '∞' : availability.limit})</div>`;
+                            tooltipHtml = `<div class="subscription-tooltip">⚠️<span class="tooltip-text">Você atingiu o limite mensal deste serviço na sua assinatura.</span></div>`;
+                        }
+                    } else if (userSubscription) {
+                        tooltipHtml = `<div class="subscription-tooltip">💳<span class="tooltip-text">Este serviço não está incluso na sua assinatura. Custa R$ ${service.price} avulso.</span></div>`;
                     }
-                }
-                
+
+                    return `
+                        <div class="${cardClass}" onclick="selectService(this, '${service.name}', ${service.duration}, ${service.price})">
+                            <h3>${displayName}${badgeHtml}${tooltipHtml}</h3>
+                            <p>${serviceDescriptions[service.name] || service.name}</p>
+                            ${availabilityText}
+                            <div class="service-meta">
+                                <span class="service-time">⏱ ${service.duration} MIN</span>
+                                <span class="service-price">${priceDisplay}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
                 return `
-                    <div class="service-card" onclick="selectService(this, '${service.name}', ${service.duration}, ${service.price})">
-                        <h3>${displayName}${availabilityText}</h3>
-                        <p>${serviceDescriptions[service.name] || service.name}</p>
-                        <div class="service-meta">
-                            <span class="service-time">⏱ ${service.duration} MIN</span>
-                            <span class="service-price">${priceDisplay}</span>
+                    <div class="category-block" style="margin-bottom:18px;">
+                        <div class="section-title" style="margin:6px 0 12px 0;">
+                            <span class="section-num"></span> ${cat}
+                        </div>
+                        <div class="category-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                            ${cards}
                         </div>
                     </div>
                 `;
@@ -639,7 +877,16 @@
             state.isSubscription = availability && availability.available > 0;
             const finalPreco = state.isSubscription ? 0 : preco;
 
-            document.getElementById('resumoServico').innerText = `${nome}${slots > 1 ? ' (' + slots + ' slots)' : ''}${state.isSubscription ? ' (Assinatura)' : ''}`;
+            // Mostrar mensagem de economia se for assinatura
+            if (state.isSubscription) {
+                const savingsMsg = document.createElement('div');
+                savingsMsg.className = 'subscription-savings';
+                savingsMsg.innerHTML = `💰 Você economiza R$ ${preco} usando sua assinatura!`;
+                el.appendChild(savingsMsg);
+                setTimeout(() => savingsMsg.remove(), 3000);
+            }
+
+            document.getElementById('resumoServico').innerHTML = `${nome}${slots > 1 ? ' (' + slots + ' slots)' : ''}${state.isSubscription ? ' <span style="color: var(--subscription); font-weight: bold;">(Assinatura)</span>' : ''}`;
             document.getElementById('resumoPreco').innerHTML = `R$ ${finalPreco} <span id="resumoTempo" style="font-size:0.8rem; color:var(--text-muted); font-weight:500;"> • ⏱ ${duracao} min </span>`;
             
             document.getElementById('dateTimeArea').style.opacity = "1";
@@ -650,7 +897,7 @@
                 document.getElementById('corte-area').style.display = 'none';
                 document.getElementById('combo-area').style.display = 'none';
                 document.getElementById('observations-area').style.display = 'none';
-            } else if(nome === 'Corte Masculino') {
+            } else if(nome === 'Corte Masculino' || nome === 'Corte Masculino só Tesoura' || nome === 'Corte Masculino só Máquina') {
                 document.getElementById('autismo-area').style.display = 'none';
                 document.getElementById('corte-area').style.display = 'block';
                 document.getElementById('combo-area').style.display = 'none';
@@ -678,8 +925,11 @@
             if (val) {
                 // Autismo demanda 2 slots; preço R$60 só para Corte Infantil
                 state.servico.slots = 2;
-                state.servico.duracao = 2 * 30;
-                if (state.servico.nome && state.servico.nome.includes('Infantil')) state.servico.preco = 60;
+                state.servico.duracao = 45;
+                if (state.servico.nome && state.servico.nome.includes('Infantil')) {
+                    state.servico.nome = 'Corte Infantil (Autismo)';
+                    state.servico.preco = 40;
+                }
             } else {
                 // restaurar valores originais
                 if (state.servico.original) {
@@ -687,7 +937,10 @@
                     state.servico.preco = state.servico.original.preco;
                     state.servico.slots = state.servico.original.slots;
                 } else {
-                    state.servico.duracao = 30; state.servico.preco = 40; state.servico.slots = 1;
+                    state.servico.duracao = 30; state.servico.preco = 35; state.servico.slots = 1;
+                }
+                if (state.servico.nome && state.servico.nome.includes('Infantil')) {
+                    state.servico.nome = 'Corte Infantil';
                 }
             }
 
@@ -702,12 +955,19 @@
         };
 
         window.setCorteType = (type) => {
-            if (!state.servico || state.servico.nome !== 'Corte Masculino') return;
+            if (!state.servico) return;
 
-            if (type === 'tesoura') {
-                state.servico.preco = 35;
-            } else if (type === 'maquina') {
-                state.servico.preco = 25;
+            // Para serviços de corte masculino, permitir mudança de tipo
+            if (state.servico.nome === 'Corte Masculino' || state.servico.nome === 'Corte Masculino só Tesoura' || state.servico.nome === 'Corte Masculino só Máquina') {
+                if (type === 'tesoura') {
+                    state.servico.nome = 'Corte Masculino só Tesoura';
+                    state.servico.preco = 30;
+                    state.servico.duracao = 45;
+                } else if (type === 'maquina') {
+                    state.servico.nome = 'Corte Masculino só Máquina';
+                    state.servico.preco = 20;
+                    state.servico.duracao = 20;
+                }
             }
 
             document.getElementById('resumoPreco').innerHTML = `R$ ${state.servico.preco} <span id="resumoTempo" style="font-size:0.8rem; color:var(--text-muted); font-weight:500;"> • ⏱ ${state.servico.duracao} min </span>`;
@@ -798,6 +1058,10 @@
                 const agora = new Date();
                 const dataHojeStr = getTodayStr();
 
+                // Verificar limite de assinatura antes de renderizar horários
+                const availability = getServiceAvailability(state.servico?.nome, state.monthlyBookings || {});
+                const subscriptionLimitReached = availability && availability.available <= 0;
+
                 horariosBase.forEach((h, index) => {
                     const btn = document.createElement('button');
                     btn.className = 'time-btn';
@@ -821,10 +1085,22 @@
                     if (isPast || !canFit) {
                         btn.classList.add('blocked');
                         btn.disabled = true;
+                    } else if (subscriptionLimitReached) {
+                        btn.classList.add('blocked');
+                        btn.disabled = true;
+                        btn.innerText = h + ' (Limite assinatura atingido)';
+                        btn.style.background = 'rgba(239, 68, 68, 0.2)';
+                        btn.style.borderColor = 'var(--danger)';
                     } else {
                         if (state.hora === h) btn.classList.add('selected');
 
                         btn.onclick = () => {
+                            // Confirmação adicional para assinatura
+                            if (state.isSubscription) {
+                                const confirmMsg = `Usar 1 dos seus ${availability.available} serviços restantes de ${availability.limit === Infinity ? '∞' : availability.limit} este mês?`;
+                                if (!confirm(confirmMsg)) return;
+                            }
+
                             document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('selected'));
                             btn.classList.add('selected');
                             state.hora = h;
@@ -953,10 +1229,19 @@
                 const slotsNeeded = state.autismo ? 2 : state.servico.slots;
                 let precoFinal = Number(state.servico.preco) || 0;
                 let servicoFinal = state.servico.nome;
+                let subscriptionUseNumber = null;
+                let subscriptionPlan = null;
+
                 if (state.isSubscription) {
                     precoFinal = 0;
                     servicoFinal += ' (Assinatura)';
+                    
+                    // Calcular o número do uso da assinatura
+                    const availability = getServiceAvailability(state.servico.nome, state.monthlyBookings || {});
+                    subscriptionUseNumber = availability.used + 1;
+                    subscriptionPlan = userSubscription.plan;
                 }
+
                 if (state.autismo) {
                     servicoFinal += ' (Autismo)';
                     if (state.servico.nome && state.servico.nome.includes('Infantil')) precoFinal = 60;
@@ -993,6 +1278,8 @@
                     preco: precoFinal,
                     autismo: state.autismo,
                     isSubscription: state.isSubscription || false,
+                    subscriptionPlan: subscriptionPlan,
+                    subscriptionUseNumber: subscriptionUseNumber,
                     observacoes: document.getElementById('observations').value,
                     status: 'confirmed',
                     timestamp: new Date()
@@ -1220,6 +1507,11 @@
                     
                     document.getElementById('subscription-info').style.display = 'block';
                     document.getElementById('no-subscription').style.display = 'none';
+
+                    // Carregar dados adicionais da assinatura
+                    await loadSubscriptionUsageChart(sub);
+                    await loadUpcomingBenefits(sub);
+                    await loadUsageHistory(sub);
                 } else {
                     document.getElementById('subscription-info').style.display = 'none';
                     document.getElementById('no-subscription').style.display = 'block';
@@ -1231,6 +1523,160 @@
             }
         }
 
+        async function loadSubscriptionUsageChart(subscription) {
+            const now = new Date();
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+            
+            try {
+                const q = query(collection(db, "agendamentos"), 
+                    where("userId", "==", state.user.uid),
+                    where("isSubscription", "==", true),
+                    where("data", ">=", startOfMonth.toISOString().split('T')[0]),
+                    where("data", "<=", endOfMonth.toISOString().split('T')[0])
+                );
+                const snap = await getDocs(q);
+                
+                const usageByService = {};
+                snap.forEach(doc => {
+                    const data = doc.data();
+                    const serviceName = data.servico.replace(' (Assinatura)', '');
+                    usageByService[serviceName] = (usageByService[serviceName] || 0) + 1;
+                });
+
+                // Calcular limites baseado no plano
+                const planLimits = getPlanLimits(subscription.plan);
+                const labels = Object.keys(planLimits);
+                const used = labels.map(service => usageByService[service] || 0);
+                const limits = labels.map(service => planLimits[service]);
+
+                const ctx = document.getElementById('usageChart').getContext('2d');
+                
+                // Destruir gráfico anterior se existir
+                if (usageChart) {
+                    usageChart.destroy();
+                }
+                
+                usageChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Usado',
+                            data: used,
+                            backgroundColor: 'var(--subscription)',
+                            borderColor: 'var(--subscription)',
+                            borderWidth: 1
+                        }, {
+                            label: 'Limite',
+                            data: limits,
+                            backgroundColor: 'rgba(139, 92, 246, 0.3)',
+                            borderColor: 'var(--subscription)',
+                            borderWidth: 1,
+                            type: 'line'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: { color: '#aaa' },
+                                grid: { color: '#333' }
+                            },
+                            x: { ticks: { color: '#aaa' }, grid: { display: false } }
+                        },
+                        plugins: { legend: { labels: { color: '#aaa' } } }
+                    }
+                });
+            } catch (e) {
+                console.error("Erro ao carregar gráfico:", e);
+            }
+        }
+
+        function getPlanLimits(plan) {
+            const limits = {};
+            if (plan === 'sempre-alinhado') {
+                limits['Depilação Nariz/Orelha'] = 4;
+                limits['Barba Completa'] = 2;
+                limits['Sobrancelha'] = 1;
+            } else if (plan === 'combo-executivo') {
+                limits['Corte Masculino'] = 2;
+                limits['Barba Completa'] = 2;
+                limits['Sobrancelha'] = Infinity;
+            } else if (plan === 'vip-premium') {
+                limits['Corte Masculino'] = Infinity;
+                limits['Barba Completa'] = Infinity;
+                limits['Sobrancelha'] = Infinity;
+                limits['Pigmentação'] = Infinity;
+                limits['Depilação Nariz/Orelha'] = Infinity;
+            }
+            return limits;
+        }
+
+        async function loadUpcomingBenefits(subscription) {
+            const container = document.getElementById('upcoming-benefits');
+            const nextBilling = new Date(subscription.nextBilling);
+            const daysUntilRenewal = Math.ceil((nextBilling - new Date()) / (1000 * 60 * 60 * 24));
+            
+            container.innerHTML = `
+                <div style="background: var(--subscription-light); padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+                    <strong style="color: var(--subscription);">🔄 Renovação Automática</strong><br>
+                    <span style="color: var(--text-muted); font-size: 0.9rem;">Em ${daysUntilRenewal} dias - ${nextBilling.toLocaleDateString('pt-BR')}</span>
+                </div>
+                <div style="background: var(--subscription-light); padding: 15px; border-radius: 8px;">
+                    <strong style="color: var(--subscription);">💳 Próximo Pagamento</strong><br>
+                    <span style="color: var(--text-muted); font-size: 0.9rem;">R$ ${subscription.value.toFixed(2)} - ${nextBilling.toLocaleDateString('pt-BR')}</span>
+                </div>
+            `;
+        }
+
+        async function loadUsageHistory(subscription) {
+            const container = document.getElementById('usage-history');
+            const now = new Date();
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            
+            try {
+                const q = query(collection(db, "agendamentos"), 
+                    where("userId", "==", state.user.uid),
+                    where("isSubscription", "==", true),
+                    where("data", ">=", startOfMonth.toISOString().split('T')[0])
+                );
+                const snap = await getDocs(q);
+                
+                if (snap.empty) {
+                    container.innerHTML = '<p style="color: var(--text-muted);">Nenhum uso registrado este mês.</p>';
+                    return;
+                }
+
+                const historyItems = snap.docs
+                    .map(doc => doc.data())
+                    .sort((a, b) => new Date(b.data) - new Date(a.data))
+                    .slice(0, 5); // Últimos 5
+
+                container.innerHTML = historyItems.map(item => `
+                    <div style="display: flex; justify-content: space-between; padding: 10px; background: var(--subscription-light); border-radius: 6px; margin-bottom: 8px;">
+                        <div>
+                            <strong style="color: var(--subscription);">${item.servico}</strong><br>
+                            <span style="color: var(--text-muted); font-size: 0.8rem;">${item.data.split('-').reverse().join('/')} às ${item.hora}h</span>
+                        </div>
+                        <div style="text-align: right;">
+                            <span style="color: var(--subscription); font-weight: bold;">Uso #${item.subscriptionUseNumber}</span>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                console.error("Erro ao carregar histórico:", e);
+                container.innerHTML = '<p style="color: var(--text-muted);">Erro ao carregar histórico.</p>';
+            }
+        }
+
+        window.showFullHistory = async () => {
+            // Implementar modal ou página completa do histórico
+            alert('Funcionalidade completa em desenvolvimento. Entre em contato com o barbeiro para ver seu histórico completo.');
+        };
+
         window.contactBarber = () => {
             const phone = "5528999082741"; // Número do barbeiro
             const message = encodeURIComponent("Olá! Gostaria de falar sobre minha assinatura.");
@@ -1238,7 +1684,29 @@
         };
 
         // Carregar serviços ao inicializar
-        loadServices();
+        console.log('=== index.html script iniciado ===');
+        
+        // Garantir que services-grid existe antes de renderizar
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('DOMContentLoaded - Carregando serviços...');
+            loadServices();
+            
+            // Renderizar novamente após 500ms para garantir
+            setTimeout(() => {
+                console.log('Re-renderizando services após delay...');
+                renderServices();
+            }, 500);
+        });
+        
+        // Se o script rodar após DOMContentLoaded
+        if (document.readyState !== 'loading') {
+            console.log('DOM já carregado - Carregando serviços imediatamente...');
+            loadServices();
+        } else {
+            console.log('Script rodou antes de DOMContentLoaded');
+        }
+
+    
     </script>
 </body>
 </html>
