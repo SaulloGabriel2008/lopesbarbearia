@@ -942,6 +942,7 @@
     </div>
 
     <div id="admin-panel">
+        <button id="btn-seed-users" style="display:none; margin: 10px; padding:8px 12px;">Seed: Criar Usuários Iniciais</button>
         <header class="main-header">
             <button class="menu-btn" onclick="toggleNavModal()">
                 <i data-lucide="menu"></i>
@@ -1433,96 +1434,111 @@
                 </div>
             </div>
 
+            <!-- Aba Configurações -->
             <div id="tab-configurações" class="tab-content">
+                <!-- Informações da Barbearia -->
                 <div class="admin-section">
-                    <h4 style="margin-bottom: 1rem; font-size: 1.1rem;">⚙️ Configurações Gerais</h4>
-                    <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.9rem;">Configure as informações básicas da barbearia e preferências do sistema.</p>
-                    
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 2rem;">
-                        <!-- Informações da Barbearia -->
-                        <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 20px;">
-                            <h5 style="color: var(--primary); margin-bottom: 15px; font-size: 1rem;">🏪 Barbearia</h5>
-                            <div style="display: flex; flex-direction: column; gap: 12px;">
-                                <div>
-                                    <label style="display: block; margin-bottom: 5px; font-size: 0.85rem; color: var(--text-muted);">Nome da Barbearia</label>
-                                    <input type="text" id="config-barber-name" placeholder="Lopes Barbearia" style="width: 100%; padding: 8px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 6px; color: var(--text-main);">
-                                </div>
-                                <div>
-                                    <label style="display: block; margin-bottom: 5px; font-size: 0.85rem; color: var(--text-muted);">Telefone</label>
-                                    <input type="tel" id="config-barber-phone" placeholder="(28) 99999-9999" style="width: 100%; padding: 8px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 6px; color: var(--text-main);">
-                                </div>
-                                <div>
-                                    <label style="display: block; margin-bottom: 5px; font-size: 0.85rem; color: var(--text-muted);">Endereço</label>
-                                    <input type="text" id="config-barber-address" placeholder="Av. Central, 149-21" style="width: 100%; padding: 8px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 6px; color: var(--text-main);">
-                                </div>
-                            </div>
+                    <h4 style="margin-bottom: 1.5rem;">Informações da Barbearia</h4>
+
+                    <div class="form-row">
+                        <div>
+                            <label>Nome da Barbearia</label>
+                            <input type="text" id="barbearia-nome" placeholder="Ex: Barbearia do Rei">
                         </div>
-                        
-                        <!-- Configurações de Horário -->
-                        <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 20px;">
-                            <h5 style="color: var(--primary); margin-bottom: 15px; font-size: 1rem;">🕐 Horários</h5>
-                            <div style="display: flex; flex-direction: column; gap: 12px;">
-                                <div>
-                                    <label style="display: block; margin-bottom: 5px; font-size: 0.85rem; color: var(--text-muted);">Horário de Abertura</label>
-                                    <input type="time" id="config-opening-time" value="08:00" style="width: 100%; padding: 8px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 6px; color: var(--text-main);">
-                                </div>
-                                <div>
-                                    <label style="display: block; margin-bottom: 5px; font-size: 0.85rem; color: var(--text-muted);">Horário de Fechamento</label>
-                                    <input type="time" id="config-closing-time" value="20:00" style="width: 100%; padding: 8px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 6px; color: var(--text-main);">
-                                </div>
-                                <div>
-                                    <label style="display: block; margin-bottom: 5px; font-size: 0.85rem; color: var(--text-muted);">Intervalo entre agendamentos (min)</label>
-                                    <input type="number" id="config-slot-interval" value="30" min="15" max="120" style="width: 100%; padding: 8px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 6px; color: var(--text-main);">
-                                </div>
-                            </div>
+                        <div>
+                            <label>Telefone/WhatsApp</label>
+                            <input type="text" id="barbearia-telefone" placeholder="(28) 99999-9999">
                         </div>
-                        
-                        <!-- Configurações de Notificações -->
-                        <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 20px;">
-                            <h5 style="color: var(--primary); margin-bottom: 15px; font-size: 1rem;">📱 Notificações</h5>
-                            <div style="display: flex; flex-direction: column; gap: 12px;">
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <input type="checkbox" id="config-notif-confirmation" checked style="width: 16px; height: 16px;">
-                                    <label for="config-notif-confirmation" style="font-size: 0.85rem; color: var(--text-main);">Confirmação automática</label>
-                                </div>
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <input type="checkbox" id="config-notif-reminder" checked style="width: 16px; height: 16px;">
-                                    <label for="config-notif-reminder" style="font-size: 0.85rem; color: var(--text-main);">Lembrete 24h antes</label>
-                                </div>
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <input type="checkbox" id="config-notif-admin" checked style="width: 16px; height: 16px;">
-                                    <label for="config-notif-admin" style="font-size: 0.85rem; color: var(--text-main);">Notificar admin</label>
-                                </div>
-                                <div>
-                                    <label style="display: block; margin-bottom: 5px; font-size: 0.85rem; color: var(--text-muted);">WhatsApp Admin</label>
-                                    <input type="tel" id="config-admin-whatsapp" placeholder="5528999082741" style="width: 100%; padding: 8px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 6px; color: var(--text-main);">
-                                </div>
-                            </div>
+                        <div style="grid-column: span 2;">
+                            <label>Endereço Completo</label>
+                            <input type="text" id="barbearia-endereco" placeholder="Rua, número, bairro, cidade - UF, CEP">
                         </div>
-                    </div>
-                    
-                    <div style="text-align: center; margin-bottom: 2rem;">
-                        <button class="btn-action" onclick="salvarConfiguracoesGerais()" style="background: var(--primary); color: #000; padding: 12px 24px;">💾 Salvar Configurações Gerais</button>
+                        <div style="grid-column: span 3;">
+                            <label>Link do Google Maps</label>
+                            <input type="url" id="barbearia-maps-link" placeholder="https://maps.app.goo.gl/...">
+                        </div>
+                        <div>
+                            <button class="btn-action" onclick="salvarInformacoesBarbearia()" style="background: var(--success);">SALVAR INFORMAÇÕES</button>
+                        </div>
                     </div>
                 </div>
-                
+
+                <!-- Configuração de Horários -->
                 <div class="admin-section">
-                    <h4 style="margin-bottom: 1rem; font-size: 1.1rem;">✂️ Configurar Serviços</h4>
-                    <p style="color: var(--text-muted); margin-bottom: 1rem; font-size: 0.9rem;">Edite os preços e durações dos serviços. As mudanças serão aplicadas automaticamente no site.</p>
-                    
-                    <div id="services-list" class="table-wrapper">  
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Serviço</th>
-                                    <th>Duração (min)</th>
-                                    <th>Preço (R$)</th>
-                                    <th style="text-align: right;">Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody id="list-services"></tbody>
-                        </table>
+                    <h4 style="margin-bottom: 1.5rem;">Horários de Funcionamento</h4>
+
+                    <div id="horarios-config">
+                        <!-- Os dias da semana serão carregados dinamicamente -->
                     </div>
+
+                    <div style="margin-top: 2rem;">
+                        <button class="btn-action" onclick="salvarHorariosFuncionamento()" style="background: var(--primary);">SALVAR HORÁRIOS</button>
+                    </div>
+                </div>
+
+                <!-- Configuração de Duração de Agendamentos -->
+                <div class="admin-section">
+                    <h4 style="margin-bottom: 1.5rem;">Duração de Agendamentos</h4>
+
+                    <div class="form-row">
+                        <div>
+                            <label>Duração padrão de cada agendamento (minutos)</label>
+                            <select id="duracao-agendamento">
+                                <option value="30">30 minutos</option>
+                                <option value="40">40 minutos</option>
+                                <option value="45">45 minutos</option>
+                                <option value="60">1 hora (60 minutos)</option>
+                                <option value="90">1 hora e 30 minutos</option>
+                            </select>
+                        </div>
+                        <div>
+                            <button class="btn-action" onclick="salvarDuracaoAgendamento()" style="background: var(--success);">SALVAR DURAÇÃO</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Configuração de Serviços -->
+                <div class="admin-section">
+                    <h4 style="margin-bottom: 1.5rem;">Configuração de Serviços</h4>
+
+                    <div class="form-row">
+                        <div>
+                            <label>Nome do Serviço</label>
+                            <input type="text" id="servico-nome" placeholder="Ex: Corte Masculino">
+                        </div>
+                        <div>
+                            <label>Preço (R$)</label>
+                            <input type="number" id="servico-preco" step="0.01" placeholder="40.00">
+                        </div>
+                        <div>
+                            <label>Duração (minutos)</label>
+                            <input type="number" id="servico-duracao" placeholder="30" min="30" step="30">
+                        </div>
+                        <div>
+                            <label>Slots (cada slot = 30min)</label>
+                            <input type="number" id="servico-slots" placeholder="1" min="1" value="1">
+                        </div>
+                        <div>
+                            <button class="btn-action" onclick="salvarServico()" style="background: var(--success);">SALVAR SERVIÇO</button>
+                            <button class="btn-action" onclick="cancelarEdicaoServico()" style="background: var(--danger); display: none;" id="btn-cancelar-edicao">CANCELAR</button>
+                        </div>
+                    </div>
+                    <input type="hidden" id="servico-id-editando" value="">
+                </div>
+
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Preço (R$)</th>
+                                <th>Duração (min)</th>
+                                <th>Slots</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="list-services"></tbody>
+                    </table>
                 </div>
             </div>
         </main>
@@ -1536,7 +1552,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+        import { getAuth, createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
         import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc, updateDoc, addDoc, getDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -1774,7 +1790,6 @@
             if(tab === 'configurações') {
                 setTimeout(() => {
                     renderServices();
-                    loadConfiguracoesGerais();
                 }, 100);
             }
             
@@ -1925,8 +1940,8 @@
         populateServiceSelect();
     }
     
-    // Normalizar agendamentos existentes (opcional)
-    normalizeExistingBookings();
+    // Normalizar agendamentos existentes (removido - função não definida)
+    // normalizeExistingBookings();
 });
 
             onSnapshot(collection(db, "despesas"), snap => {
@@ -2039,7 +2054,7 @@
                 
                 todaysAgendamentos.forEach(agend => {
                     const clientName = agend.nome || agend.cliente || 'Cliente não informado';
-                    const service = agend.servico || 'Serviço não informado';
+                    const service = agend.servico || 'Serviço por assinatura';
                     const time = agend.hora || '--:--';
                     
                     // Verificar se é assinante
@@ -2075,123 +2090,184 @@
         };
 
         function renderCalendar() {
-            const grid = document.getElementById('calendar-body');
-            const label = document.getElementById('calendar-month-year');
-            if(!grid || !label) return;
+    const grid = document.getElementById('calendar-body');
+    const label = document.getElementById('calendar-month-year');
+    if(!grid || !label) return;
 
-            grid.innerHTML = '';
-            const year = currentCalendarDate.getFullYear();
-            const month = currentCalendarDate.getMonth();
-            label.innerText = new Intl.DateTimeFormat('pt-BR', {month:'long', year:'numeric'}).format(currentCalendarDate).toUpperCase();
+    grid.innerHTML = '';
+    const year = currentCalendarDate.getFullYear();
+    const month = currentCalendarDate.getMonth();
+    label.innerText = new Intl.DateTimeFormat('pt-BR', {month:'long', year:'numeric'}).format(currentCalendarDate).toUpperCase();
 
-            const firstDay = new Date(year, month, 1).getDay();
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-            for(let i=0; i<firstDay; i++) grid.innerHTML += `<div class="calendar-day" style="opacity:0"></div>`;
+    for(let i=0; i<firstDay; i++) grid.innerHTML += `<div class="calendar-day" style="opacity:0"></div>`;
 
-            for(let d=1; d<=daysInMonth; d++) {
-                const iso = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-                const [y, m, dayNum] = iso.split('-').map(Number);
-                const dayOfWeek = new Date(y, m - 1, dayNum).getDay();
-                const config = configDiasData[iso] || { status: (dayOfWeek === 0 ? 'closed' : 'open') };
-                const dayAgends = agendamentosData.filter(a => a.data === iso);
+    for(let d=1; d<=daysInMonth; d++) {
+        const iso = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        
+        // CORREÇÃO: Obter dia da semana corretamente
+        const dateObj = new Date(year, month, d);
+        const dayOfWeek = dateObj.getDay(); // 0 = Domingo, 1 = Segunda, etc.
+        
+        // Obter nome do dia
+        const dayNames = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
+        const dayName = dayNames[dayOfWeek];
+        
+        // Verificar se o dia está fechado nas configurações de horários
+        const daySchedule = window.horariosConfig && window.horariosConfig[dayName];
+        const isClosedBySchedule = (daySchedule && daySchedule.abre === false);
+        
+        const config = configDiasData[iso] || { status: (isClosedBySchedule ? 'closed' : 'open') };
+        const dayAgends = agendamentosData.filter(a => a.data === iso);
 
-                const div = document.createElement('div');
-                div.className = `calendar-day ${iso === selectedDateISO ? 'selected' : ''} ${config.status === 'closed' ? 'closed' : ''}`;
-                
-                // Verificar se há agendamentos por assinatura
-                const hasSubscriptionBooking = dayAgends.some(a => a.isSubscription);
-                if (hasSubscriptionBooking) {
-                    div.classList.add('subscription');
-                }
+        const div = document.createElement('div');
+        div.className = `calendar-day ${iso === selectedDateISO ? 'selected' : ''} ${config.status === 'closed' ? 'closed' : ''}`;
+        
+        // Verificar se há agendamentos por assinatura
+        const hasSubscriptionBooking = dayAgends.some(a => a.isSubscription);
+        if (hasSubscriptionBooking) {
+            div.classList.add('subscription');
+        }
 
-                div.onclick = async () => {
-                    selectedDateISO = iso;
-                    renderCalendar();
-                    renderSlots();
-                };
-                div.innerHTML = `<div class="day-number">${d}</div>`;
-                
-                dayAgends.forEach(a => {
-                    const baseService = (a.servico || "").replace(" (Autismo)", "").replace(" (Assinatura)", "");
-                    let color = a.status === 'blocked' ? serviceColors["Bloqueio"] : (serviceColors[baseService] || serviceColors["Outros"]);
-                    
-                    // Destaque para assinaturas
-                   if (a.isSubscription) {
-    color = 'var(--subscription)';
-                    }
-                    
-                    div.innerHTML += `<span style="width:4px;height:4px;background:${color};display:inline-block;margin:1px;border-radius:1px"></span>`;
-                });
-                grid.appendChild(div);
+        div.onclick = async () => {
+            selectedDateISO = iso;
+            renderCalendar();
+            renderSlots();
+        };
+        
+        // Adicionar ícone se for dia fechado por horário
+        let closedIcon = '';
+        if (isClosedBySchedule && config.status !== 'closed') {
+            closedIcon = '<div style="position: absolute; top: 2px; right: 2px; font-size: 0.7rem; color: var(--text-muted);">⏸️</div>';
+        }
+        
+        div.innerHTML = `<div class="day-number">${d}</div>${closedIcon}`;
+        
+        dayAgends.forEach(a => {
+            const baseService = (a.servico || "").replace(" (Autismo)", "").replace(" (Assinatura)", "");
+            let color = a.status === 'blocked' ? serviceColors["Bloqueio"] : (serviceColors[baseService] || serviceColors["Outros"]);
+            
+            if (a.isSubscription) {
+                color = 'var(--subscription)';
             }
             
-            // Atualizar ícones
-            lucide.createIcons();
-        }
+            div.innerHTML += `<span style="width:4px;height:4px;background:${color};display:inline-block;margin:1px;border-radius:1px"></span>`;
+        });
+        grid.appendChild(div);
+    }
+    
+    // Atualizar ícones
+    lucide.createIcons();
+}
 
         function renderSlots() {
-            const grid = document.getElementById('slots-grid');
-            if(!grid) return;
-            document.getElementById('selected-date-label').innerText = selectedDateISO.split('-').reverse().join('/');
-            document.getElementById('slot-editor').style.display = 'none';
-            grid.innerHTML = '';
+    const grid = document.getElementById('slots-grid');
+    if(!grid) return;
+    document.getElementById('selected-date-label').innerText = selectedDateISO.split('-').reverse().join('/');
+    document.getElementById('slot-editor').style.display = 'none';
+    grid.innerHTML = '';
 
-            const config = configDiasData[selectedDateISO] || {};
-            const slots = config.extraSlots ? [...baseSlots, ...config.extraSlots].sort() : baseSlots;
+    const config = configDiasData[selectedDateISO] || {};
+    
+    // CORREÇÃO: Obter dia da semana corretamente (considerando fuso horário do Brasil)
+    const dateParts = selectedDateISO.split('-').map(Number);
+    const dateObj = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
+    const dayOfWeek = dateObj.getDay(); // 0 = Domingo, 1 = Segunda, etc.
+    
+    // Mapear para os nomes dos dias usados nas configurações
+    const dayNames = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
+    const dayName = dayNames[dayOfWeek];
+    
+    console.log(`Data: ${selectedDateISO}, Dia da semana: ${dayOfWeek} (${dayName})`);
+    
+    // Carregar configurações de horários
+    let daySchedule = window.horariosConfig && window.horariosConfig[dayName];
+    
+    // Se o dia estiver fechado nas configurações OU estiver marcado como fechado no configDiasData
+    const isClosedBySchedule = (daySchedule && daySchedule.abre === false);
+    const isClosedByConfig = (config.status === 'closed');
+    
+    console.log(`Fechado por horários: ${isClosedBySchedule}, Fechado por config: ${isClosedByConfig}`);
+    
+    if (isClosedBySchedule || isClosedByConfig) {
+        grid.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-muted);">Dia Fechado</div>';
+        return;
+    }
 
-            slots.forEach((time, index) => {
-                const agend = agendamentosData.find(a => a.data === selectedDateISO && a.hora === time);
-                const btn = document.createElement('div');
-                
-                let isPartOfLong = false;
-                if (index > 0) {
-                    const prevTime = slots[index - 1];
-                    const prevAgend = agendamentosData.find(a => a.data === selectedDateISO && a.hora === prevTime);
-                    if (prevAgend && prevAgend.slots === 2) isPartOfLong = true;
-                }
+    // GERAR HORÁRIOS COM BASE NAS CONFIGURAÇÕES
+    let slots = [];
+    
+    if (daySchedule && daySchedule.abre !== false) {
+        // Usar horários configurados
+        const startTime = daySchedule.abertura || '09:00';
+        const endTime = daySchedule.fechamento || '18:00';
+        const lunchStart = daySchedule.almocoInicio || '12:00';
+        const lunchEnd = daySchedule.almocoFim || '13:00';
+        
+        slots = generateTimeSlots(startTime, endTime, lunchStart, lunchEnd);
+    } else {
+        // Usar slots padrão como fallback
+        slots = [...baseSlots];
+    }
+    
+    // Adicionar slots extras se existirem
+    if (config.extraSlots) {
+        slots = [...slots, ...config.extraSlots].sort();
+    }
 
-                const isEditing = selectedSlot && selectedSlot.time === time;
-                btn.className = `slot-btn ${agend ? (agend.status === 'blocked' ? 'blocked' : 'occupied') : ''} ${isPartOfLong ? 'part-of-long' : ''} ${isEditing ? 'active-editing' : ''}`;
-                
-                if (agend) {
-                    let displayName = agend.nome || agend.cliente || '...';
-                    if(agend.status === 'completed') {
-                        displayName += ' ✅';
-                    }
-                    
-                    // Adicionar indicador de assinatura
-                    if (agend.isSubscription) {
-                        displayName += ' 👑';
-                    }
-                    
-                    btn.innerText = `${time} - ${agend.status === 'blocked' ? 'BLOQUEADO' : displayName}`;
-                    const baseService = (agend.servico || "").replace(" (Autismo)", "").replace(" (Assinatura)", "");
-                    let sColor = agend.status === 'blocked' ? serviceColors["Bloqueio"] : (serviceColors[baseService] || serviceColors["Outros"]);
-                    
-                    // Destaque para assinaturas
-                    if (agend.isSubscription) {
-                        sColor = 'var(--subscription)';
-                    }
-                    
-                    btn.style.borderLeft = `3px solid ${sColor}`;
-                } else if (isPartOfLong) {
-                    const owner = agendamentosData.find(a => a.data === selectedDateISO && a.hora === slots[index-1]);
-                    const ownerName = owner ? (owner.nome || owner.cliente || '...') : '...';
-                    btn.innerText = `${time} - (${ownerName})`;
-                    btn.style.opacity = "0.5";
-                } else {
-                    btn.innerText = time;
-                }
-
-                btn.onclick = () => {
-                    if (isPartOfLong) return;
-                    openSlotEditor(time, agend, slots, index);
-                };
-                grid.appendChild(btn);
-            });
-            lucide.createIcons();
+    // RENDERIZAR OS SLOTS (o resto da função permanece igual)
+    slots.forEach((time, index) => {
+        const agend = agendamentosData.find(a => a.data === selectedDateISO && a.hora === time);
+        const btn = document.createElement('div');
+        
+        let isPartOfLong = false;
+        if (index > 0) {
+            const prevTime = slots[index - 1];
+            const prevAgend = agendamentosData.find(a => a.data === selectedDateISO && a.hora === prevTime);
+            if (prevAgend && prevAgend.slots === 2) isPartOfLong = true;
         }
+
+        const isEditing = selectedSlot && selectedSlot.time === time;
+        btn.className = `slot-btn ${agend ? (agend.status === 'blocked' ? 'blocked' : 'occupied') : ''} ${isPartOfLong ? 'part-of-long' : ''} ${isEditing ? 'active-editing' : ''}`;
+        
+        if (agend) {
+            let displayName = agend.nome || agend.cliente || '...';
+            if(agend.status === 'completed') {
+                displayName += ' ✅';
+            }
+            
+            if (agend.isSubscription) {
+                displayName += ' 👑';
+            }
+            
+            btn.innerText = `${time} - ${agend.status === 'blocked' ? 'BLOQUEADO' : displayName}`;
+            const baseService = (agend.servico || "").replace(" (Autismo)", "").replace(" (Assinatura)", "");
+            let sColor = agend.status === 'blocked' ? serviceColors["Bloqueio"] : (serviceColors[baseService] || serviceColors["Outros"]);
+            
+            if (agend.isSubscription) {
+                sColor = 'var(--subscription)';
+            }
+            
+            btn.style.borderLeft = `3px solid ${sColor}`;
+        } else if (isPartOfLong) {
+            const owner = agendamentosData.find(a => a.data === selectedDateISO && a.hora === slots[index-1]);
+            const ownerName = owner ? (owner.nome || owner.cliente || '...') : '...';
+            btn.innerText = `${time} - (${ownerName})`;
+            btn.style.opacity = "0.5";
+        } else {
+            btn.innerText = time;
+        }
+
+        btn.onclick = () => {
+            if (isPartOfLong) return;
+            openSlotEditor(time, agend, slots, index);
+        };
+        grid.appendChild(btn);
+    });
+    lucide.createIcons();
+}
 
         function openSlotEditor(time, agend, allSlots, index) {
             selectedSlot = { time, agend, allSlots, index };
@@ -3171,41 +3247,160 @@
         return;
     }
 
-    if (!servicesData || servicesData.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 2rem;">Carregando serviços...</td></tr>';
+    tbody.innerHTML = '';
+
+    // Ordenar serviços por nome
+    const servicosOrdenados = [...servicesData].sort((a, b) => a.name.localeCompare(b.name));
+
+    if (servicosOrdenados.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.9rem;">
+                    Nenhum serviço cadastrado. Adicione seu primeiro serviço acima.
+                </td>
+            </tr>
+        `;
         return;
     }
 
-    console.log('Renderizando', servicesData.length, 'serviços');
-
-    // Criar uma cópia e ordenar
-    const sortedServices = [...servicesData].sort((a, b) => {
-        const indexA = serviceOrder.indexOf(a.name);
-        const indexB = serviceOrder.indexOf(b.name);
-        
-        // Se um serviço não estiver na lista de ordem, colocar no final
-        if (indexA === -1 && indexB === -1) return 0;
-        if (indexA === -1) return 1;
-        if (indexB === -1) return -1;
-        
-        return indexA - indexB;
+    servicosOrdenados.forEach(servico => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><strong>${servico.name}</strong></td>
+            <td style="color: var(--primary)">R$ ${servico.price.toFixed(2)}</td>
+            <td>${servico.duration} min</td>
+            <td>${Math.ceil(servico.duration / 30)} slot(s)</td>
+            <td style="display: flex; gap: 8px;">
+                <button class="btn-action" style="background: var(--primary); padding: 6px 12px; font-size: 0.8rem;" onclick="editarServico('${servico.id}')">
+                    <i data-lucide="edit-2"></i> Editar
+                </button>
+                <button class="btn-action" style="background: var(--danger); padding: 6px 12px; font-size: 0.8rem;" onclick="excluirServico('${servico.id}')">
+                    <i data-lucide="trash-2"></i> Excluir
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
     });
 
-    tbody.innerHTML = sortedServices.map(service => {
-        return `
-        <tr>
-            <td><strong>${service.name}</strong></td>
-            <td><input type="number" value="${service.duration || 30}" onchange="updateService('${service.id}', 'duration', this.value)" style="width: 80px; padding: 8px; font-size: 0.9rem;"></td>
-            <td><input type="number" step="0.01" value="${service.price || 0}" onchange="updateService('${service.id}', 'price', this.value)" style="width: 100px; padding: 8px; font-size: 0.9rem;"></td>
-            <td style="text-align: right;">
-                <button class="btn-action" onclick="saveService('${service.id}')" style="padding: 8px 16px; font-size: 0.85rem;">Salvar</button>
-            </td>
-        </tr>
-        `;
-    }).join('');
-    
-    // ATUALIZAR O SELECT DA AGENDA TAMBÉM!
-    populateServiceSelect();
+    lucide.createIcons();
+};
+
+// Salvar serviço (criar ou atualizar)
+window.salvarServico = async () => {
+    const nome = document.getElementById('servico-nome').value;
+    const preco = parseFloat(document.getElementById('servico-preco').value);
+    const duracao = parseInt(document.getElementById('servico-duracao').value);
+    const slots = parseInt(document.getElementById('servico-slots').value);
+    const servicoId = document.getElementById('servico-id-editando').value;
+
+    if (!nome || isNaN(preco) || isNaN(duracao) || isNaN(slots)) {
+        showToast('Preencha todos os campos corretamente.', 'warning');
+        return;
+    }
+
+    // Garantir que a duração seja múltiplo de 30
+    if (duracao % 30 !== 0) {
+        showToast('A duração deve ser múltipla de 30 minutos.', 'warning');
+        return;
+    }
+
+    // Garantir que os slots correspondam à duração (cada slot = 30min)
+    const slotsCalculados = Math.ceil(duracao / 30);
+    if (slots !== slotsCalculados) {
+        if (confirm(`A duração de ${duracao} minutos corresponde a ${slotsCalculados} slot(s). Deseja ajustar automaticamente?`)) {
+            document.getElementById('servico-slots').value = slotsCalculados;
+            slots = slotsCalculados;
+        }
+    }
+
+    const servicoData = {
+        name: nome,
+        price: preco,
+        duration: duracao,
+        slots: slots,
+        timestamp: new Date()
+    };
+
+    try {
+        if (servicoId) {
+            // Atualizar serviço existente
+            await updateDoc(doc(db, "services", servicoId), servicoData);
+            showToast('Serviço atualizado com sucesso!', 'success');
+        } else {
+            // Criar novo serviço
+            await addDoc(collection(db, "services"), servicoData);
+            showToast('Serviço criado com sucesso!', 'success');
+        }
+
+        // Limpar formulário
+        document.getElementById('servico-nome').value = '';
+        document.getElementById('servico-preco').value = '';
+        document.getElementById('servico-duracao').value = '30';
+        document.getElementById('servico-slots').value = '1';
+        document.getElementById('servico-id-editando').value = '';
+        document.getElementById('btn-cancelar-edicao').style.display = 'none';
+
+    } catch (e) {
+        showToast('Erro ao salvar serviço: ' + e.message, 'error');
+    }
+};
+
+// Editar serviço
+window.editarServico = async (id) => {
+    const servico = servicesData.find(s => s.id === id);
+    if (!servico) return;
+
+    document.getElementById('servico-nome').value = servico.name;
+    document.getElementById('servico-preco').value = servico.price;
+    document.getElementById('servico-duracao').value = servico.duration;
+    document.getElementById('servico-slots').value = servico.slots || Math.ceil(servico.duration / 30);
+    document.getElementById('servico-id-editando').value = servico.id;
+    document.getElementById('btn-cancelar-edicao').style.display = 'block';
+
+    // Rolar para o formulário
+    document.getElementById('servico-nome').scrollIntoView({ behavior: 'smooth' });
+    document.getElementById('servico-nome').focus();
+
+    showToast(`Editando: ${servico.name}`, 'info');
+};
+
+// Cancelar edição de serviço
+window.cancelarEdicaoServico = () => {
+    document.getElementById('servico-nome').value = '';
+    document.getElementById('servico-preco').value = '';
+    document.getElementById('servico-duracao').value = '30';
+    document.getElementById('servico-slots').value = '1';
+    document.getElementById('servico-id-editando').value = '';
+    document.getElementById('btn-cancelar-edicao').style.display = 'none';
+    showToast('Edição cancelada.', 'info');
+};
+
+// Excluir serviço
+window.excluirServico = async (id) => {
+    const servico = servicesData.find(s => s.id === id);
+    if (!servico) return;
+
+    if (!confirm(`Tem certeza que deseja excluir o serviço "${servico.name}"?`)) {
+        return;
+    }
+
+    // Verificar se o serviço está sendo usado em agendamentos
+    const agendamentosComServico = agendamentosData.filter(a =>
+        a.servico && a.servico.includes(servico.name)
+    );
+
+    if (agendamentosComServico.length > 0) {
+        if (!confirm(`Este serviço está em ${agendamentosComServico.length} agendamento(s). A exclusão pode afetar esses registros. Deseja continuar?`)) {
+            return;
+        }
+    }
+
+    try {
+        await deleteDoc(doc(db, "services", id));
+        showToast('Serviço excluído com sucesso!', 'success');
+    } catch (e) {
+        showToast('Erro ao excluir serviço: ' + e.message, 'error');
+    }
 };
 
         function populateServiceSelect() {
@@ -3351,7 +3546,7 @@
                             data: agendamento.data,
                             tipo: 'Serviço',
                             cliente: agendamento.nome || agendamento.cliente || 'Cliente não informado',
-                            descricao: agendamento.servico || 'Serviço não informado',
+                            descricao: agendamento.servico || 'Serviço por assinatura',
                             valor: Number(agendamento.preco || 0)
                         });
                         totalServicos += Number(agendamento.preco || 0);
@@ -3491,6 +3686,163 @@
             return months[parseInt(monthNumber) - 1] || '';
         }
 
+        // --- FUNÇÕES DE CONTROLE DE ACESSO E SEEDING ---
+        async function loadUsuarioAuth(uid) {
+            try {
+                const docRef = doc(db, 'usuarios_auth', uid);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    window.currentUserAuth = docSnap.data();
+                    window.currentUserAuth.uid = uid;
+                    console.log('Usuario auth carregado:', window.currentUserAuth);
+                    applyPermissionsUI();
+                } else {
+                    console.warn('usuarios_auth não encontrado para uid', uid);
+                    window.currentUserAuth = null;
+                    applyPermissionsUI();
+                }
+            } catch (e) { console.error('Erro carregando usuarios_auth', e); }
+        }
+
+        function applyPermissionsUI() {
+            const ua = window.currentUserAuth;
+            // Mostrar/ocultar botões do menu
+            document.querySelectorAll('.nav-modal-item').forEach(item => {
+                const txt = item.textContent.trim();
+                // Esconder Finanças e Configurações para não-admin
+                if (ua && ua.nivelAcesso !== 'admin' && (txt.includes('Finanças') || txt.includes('Configurações'))) {
+                    item.style.display = 'none';
+                } else {
+                    item.style.display = '';
+                }
+            });
+
+            // Mostrar botão de seed apenas para admin
+            const btnSeed = document.getElementById('btn-seed-users');
+            if (btnSeed) btnSeed.style.display = (ua && ua.nivelAcesso === 'admin') ? 'inline-block' : 'none';
+
+            // Se usuário for funcionário, renderizar dashboard pessoal
+            if (ua && ua.nivelAcesso !== 'admin') {
+                renderFuncionarioDashboard();
+            } else {
+                // Restaurar dashboard admin quando voltar a admin
+                const dash = document.getElementById('tab-dashboard');
+                if (dash && dash.dataset._adminHtml) {
+                    dash.innerHTML = dash.dataset._adminHtml;
+                    updateDashboard();
+                    updateSimpleDashboard();
+                }
+            }
+        }
+
+        async function criarUsuarioBarbeiro({ email, nome, nivelAcesso, comissao = 0, permissoes = {} }) {
+            try {
+                // Criar usuário no Auth (padrão senha temporária - altere conforme necessário)
+                const tempPass = 'SenhaTemp@123';
+                const userCred = await createUserWithEmailAndPassword(auth, email, tempPass);
+                const uid = userCred.user.uid;
+
+                // Criar documento em barbeiros
+                const barbRef = await addDoc(collection(db, 'barbeiros'), {
+                    nome: nome,
+                    email: email,
+                    ativo: true,
+                    nivelAcesso: nivelAcesso,
+                    comissao: comissao,
+                    criadoEm: new Date()
+                });
+
+                // Criar documento em usuarios_auth
+                await setDoc(doc(db, 'usuarios_auth', uid), {
+                    uid: uid,
+                    email: email,
+                    barbeiroId: barbRef.id,
+                    nivelAcesso: nivelAcesso,
+                    permissoes: permissoes,
+                    criadoEm: new Date()
+                });
+
+                console.log('Usuario barbeiro criado:', email);
+                return { uid, barbRefId: barbRef.id };
+            } catch (e) {
+                console.error('Erro criando usuario barbeiro:', e);
+                throw e;
+            }
+        }
+
+        async function setupUsuariosIniciais() {
+            try {
+                await criarUsuarioBarbeiro({
+                    email: 'saullinho2008@gmail.com',
+                    nome: 'Barbeiro 1 (Admin)',
+                    nivelAcesso: 'admin',
+                    comissao: 0,
+                    permissoes: { verTodosAgendamentos: true, verFinancasGerais: true, editarServicos: true, editarBarbeiros: true, verRelatoriosCompletos: true }
+                });
+
+                await criarUsuarioBarbeiro({
+                    email: 'saullogabriel18@hotmail.com',
+                    nome: 'Barbeiro 2 (Funcionário)',
+                    nivelAcesso: 'funcionario',
+                    comissao: 10,
+                    permissoes: { verTodosAgendamentos: false, verFinancasGerais: false, editarServicos: false, editarBarbeiros: false, verRelatoriosCompletos: false }
+                });
+
+                showToast('Usuários iniciais criados (verifique Auth para senhas).', 'success');
+            } catch (e) {
+                showToast('Erro ao criar usuários iniciais: ' + e.message, 'error');
+            }
+        }
+
+        async function getMinhaAgenda(barbeiroId) {
+            const hoje = new Date();
+            const inicioDia = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+            const fimDia = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() + 1);
+
+            const q = query(collection(db, 'agendamentos'), where('barbeiroId', '==', barbeiroId), where('dataHora', '>=', inicioDia), where('dataHora', '<', fimDia), where('status', 'in', ['confirmado', 'em_andamento', 'concluido']), );
+            const snap = await getDocs(q);
+            return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        }
+
+        async function calcularComissaoBarbeiro(barbeiroId, mesAno) {
+            const [ano, mes] = mesAno.split('-');
+            const inicioMes = new Date(parseInt(ano), parseInt(mes) - 1, 1);
+            const fimMes = new Date(parseInt(ano), parseInt(mes), 0, 23, 59, 59);
+
+            const q = query(collection(db, 'agendamentos'), where('barbeiroId', '==', barbeiroId), where('dataHora', '>=', inicioMes), where('dataHora', '<=', fimMes), where('status', '==', 'concluido'), where('pagamentoStatus', '==', 'pago'));
+            const snap = await getDocs(q);
+            let total = 0;
+            const servs = [];
+            snap.forEach(d => { total += (d.data().preco || 0); servs.push(d.id); });
+            const comissao = total * 0.10;
+            return { totalArrecadado: total, comissao };
+        }
+
+        async function renderFuncionarioDashboard() {
+            const ua = window.currentUserAuth;
+            if (!ua) return;
+            const dash = document.getElementById('tab-dashboard');
+            if (dash && !dash.dataset._adminHtml) dash.dataset._adminHtml = dash.innerHTML;
+
+            const hoje = new Date();
+            const mesRef = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
+            const minhaAgenda = await getMinhaAgenda(ua.barbeiroId);
+            const { totalArrecadado, comissao } = await calcularComissaoBarbeiro(ua.barbeiroId, mesRef);
+
+            dash.innerHTML = `
+                <div style="padding:20px;">
+                    <h2>Meu Painel</h2>
+                    <p>Serviços hoje: <strong>${minhaAgenda.length}</strong></p>
+                    <p>Total arrecadado (mês): <strong>R$ ${totalArrecadado.toFixed(2)}</strong></p>
+                    <p>Minha comissão (10%): <strong>R$ ${comissao.toFixed(2)}</strong></p>
+                    <h4>Atendimentos de hoje</h4>
+                    <ul>
+                        ${minhaAgenda.map(a => `<li>${a.dataHora ? new Date(a.dataHora.seconds*1000).toLocaleString() : a.dataHora} - ${a.servicoId || a.servicoNome || a.servico} - ${a.clienteNome}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+        }
+
         // Inicializar quando o DOM estiver pronto
         document.addEventListener('DOMContentLoaded', () => {
             // Configurar data atual nos campos
@@ -3519,6 +3871,89 @@
                         backToTop.style.display = 'none';
                     }
                 }
+                // No final do script, dentro do DOMContentLoaded:
+
+// Inicializar a visão simplificada
+updateSimpleDashboard();
+
+// Inicializar configurações
+loadConfiguracoesGerais();
+renderHorariosConfig();
+loadHorariosFuncionamento();
+loadDuracaoAgendamento();
+
+// Preencher o select de serviços se a aba de agenda estiver ativa
+if (document.getElementById('tab-agendamentos').classList.contains('active')) {
+    populateServiceSelect();
+}
+
+// Tornar a função switchTab global depois que o DOM estiver pronto
+window.switchTab = (tab) => {
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.nav-modal-item').forEach(i => i.classList.remove('active'));
+    
+    const tabElement = document.getElementById('tab-' + tab);
+    if (tabElement) {
+        tabElement.classList.add('active');
+    }
+    
+    // Atualizar título
+    const titles = {
+        'dashboard': 'Dashboard',
+        'agendamentos': 'Agenda',
+        'clientes': 'Clientes',
+        'assinaturas': 'Assinaturas',
+        'finanças': 'Finanças',
+        'configurações': 'Configurações'
+    };
+    
+    const titleText = titles[tab] || tab;
+    
+    // Verificar se o elemento existe antes de definir o texto
+    const currentTabElement = document.getElementById('current-tab');
+    if (currentTabElement) {
+        currentTabElement.innerText = titleText;
+    }
+    
+    // Ativar item do menu
+    const navItems = document.querySelectorAll('.nav-modal-item');
+    navItems.forEach(item => {
+        if (item.textContent.includes(titleText)) {
+            item.classList.add('active');
+        }
+    });
+    
+    // Fechar modal de navegação
+    closeNavModal();
+    
+    // Executar funções específicas da tab
+    if(tab === 'dashboard') {
+        setTimeout(() => {
+            updateDashboard();
+            updateSimpleDashboard();
+        }, 50);
+    }
+    if(tab === 'agendamentos') {
+        renderCalendar();
+        setTimeout(() => {
+            populateServiceSelect();
+        }, 100);
+    }
+    if(tab === 'clientes') renderClients();
+    if(tab === 'assinaturas') {
+        renderSubscriptions();
+        renderSubscriptionUsageHistory();
+    }
+    if(tab === 'finanças') switchFinanceMode('despesas');
+    if(tab === 'configurações') {
+        setTimeout(() => {
+            renderServices();
+        }, 100);
+    }
+    
+    // Scroll para o topo
+    window.scrollTo({top: 0, behavior: 'smooth'});
+};
             });
             
             // Fechar modal ao pressionar ESC
@@ -3542,45 +3977,247 @@
             updateSimpleDashboard();
         });
 
-        // Carregar configurações gerais
+        // === NOVAS FUNÇÕES PARA CONFIGURAÇÕES ===
+        
+        // Salvar informações da barbearia
+        async function salvarInformacoesBarbearia() {
+            try {
+                const configData = {
+                    barberName: document.getElementById('barbearia-nome').value.trim(),
+                    barberPhone: document.getElementById('barbearia-telefone').value.trim(),
+                    barberAddress: document.getElementById('barbearia-endereco').value.trim(),
+                    barberMapsLink: document.getElementById('barbearia-maps-link').value.trim(),
+                    updatedAt: new Date(),
+                    updatedBy: auth.currentUser?.uid || 'admin'
+                };
+                
+                // Validar campos obrigatórios
+                if (!configData.barberName) {
+                    showToast("❌ Nome da barbearia é obrigatório!", "error");
+                    return;
+                }
+                
+                console.log('Salvando informações da barbearia:', configData);
+                await setDoc(doc(db, "configuracoes_gerais", "barbearia"), configData, { merge: true });
+                
+                showToast("✅ Informações da barbearia salvas com sucesso!", "success");
+                
+                // Atualizar nome no header se estiver na aba configurações
+                const headerTitle = document.querySelector('.header-title');
+                if (headerTitle) {
+                    headerTitle.textContent = configData.barberName;
+                }
+                
+            } catch (error) {
+                console.error("Erro ao salvar informações da barbearia:", error);
+                showToast("❌ Erro ao salvar informações: " + error.message, "error");
+            }
+        }   
+        
+        // Definir valores padrão
+        function setarValoresPadrao() {
+            document.getElementById('barbearia-nome').value = 'Lopes Barbearia';
+            document.getElementById('barbearia-telefone').value = '5528999082741';
+            document.getElementById('barbearia-endereco').value = 'Av. Central, 149-21 - Alto Lagoa Funda, Marataízes - ES, 29345-000';
+            document.getElementById('barbearia-maps-link').value = 'https://maps.app.goo.gl/tMqWDAU2Eh14hp9bA';
+        }
+        
+        // Renderizar configuração de horários
+        function renderHorariosConfig() {
+            const container = document.getElementById('horarios-config');
+            if (!container) return;
+            
+            const diasSemana = [
+                { id: 'domingo', nome: 'Domingo', abre: false },
+                { id: 'segunda', nome: 'Segunda-feira', abre: true },
+                { id: 'terca', nome: 'Terça-feira', abre: true },
+                { id: 'quarta', nome: 'Quarta-feira', abre: true },
+                { id: 'quinta', nome: 'Quinta-feira', abre: true },
+                { id: 'sexta', nome: 'Sexta-feira', abre: true },
+                { id: 'sabado', nome: 'Sábado', abre: true }
+            ];
+            
+            container.innerHTML = diasSemana.map(dia => `
+                <div class="admin-section" style="margin-bottom: 1rem; padding: 1rem; border: 1px solid var(--border); border-radius: 8px;">
+                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: bold;">
+                            <input type="checkbox" id="abre-${dia.id}" ${dia.abre ? 'checked' : ''}>
+                            ${dia.nome}
+                        </label>
+                    </div>
+                    
+                    <div id="horarios-${dia.id}" style="${dia.abre ? '' : 'display: none;'}">
+                        <div class="form-row" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+                            <div>
+                                <label>Abertura</label>
+                                <input type="time" id="abertura-${dia.id}" value="09:00">
+                            </div>
+                            <div>
+                                <label>Fechamento</label>
+                                <input type="time" id="fechamento-${dia.id}" value="18:00">
+                            </div>
+                            <div>
+                                <label>Almoço (início)</label>
+                                <input type="time" id="almoco-inicio-${dia.id}" value="12:00">
+                            </div>
+                            <div>
+                                <label>Almoço (fim)</label>
+                                <input type="time" id="almoco-fim-${dia.id}" value="13:00">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Adicionar event listeners para os checkboxes
+            diasSemana.forEach(dia => {
+                const checkbox = document.getElementById(`abre-${dia.id}`);
+                const horariosDiv = document.getElementById(`horarios-${dia.id}`);
+                
+                checkbox.addEventListener('change', () => {
+                    horariosDiv.style.display = checkbox.checked ? 'block' : 'none';
+                });
+            });
+        }
+        
+        // Salvar horários de funcionamento
+        async function salvarHorariosFuncionamento() {
+    try {
+        const horariosData = {};
+        const diasSemana = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
+        
+        diasSemana.forEach(dia => {
+            const abre = document.getElementById(`abre-${dia}`).checked;
+            const abertura = document.getElementById(`abertura-${dia}`).value;
+            const fechamento = document.getElementById(`fechamento-${dia}`).value;
+            const almocoInicio = document.getElementById(`almoco-inicio-${dia}`).value;
+            const almocoFim = document.getElementById(`almoco-fim-${dia}`).value;
+            
+            horariosData[dia] = {
+                abre: abre,
+                abertura: abertura,
+                fechamento: fechamento,
+                almocoInicio: almocoInicio,
+                almocoFim: almocoFim
+            };
+        });
+        
+        console.log('Salvando horários:', horariosData);
+        await setDoc(doc(db, "configuracoes_gerais", "horarios"), {
+            ...horariosData,
+            updatedAt: new Date(),
+            updatedBy: auth.currentUser?.uid || 'admin'
+        });
+        
+        // Salvar globalmente e atualizar slots
+        window.horariosConfig = horariosData;
+        
+        // Atualizar slots se estiver na aba de agendamentos
+        if (document.getElementById('tab-agendamentos').classList.contains('active')) {
+            renderSlots();
+        }
+        
+        showToast("✅ Horários salvos com sucesso!", "success");
+        
+    } catch (error) {
+        console.error("Erro ao salvar horários:", error);
+        showToast("❌ Erro ao salvar horários: " + error.message, "error");
+    }
+}
+        
+        // Carregar horários salvos
+                // ... código anterior ...
+
+        // Carregar horários salvos
+        async function loadHorariosFuncionamento() {
+    try {
+        const docRef = doc(db, "configuracoes_gerais", "horarios");
+        const docSnap = await getDoc(docRef);
+        
+        if (docSnap.exists()) {
+            const horarios = docSnap.data();
+            console.log('=== HORÁRIOS CARREGADOS DO FIREBASE ===');
+            console.log(horarios);
+            
+            // Salvar globalmente para usar em renderSlots
+            window.horariosConfig = horarios;
+            
+            const diasSemana = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
+            
+            diasSemana.forEach(dia => {
+                const diaData = horarios[dia];
+                if (diaData) {
+                    console.log(`${dia}: abre=${diaData.abre}, abertura=${diaData.abertura}, fechamento=${diaData.fechamento}`);
+                    
+                    const checkbox = document.getElementById(`abre-${dia}`);
+                    const abertura = document.getElementById(`abertura-${dia}`);
+                    const fechamento = document.getElementById(`fechamento-${dia}`);
+                    const almocoInicio = document.getElementById(`almoco-inicio-${dia}`);
+                    const almocoFim = document.getElementById(`almoco-fim-${dia}`);
+                    
+                    if (checkbox) checkbox.checked = diaData.abre !== false;
+                    if (abertura) abertura.value = diaData.abertura || '09:00';
+                    if (fechamento) fechamento.value = diaData.fechamento || '18:00';
+                    if (almocoInicio) almocoInicio.value = diaData.almocoInicio || '12:00';
+                    if (almocoFim) almocoFim.value = diaData.almocoFim || '13:00';
+                    
+                    // Atualizar visibilidade dos horários
+                    const horariosDiv = document.getElementById(`horarios-${dia}`);
+                    if (horariosDiv) {
+                        horariosDiv.style.display = diaData.abre !== false ? 'block' : 'none';
+                    }
+                }
+            });
+            
+            // Atualizar a agenda se estiver na aba de agendamentos
+            if (document.getElementById('tab-agendamentos').classList.contains('active')) {
+                renderSlots();
+            }
+        } else {
+            console.log('Nenhuma configuração de horários encontrada no Firebase');
+            // Se não houver configurações, usar padrões
+            window.horariosConfig = {
+                domingo: { abre: false, abertura: '09:00', fechamento: '18:00', almocoInicio: '12:00', almocoFim: '13:00' },
+                segunda: { abre: true, abertura: '09:00', fechamento: '18:00', almocoInicio: '12:00', almocoFim: '13:00' },
+                terca: { abre: true, abertura: '09:00', fechamento: '18:00', almocoInicio: '12:00', almocoFim: '13:00' },
+                quarta: { abre: true, abertura: '09:00', fechamento: '18:00', almocoInicio: '12:00', almocoFim: '13:00' },
+                quinta: { abre: true, abertura: '09:00', fechamento: '18:00', almocoInicio: '12:00', almocoFim: '13:00' },
+                sexta: { abre: true, abertura: '09:00', fechamento: '18:00', almocoInicio: '12:00', almocoFim: '13:00' },
+                sabado: { abre: true, abertura: '09:00', fechamento: '18:00', almocoInicio: '12:00', almocoFim: '13:00' }
+            };
+        }
+    } catch (error) {
+        console.error("Erro ao carregar horários:", error);
+    }
+}
+        
+        // Atualizar função loadConfiguracoesGerais para incluir informações da barbearia
         async function loadConfiguracoesGerais() {
             try {
-                console.log('=== loadConfiguracoesGerais iniciado ===');
+                console.log('Carregando configurações gerais...');
+                const docRef = doc(db, "configuracoes_gerais", "barbearia");
+                const docSnap = await getDoc(docRef);
                 
-                // Tentar carregar do Firebase
-                const configDoc = await getDoc(doc(db, "configuracoes_gerais", "barbearia"));
-                
-                if (configDoc.exists()) {
-                    const config = configDoc.data();
-                    console.log('Configurações encontradas no Firebase:', config);
+                if (docSnap.exists()) {
+                    const config = docSnap.data();
+                    console.log('Configurações encontradas:', config);
                     
-                    const fieldMap = {
-                        'config-barber-name': config.barberName || 'Lopes Barbearia',
-                        'config-barber-phone': config.barberPhone || '',
-                        'config-barber-address': config.barberAddress || '',
-                        'config-opening-time': config.openingTime || '08:00',
-                        'config-closing-time': config.closingTime || '20:00',
-                        'config-slot-interval': config.slotInterval || 30,
-                        'config-admin-whatsapp': config.adminWhatsapp || ''
-                    };
+                    // Preencher campos de informações da barbearia
+                    const nomeField = document.getElementById('barbearia-nome');
+                    const telefoneField = document.getElementById('barbearia-telefone');
+                    const enderecoField = document.getElementById('barbearia-endereco');
+                    const mapsField = document.getElementById('barbearia-maps-link');
                     
-                    // Preencher campos de texto
-                    for (let id in fieldMap) {
-                        const elem = document.getElementById(id);
-                        if (elem) {
-                            elem.value = fieldMap[id];
-                            console.log('Preenchido:', id, fieldMap[id]);
-                        } else {
-                            console.warn('Elemento não encontrado:', id);
-                        }
+                    if (nomeField) nomeField.value = config.barberName || '';
+                    if (telefoneField) telefoneField.value = config.barberPhone || '';
+                    if (enderecoField) enderecoField.value = config.barberAddress || '';
+                    if (mapsField) mapsField.value = config.barberMapsLink || '';
+                    
+                    // Atualizar nome no header
+                    const headerTitle = document.querySelector('.header-title');
+                    if (headerTitle && config.barberName) {
+                        headerTitle.textContent = config.barberName;
                     }
-                    
-                    // Preencher checkboxes
-                    document.getElementById('config-notif-confirmation').checked = config.notifications?.confirmation !== false;
-                    document.getElementById('config-notif-reminder').checked = config.notifications?.reminder !== false;
-                    document.getElementById('config-notif-admin').checked = config.notifications?.admin !== false;
-                    
-                    console.log('Configurações carregadas com sucesso');
                 } else {
                     console.log('Nenhuma configuração no Firebase, usando padrões');
                     setarValoresPadrao();
@@ -3589,73 +4226,79 @@
                 console.error("Erro ao carregar configurações:", error);
                 setarValoresPadrao();
             }
+        } // Fecha a função loadConfiguracoesGerais
+        
+        // === FUNÇÕES PARA DURAÇÃO DE AGENDAMENTOS ===
+        
+        async function salvarDuracaoAgendamento() {
+    try {
+        const duracao = document.getElementById('duracao-agendamento').value;
+        
+        if (!duracao) {
+            showToast("❌ Selecione uma duração válida!", "error");
+            return;
         }
         
-        function setarValoresPadrao() {
-            console.log('Setando valores padrão...');
-            
-            const campos = {
-                'config-barber-name': 'Lopes Barbearia',
-                'config-barber-phone': '',
-                'config-barber-address': '',
-                'config-opening-time': '08:00',
-                'config-closing-time': '20:00',
-                'config-slot-interval': '30',
-                'config-admin-whatsapp': ''
-            };
-            
-            for (let id in campos) {
-                const elem = document.getElementById(id);
-                if (elem) {
-                    elem.value = campos[id];
-                }
-            }
-            
-            // Checkboxes
-            document.getElementById('config-notif-confirmation').checked = true;
-            document.getElementById('config-notif-reminder').checked = true;
-            document.getElementById('config-notif-admin').checked = true;
-            
-            console.log('Valores padrão setados');
+        console.log('Salvando duração de agendamento:', duracao);
+        await setDoc(doc(db, "configuracoes_gerais", "agendamentos"), {
+            duracao: parseInt(duracao),
+            updatedAt: new Date(),
+            updatedBy: auth.currentUser?.uid || 'admin'
+        }, { merge: true });
+        
+        // Atualizar globalmente
+        window.duracaoAgendamento = parseInt(duracao);
+        
+        // Recarregar os horários disponíveis com a nova duração
+        if (document.getElementById('tab-agendamentos').classList.contains('active')) {
+            renderSlots();
         }
         
-        // Salvar configurações gerais
-        async function salvarConfiguracoesGerais() {
-            try {
-                const configData = {
-                    // Informações da barbearia
-                    barberName: document.getElementById('config-barber-name')?.value?.trim() || 'Lopes Barbearia',
-                    barberPhone: document.getElementById('config-barber-phone')?.value?.trim() || '',
-                    barberAddress: document.getElementById('config-barber-address')?.value?.trim() || '',
-                    
-                    // Horários
-                    openingTime: document.getElementById('config-opening-time')?.value || '08:00',
-                    closingTime: document.getElementById('config-closing-time')?.value || '20:00',
-                    slotInterval: parseInt(document.getElementById('config-slot-interval')?.value || 30),
-                    
-                    // Notificações
-                    notifications: {
-                        confirmation: document.getElementById('config-notif-confirmation')?.checked !== false,
-                        reminder: document.getElementById('config-notif-reminder')?.checked !== false,
-                        admin: document.getElementById('config-notif-admin')?.checked !== false
-                    },
-                    adminWhatsapp: document.getElementById('config-admin-whatsapp')?.value?.trim() || '',
-                    
-                    // Metadata
-                    updatedAt: new Date(),
-                    updatedBy: auth.currentUser?.uid || 'admin'
-                };
-                
-                console.log('Salvando configurações:', configData);
-                await setDoc(doc(db, "configuracoes_gerais", "barbearia"), configData);
-                
-                showToast("✅ Configurações salvas com sucesso!", "success");
-                
-            } catch (error) {
-                console.error("Erro ao salvar configurações gerais:", error);
-                showToast("❌ Erro ao salvar configurações: " + error.message, "error");
+        showToast("✅ Duração de agendamentos salva com sucesso!", "success");
+        
+    } catch (error) {
+        console.error("Erro ao salvar duração de agendamento:", error);
+        showToast("❌ Erro ao salvar duração: " + error.message, "error");
+    }
+}
+        
+        async function loadDuracaoAgendamento() {
+    try {
+        const docRef = doc(db, "configuracoes_gerais", "agendamentos");
+        const docSnap = await getDoc(docRef);
+        
+        if (docSnap.exists()) {
+            const dados = docSnap.data();
+            const duracao = dados.duracao || 30;
+            
+            const selectDuracao = document.getElementById('duracao-agendamento');
+            if (selectDuracao) {
+                selectDuracao.value = duracao.toString();
             }
+            
+            // Armazenar globalmente para usar em renderizações
+            window.duracaoAgendamento = duracao;
+            
+            console.log('Duração de agendamento carregada:', duracao);
+        } else {
+            // Valor padrão
+            window.duracaoAgendamento = 30;
         }
+    } catch (error) {
+        console.error("Erro ao carregar duração de agendamento:", error);
+        window.duracaoAgendamento = 30; // Usar padrão se houver erro
+    }
+}
+        
+        // Tornar funções globais para serem acessíveis via onclick
+        window.salvarInformacoesBarbearia = salvarInformacoesBarbearia;
+        window.renderHorariosConfig = renderHorariosConfig;
+        window.salvarHorariosFuncionamento = salvarHorariosFuncionamento;
+        window.loadHorariosFuncionamento = loadHorariosFuncionamento;
+        window.salvarDuracaoAgendamento = salvarDuracaoAgendamento;
+        window.loadDuracaoAgendamento = loadDuracaoAgendamento;
+        window.loadConfiguracoesGerais = loadConfiguracoesGerais;
+        window.setarValoresPadrao = setarValoresPadrao;
         
         // Inicializar configurações ao carregar página
         console.log('=== Script admin.html carregado ===');
@@ -3665,12 +4308,76 @@
                 console.log('DOMContentLoaded - Carregando configurações...');
                 setTimeout(() => {
                     loadConfiguracoesGerais();
+                    renderHorariosConfig();
+                    loadHorariosFuncionamento();
+                    loadDuracaoAgendamento();
                 }, 300);
             });
         } else {
             console.log('DOM já pronto - Carregando configurações imediatamente...');
             loadConfiguracoesGerais();
+            renderHorariosConfig();
+            loadHorariosFuncionamento();
+            loadDuracaoAgendamento();
         }
+        
+        // Adicionar evento para atualizar o select de serviços quando abrir a aba de agendamentos
+        document.addEventListener('DOMContentLoaded', function() {
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                        if (document.getElementById('tab-agendamentos').classList.contains('active')) {
+                            populateServiceSelect();
+                        }
+                    }
+                });
+            });
+            
+            // Observar mudanças na aba de agendamentos
+            const agendaTab = document.getElementById('tab-agendamentos');
+            if (agendaTab) {
+                observer.observe(agendaTab, { attributes: true });
+            }
+            
+        });
+
+        function generateTimeSlots(startTime, endTime, lunchStart, lunchEnd) {
+    const slots = [];
+    
+    // Converter para minutos desde meia-noite
+    function timeToMinutes(time) {
+        const [hours, minutes] = time.split(':').map(Number);
+        return hours * 60 + minutes;
+    }
+    
+    // Converter minutos para string de tempo
+    function minutesToTime(minutes) {
+        const h = Math.floor(minutes / 60);
+        const m = minutes % 60;
+        return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+    }
+    
+    const startMinutes = timeToMinutes(startTime);
+    const endMinutes = timeToMinutes(endTime);
+    const lunchStartMinutes = timeToMinutes(lunchStart);
+    const lunchEndMinutes = timeToMinutes(lunchEnd);
+    
+    // Duração de cada slot (30 minutos por padrão)
+    const slotDuration = window.duracaoAgendamento || 30;
+    
+    // Gerar slots
+    for (let time = startMinutes; time < endMinutes; time += slotDuration) {
+        // Pular horário de almoço
+        if (time >= lunchStartMinutes && time < lunchEndMinutes) {
+            continue;
+        }
+        
+        slots.push(minutesToTime(time));
+    }
+    
+    return slots;
+}
+        
     </script>
 </body>
 </html>
