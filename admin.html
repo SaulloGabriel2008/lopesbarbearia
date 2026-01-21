@@ -1472,7 +1472,8 @@
                     </div>
 
                     <div style="margin-top: 2rem;">
-                        <button class="btn-action" onclick="salvarHorariosFuncionamento()" style="background: var(--primary);">SALVAR HORÁRIOS</button>
+                        <button class="btn-action" disabled style="background: #666; color: #999; cursor: not-allowed;">✅ Auto-salvo</button>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem;">As alterações são salvas automaticamente</p>
                     </div>
                 </div>
 
@@ -4038,60 +4039,75 @@ window.switchTab = (tab) => {
             ];
             
             container.innerHTML = diasSemana.map(dia => `
-                <div class="admin-section" style="margin-bottom: 1rem; padding: 1rem; border: 1px solid var(--border); border-radius: 8px;">
-                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                <div class="admin-section" style="margin-bottom: 1rem; padding: 1rem; border: 1px solid var(--border); border-radius: 8px; position: relative;">
+                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; justify-content: space-between;">
                         <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: bold;">
                             <input type="checkbox" id="abre-${dia.id}" ${dia.abre ? 'checked' : ''}>
                             ${dia.nome}
                         </label>
+                        <span id="status-${dia.id}" style="font-size: 0.8rem; color: var(--text-muted); display: none;">✅ Salvo</span>
                     </div>
                     
                     <div id="horarios-${dia.id}" style="${dia.abre ? '' : 'display: none;'}">
                         <div class="form-row" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
                             <div>
                                 <label>Abertura</label>
-                                <input type="time" id="abertura-${dia.id}" value="09:00">
+                                <input type="time" id="abertura-${dia.id}" value="09:00" class="horario-input">
                             </div>
                             <div>
                                 <label>Fechamento</label>
-                                <input type="time" id="fechamento-${dia.id}" value="18:00">
+                                <input type="time" id="fechamento-${dia.id}" value="18:00" class="horario-input">
                             </div>
                             <div>
                                 <label>Almoço (início)</label>
-                                <input type="time" id="almoco-inicio-${dia.id}" value="12:00">
+                                <input type="time" id="almoco-inicio-${dia.id}" value="12:00" class="horario-input">
                             </div>
                             <div>
                                 <label>Almoço (fim)</label>
-                                <input type="time" id="almoco-fim-${dia.id}" value="13:00">
+                                <input type="time" id="almoco-fim-${dia.id}" value="13:00" class="horario-input">
                             </div>
                         </div>
                     </div>
                 </div>
             `).join('');
             
-            // Adicionar event listeners para os checkboxes
+            // Adicionar event listeners para auto-save
             diasSemana.forEach(dia => {
                 const checkbox = document.getElementById(`abre-${dia.id}`);
                 const horariosDiv = document.getElementById(`horarios-${dia.id}`);
+                const abertura = document.getElementById(`abertura-${dia.id}`);
+                const fechamento = document.getElementById(`fechamento-${dia.id}`);
+                const almocoInicio = document.getElementById(`almoco-inicio-${dia.id}`);
+                const almocoFim = document.getElementById(`almoco-fim-${dia.id}`);
                 
+                // Auto-save ao mudar o checkbox
                 checkbox.addEventListener('change', () => {
                     horariosDiv.style.display = checkbox.checked ? 'block' : 'none';
+                    salvarHorariosFuncionamento(dia.id);
+                });
+                
+                // Auto-save ao mudar os horários
+                const inputs = [abertura, fechamento, almocoInicio, almocoFim];
+                inputs.forEach(input => {
+                    input.addEventListener('change', () => {
+                        salvarHorariosFuncionamento(dia.id);
+                    });
                 });
             });
         }
         
-        // Salvar horários de funcionamento
-        async function salvarHorariosFuncionamento() {
+        // Salvar horários de funcionamento (com auto-save)
+        async function salvarHorariosFuncionamento(diaParaMostrarStatus = null) {
     try {
         const horariosData = {};
         const diasSemana = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
         
         diasSemana.forEach(dia => {
-            const abre = document.getElementById(`abre-${dia}`).checked;
-            const abertura = document.getElementById(`abertura-${dia}`).value;
-            const fechamento = document.getElementById(`fechamento-${dia}`).value;
-            const almocoInicio = document.getElementById(`almoco-inicio-${dia}`).value;
-            const almocoFim = document.getElementById(`almoco-fim-${dia}`).value;
+            const abre = document.getElementById(`abre-${dia}`)?.checked;
+            const abertura = document.getElementById(`abertura-${dia}`)?.value;
+            const fechamento = document.getElementById(`fechamento-${dia}`)?.value;
+            const almocoInicio = document.getElementById(`almoco-inicio-${dia}`)?.value;
+            const almocoFim = document.getElementById(`almoco-fim-${dia}`)?.value;
             
             horariosData[dia] = {
                 abre: abre,
@@ -4112,12 +4128,28 @@ window.switchTab = (tab) => {
         // Salvar globalmente e atualizar slots
         window.horariosConfig = horariosData;
         
-        // Atualizar slots se estiver na aba de agendamentos
-        if (document.getElementById('tab-agendamentos').classList.contains('active')) {
-            renderSlots();
+        // Mostrar status de salvo no dia específico
+        if (diaParaMostrarStatus) {
+            const statusEl = document.getElementById(`status-${diaParaMostrarStatus}`);
+            if (statusEl) {
+                statusEl.style.display = 'inline';
+                statusEl.style.color = 'var(--success)';
+                statusEl.textContent = '✅ Salvo';
+                
+                // Esconder o status após 2 segundos
+                setTimeout(() => {
+                    statusEl.style.display = 'none';
+                }, 2000);
+            }
+        } else {
+            // Se for salvar tudo, mostrar toast
+            showToast("✅ Horários salvos com sucesso!", "success");
         }
         
-        showToast("✅ Horários salvos com sucesso!", "success");
+        // Atualizar slots se estiver na aba de agendamentos
+        if (document.getElementById('tab-agendamentos')?.classList.contains('active')) {
+            renderSlots();
+        }
         
     } catch (error) {
         console.error("Erro ao salvar horários:", error);
@@ -4125,9 +4157,6 @@ window.switchTab = (tab) => {
     }
 }
         
-        // Carregar horários salvos
-                // ... código anterior ...
-
         // Carregar horários salvos
         async function loadHorariosFuncionamento() {
     try {
