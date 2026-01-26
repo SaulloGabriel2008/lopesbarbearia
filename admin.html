@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Admin | barber manager</title>
-    
+    <title>Admin | FLOW BARBER</title>
+    <link rel="manifest" href="/manifest.json">
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
 
@@ -941,7 +942,7 @@
 
     <div id="login-screen">
         <div class="login-card">
-            <h2 style="color: var(--primary); text-align: center; margin-bottom: 1.5rem; font-size: 1.5rem;">LOPES ADMIN</h2>
+            <h2 style="color: var(--primary); text-align: center; margin-bottom: 1.5rem; font-size: 1.5rem;">FLOW BARBER</h2>
             <div style="margin-bottom: 1rem;"><label>Email</label><input type="email" id="login-email" autocomplete="email"></div>
             <div style="margin-bottom: 1.5rem;"><label>Senha</label><input type="password" id="login-password" autocomplete="current-password"></div>
             <button class="btn-action" id="btn-login" style="width: 100%;">ENTRAR</button>
@@ -956,7 +957,7 @@
                 <i data-lucide="menu"></i>
             </button>
             <div class="header-title">
-                <span class="logo">BARBER MANAGER</span>
+                <span class="logo">FLOW BARBER</span>
                 <span id="current-tab" style="margin-left: 10px; color: var(--text-muted); font-size: 0.9rem;">Dashboard</span>
             </div>
             <button class="btn-action" onclick="logout()" style="background: var(--danger); padding: 8px 16px; font-size: 0.85rem;">
@@ -1795,7 +1796,7 @@
             const phone = clean.startsWith("55") ? clean : "55" + clean;
             const msg = encodeURIComponent(
                 `Olá, ${nome}! 👋\n\n` +
-                `Sentimos sua falta na *${window.barberName || 'barber manager'}*! ✂️\n` +
+                `Sentimos sua falta na *${window.barberName || 'FLOW BARBER'}*! ✂️\n` +
                 `Já fazem ${dias} dias desde sua última visita.\n\n` +
                 `Que tal agendar um horário pra dar aquele tapa no visual? 😉`
             );
@@ -2459,7 +2460,7 @@
                     const cleanPhone = telefone.replace(/\D/g, "");
                     const fullPhone = cleanPhone.startsWith("55") ? cleanPhone : "55" + cleanPhone;
                     const displayName = agend.nome || agend.cliente || 'cliente';
-                    const msg = encodeURIComponent(`Olá, ${displayName}! 👋\n\nEstou passando para confirmar o seu agendamento na *${window.barberName || 'barber manager'}*.\n\n📅 Data: ${agend.data.split('-').reverse().join('/')}\n⏰ Hora: ${agend.hora}h\n✂️ Serviço: ${agend.servico}\n\nPodemos confirmar? 😉`);
+                    const msg = encodeURIComponent(`Olá, ${displayName}! 👋\n\nEstou passando para confirmar o seu agendamento na *${window.barberName || 'FLOW BARBER'}*.\n\n📅 Data: ${agend.data.split('-').reverse().join('/')}\n⏰ Hora: ${agend.hora}h\n✂️ Serviço: ${agend.servico}\n\nPodemos confirmar? 😉`);
                     window.open(`https://api.whatsapp.com/send?phone=${fullPhone}&text=${msg}`);
                 };
             } else {
@@ -3162,7 +3163,7 @@
             const fullPhone = clean.startsWith("55") ? clean : "55" + clean;
             const msg = encodeURIComponent(
                 `Olá, ${clientName}! 👋\n\n` +
-                `Estou passando para lembrá-lo da sua assinatura na *${window.barberName || 'barber manager'}*! ✂️\n\n` +
+                `Estou passando para lembrá-lo da sua assinatura na *${window.barberName || 'FLOW BARBER'}*! ✂️\n\n` +
                 `Valor: *R$ ${amount.toLocaleString('pt-BR', {minimumFractionDigits: 2})}*\n` +
                 `PIX: *28999082741*\n\n` +
                 `Pode nos enviar o comprovante após o pagamento? 😉`
@@ -4186,7 +4187,7 @@ window.excluirServico = async (id) => {
         
         // Definir valores padrão
         function setarValoresPadrao() {
-            document.getElementById('barbearia-nome').value = 'barber manager';
+            document.getElementById('barbearia-nome').value = 'FLOW BARBER';
             document.getElementById('barbearia-telefone').value = '5528999082741';
             document.getElementById('barbearia-endereco').value = 'Av. Central, 149-21 - Alto Lagoa Funda, Marataízes - ES, 29345-000';
             document.getElementById('barbearia-maps-link').value = 'https://maps.app.goo.gl/tMqWDAU2Eh14hp9bA';
@@ -4407,7 +4408,7 @@ window.excluirServico = async (id) => {
                     console.log('Configurações encontradas:', config);
                     
                     // Salvar nome globalmente para mensagens WhatsApp
-                    window.barberName = config.barberName || 'barber manager';
+                    window.barberName = config.barberName || 'FLOW BARBER';
                     
                     // Preencher campos de informações da barbearia
                     const nomeField = document.getElementById('barbearia-nome');
@@ -4441,7 +4442,7 @@ window.excluirServico = async (id) => {
             onSnapshot(docRef, (snapshot) => {
                 if (snapshot.exists()) {
                     const config = snapshot.data();
-                    window.barberName = config.barberName || 'barber manager';
+                    window.barberName = config.barberName || 'FLOW BARBER';
                     console.log('Nome da barbearia atualizado para:', window.barberName);
                 }
             });
@@ -4749,7 +4750,48 @@ window.excluirServico = async (id) => {
     
     return slots;
 }
-        
+    
+
+import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-messaging.js";
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/service-worker.js");
+  navigator.serviceWorker.register("/firebase-messaging-sw.js");
+}
+
+const messaging = getMessaging(app);
+
+async function enableNotifications() {
+  const permission = await Notification.requestPermission();
+  if (permission !== "granted") return;
+
+  const token = await getToken(messaging, {
+    vapidKey: "BKwXi48YHCAqONsGUzs47anRjyov84hlpcFFjek4pjPtqewf8LNa5uxxvLslRmY1EB_rIT7CyPqVD_ImShqxCkg"
+  });
+
+  if (token && currentUserEmail) {
+    await setDoc(doc(db, "barbeirosTokens", currentUserEmail), {
+      token,
+      updatedAt: new Date()
+    });
+  }
+}
+
+onAuthStateChanged(auth, user => {
+  if (user) {
+    currentUserEmail = user.email;
+    enableNotifications();
+  }
+});
+
+onMessage(messaging, payload => {
+  new Notification(payload.notification.title, {
+    body: payload.notification.body,
+    icon: "/icon-192.png"
+  });
+});
+
+
     </script>
 </body>
 </html>
