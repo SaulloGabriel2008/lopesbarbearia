@@ -1,5 +1,8 @@
 const { onDocumentCreated } = require("firebase-functions/v2/firestore");
+const { setGlobalOptions } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
+
+setGlobalOptions({ region: "southamerica-east1" });
 
 admin.initializeApp();
 
@@ -17,13 +20,11 @@ exports.notifyNewBooking = onDocumentCreated(
 
     if (!tokens.length) return;
 
-    const payload = {
+    await admin.messaging().sendToDevice(tokens, {
       notification: {
         title: "✂️ Novo agendamento",
-        body: `${data.cliente || "Cliente"} – ${data.servico || "Serviço"} às ${data.horario || ""}`
+        body: `${data.nome} – ${data.servico} às ${data.hora}`
       }
-    };
-
-    await admin.messaging().sendToDevice(tokens, payload);
+    });
   }
 );
