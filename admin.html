@@ -4760,10 +4760,8 @@ window.excluirServico = async (id) => {
 }
 
 const messaging = getMessaging(app);
-const auth = getAuth(app);
-const db = getFirestore(app);
-
-let currentUserEmail = null;
+// `auth` and `db` were already initialized earlier in this module — don't redeclare them.
+// `currentUserEmail` was defined earlier; avoid redeclaration here.
 
 async function enableNotifications() {
   const permission = await Notification.requestPermission();
