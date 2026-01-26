@@ -4760,47 +4760,45 @@ window.excluirServico = async (id) => {
 }
 
 const messaging = getMessaging(app);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+let currentUserEmail = null;
 
 async function enableNotifications() {
   const permission = await Notification.requestPermission();
   if (permission !== "granted") return;
 
-await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+  // Registra o Service Worker
+  await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+  const registration = await navigator.serviceWorker.ready;
 
-// 👇 ISSO É O PULO DO GATO
-const registration = await navigator.serviceWorker.ready;
+  // Gera o token FCM
+  const token = await getToken(messaging, {
+    vapidKey: "BLD963N5YjeyOePsC9_V-lLBqL50e7G78Z9yxyThBM6J3rUa9B6YBiW7WKIT7JBRvoPQZZ3zO9Zw4-m95bxI_fA",
+    serviceWorkerRegistration: registration
+  });
 
-const token = await getToken(messaging, {
-  vapidKey: "BLD963N5YjeyOePsC9_V-lLBqL50e7G78Z9yxyThBM6J3rUa9B6YBiW7WKIT7JBRvoPQZZ3zO9Zw4-m95bxI_fA",
-  serviceWorkerRegistration: registration
-});
+  console.log("FCM TOKEN:", token);
 
-console.log("FCM TOKEN:", token);
-
-
-
-import {
-  collection,
-  addDoc,
-  serverTimestamp
-} from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
-
-if (token && currentUserEmail) {
-  await addDoc(
-    collection(
-      db,
-      "barbeirosTokens",
-      currentUserEmail,
-      "tokens"
-    ),
-    {
-      token,
-      createdAt: serverTimestamp()
-    }
-  );
+  // 🔥 SALVA SEM SOBRESCREVER (SUPORTA VÁRIOS DISPOSITIVOS)
+  if (token && currentUserEmail) {
+    await addDoc(
+      collection(
+        db,
+        "barbeirosTokens",
+        currentUserEmail,
+        "tokens"
+      ),
+      {
+        token,
+        createdAt: serverTimestamp()
+      }
+    );
+  }
 }
 
-
+// Ativa notificações quando o barbeiro logar
 onAuthStateChanged(auth, user => {
   if (user) {
     currentUserEmail = user.email;
@@ -4808,6 +4806,7 @@ onAuthStateChanged(auth, user => {
   }
 });
 
+// Push em foreground (site aberto)
 onMessage(messaging, payload => {
   new Notification(payload.notification.title, {
     body: payload.notification.body,
