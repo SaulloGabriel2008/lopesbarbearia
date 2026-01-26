@@ -976,7 +976,7 @@
                 <div class="nav-modal-item" onclick="switchTab('clientes'); toggleNavModal();">
                     <i data-lucide="users"></i> Clientes
                 </div>
-                <div class="nav-modal-item" onclick="switchTab('assinaturas'); toggleNavModal();">
+                <div class="nav-modal-item" id="assinaturas-menu-item" onclick="switchTab('assinaturas'); toggleNavModal();">
                     <i data-lucide="credit-card"></i> Assinaturas
                 </div>
                 <div class="nav-modal-item" onclick="switchTab('finanças'); toggleNavModal();">
@@ -1515,6 +1515,22 @@
                     </div>
                 </div>
 
+                <!-- Configuração de Relatório Fiscal -->
+                <div class="admin-section">
+                    <h4 style="margin-bottom: 1.5rem;">Relatório Fiscal</h4>
+
+                    <div class="form-row">
+                        <div>
+                            <label>Habilitar Funcionalidade de Relatório Fiscal</label>
+                            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                                <button id="btn-enable-fiscal-report" class="btn-action" onclick="toggleFiscalReport(true)" style="background: var(--success); flex: 1;">✅ ATIVAR</button>
+                                <button id="btn-disable-fiscal-report" class="btn-action" onclick="toggleFiscalReport(false)" style="background: var(--danger); flex: 1;">❌ DESATIVAR</button>
+                            </div>
+                            <p id="fiscal-report-status" style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem;">Carregando status...</p>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Configuração de Serviços de Assinatura -->
                 <div class="admin-section">
                     <h4 style="margin-bottom: 1.5rem;">Configuração de Serviços de Assinatura</h4>
@@ -1806,6 +1822,12 @@
             // Verificar se o usuário pode acessar configurações
             if (tab === 'configurações' && currentUserEmail !== 'saullinho2008@gmail.com') {
                 showToast('Acesso negado: apenas o administrador pode acessar configurações.', 'error');
+                return;
+            }
+            
+            // Verificar se assinaturas estão habilitadas
+            if (tab === 'assinaturas' && !subscriptionsEnabled) {
+                showToast('Sistema de assinaturas desabilitado.', 'error');
                 return;
             }
             
@@ -3893,6 +3915,12 @@ window.excluirServico = async (id) => {
 
         // --- FUNÇÃO ATUALIZADA PARA RELATÓRIO FISCAL COM ASSINATURAS ---
         window.generateFiscalReport = () => {
+            // Verificar se a funcionalidade está habilitada
+            if (!fiscalReportEnabled) {
+                showToast('❌ Relatório fiscal está desabilitado. Converse com o administrador.', 'error');
+                return;
+            }
+
             const year = document.getElementById('report-year').value;
             const month = document.getElementById('report-month').value;
             const week = document.getElementById('report-week').value;
@@ -4066,6 +4094,10 @@ window.excluirServico = async (id) => {
 
         // FUNÇÃO PARA EXPORTAR RELATÓRIO FISCAL
         window.exportFiscalReport = () => {
+            if (!fiscalReportEnabled) {
+                showToast('❌ Relatório fiscal está desabilitado. Converse com o administrador.', 'error');
+                return;
+            }
             if (!window.currentFiscalReportData || window.currentFiscalReportData.data.length === 0) {
                 showToast('Nenhum dado para exportar.', 'warning');
                 return;
@@ -4511,17 +4543,22 @@ window.excluirServico = async (id) => {
             const statusText = document.getElementById('subscriptions-status');
             const enableBtn = document.getElementById('btn-enable-subscriptions');
             const disableBtn = document.getElementById('btn-disable-subscriptions');
+            const menuItem = document.getElementById('assinaturas-menu-item');
             
             if (subscriptionsEnabled) {
                 if (statusText) statusText.innerHTML = '✅ <strong>ATIVADO</strong> - Sistema de assinaturas está funcionando';
                 if (enableBtn) enableBtn.style.opacity = '1';
                 if (disableBtn) disableBtn.style.opacity = '0.5';
-                document.getElementById('tab-assinaturas').style.display = 'block';
+                if (menuItem) menuItem.style.display = '';
             } else {
                 if (statusText) statusText.innerHTML = '❌ <strong>DESATIVADO</strong> - Sistema de assinaturas está desligado';
                 if (enableBtn) enableBtn.style.opacity = '0.5';
                 if (disableBtn) disableBtn.style.opacity = '1';
-                document.getElementById('tab-assinaturas').style.display = 'none';
+                if (menuItem) menuItem.style.display = 'none';
+                // If currently viewing the subscriptions tab, switch to dashboard
+                if (document.getElementById('tab-assinaturas') && document.getElementById('tab-assinaturas').classList.contains('active')) {
+                    switchTab('dashboard');
+                }
             }
         }
         
@@ -4550,7 +4587,74 @@ window.excluirServico = async (id) => {
             }
         };
         
-        // Tornar funções globais para serem acessíveis via onclick
+        // Variável global para status de relatório fiscal
+        let fiscalReportEnabled = false;
+        
+        // Carregar status de relatório fiscal
+        async function loadFiscalReportStatus() {
+            try {
+                const docRef = doc(db, "configuracoes_gerais", "fiscal_report");
+                const docSnap = await getDoc(docRef);
+                
+                if (docSnap.exists()) {
+                    const dados = docSnap.data();
+                    fiscalReportEnabled = dados.enabled === true;
+                } else {
+                    fiscalReportEnabled = false;
+                }
+                
+                updateFiscalReportStatusUI();
+            } catch (error) {
+                console.error("Erro ao carregar status de relatório fiscal:", error);
+                fiscalReportEnabled = false;
+            }
+        }
+        
+        // Atualizar UI de status de relatório fiscal
+        function updateFiscalReportStatusUI() {
+            const statusText = document.getElementById('fiscal-report-status');
+            const enableBtn = document.getElementById('btn-enable-fiscal-report');
+            const disableBtn = document.getElementById('btn-disable-fiscal-report');
+            
+            if (fiscalReportEnabled) {
+                if (statusText) statusText.innerHTML = '✅ <strong>ATIVADO</strong> - Relatório fiscal está disponível';
+                if (enableBtn) enableBtn.style.opacity = '0.5';
+                if (disableBtn) disableBtn.style.opacity = '1';
+            } else {
+                if (statusText) statusText.innerHTML = '❌ <strong>DESATIVADO</strong> - Converse com o Admin para alterar para um plano que tenha esse recurso';
+                if (enableBtn) enableBtn.style.opacity = '1';
+                if (disableBtn) disableBtn.style.opacity = '0.5';
+            }
+        }
+        
+        // Toggle relatório fiscal
+        window.toggleFiscalReport = async (enabled) => {
+            // Verificar permissão
+            if (currentUserEmail !== 'saullinho2008@gmail.com') {
+                showToast('Acesso negado: apenas o administrador pode modificar configurações.', 'error');
+                return;
+            }
+            
+            try {
+                fiscalReportEnabled = enabled;
+                
+                const configRef = doc(db, "configuracoes_gerais", "fiscal_report");
+                await setDoc(configRef, {
+                    enabled: enabled,
+                    updatedAt: new Date().toISOString(),
+                    updatedBy: auth.currentUser?.email || 'admin'
+                });
+                
+                updateFiscalReportStatusUI();
+                showToast(enabled ? '✅ Relatório fiscal ativado!' : '❌ Relatório fiscal desativado!', 'success');
+                console.log('Status do relatório fiscal atualizado para:', enabled);
+            } catch (error) {
+                console.error("Erro ao atualizar status de relatório fiscal:", error);
+                showToast("❌ Erro ao atualizar: " + error.message, "error");
+                // Recarregar status anterior
+                loadFiscalReportStatus();
+            }
+        };
         window.salvarInformacoesBarbearia = salvarInformacoesBarbearia;
         window.renderHorariosConfig = renderHorariosConfig;
         window.salvarHorariosFuncionamento = salvarHorariosFuncionamento;
@@ -4575,6 +4679,7 @@ window.excluirServico = async (id) => {
                     loadHorariosFuncionamento();
                     loadDuracaoAgendamento();
                     loadSubscriptionsStatus();
+                    loadFiscalReportStatus();
                 }, 300);
             });
         } else {
@@ -4585,6 +4690,7 @@ window.excluirServico = async (id) => {
             loadHorariosFuncionamento();
             loadDuracaoAgendamento();
             loadSubscriptionsStatus();
+            loadFiscalReportStatus();
         }
         
         // Adicionar evento para atualizar o select de serviços quando abrir a aba de agendamentos
