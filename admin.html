@@ -4752,9 +4752,9 @@ window.excluirServico = async (id) => {
 }
     
 
-import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-messaging.js";
+        import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-messaging.js";
 
-if ("serviceWorker" in navigator) {
+        if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("/service-worker.js");
   navigator.serviceWorker.register("/firebase-messaging-sw.js");
 }
@@ -4765,12 +4765,18 @@ async function enableNotifications() {
   const permission = await Notification.requestPermission();
   if (permission !== "granted") return;
 
+await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+
+// 👇 ISSO É O PULO DO GATO
 const registration = await navigator.serviceWorker.ready;
 
 const token = await getToken(messaging, {
-  vapidKey: "BBLD963N5YjeyOePsC9_V-lLBqL50e7G78Z9yxyThBM6J3rUa9B6YBiW7WKIT7JBRvoPQZZ3zO9Zw4-m95bxI_fA",
+  vapidKey: "BLD963N5YjeyOePsC9_V-lLBqL50e7G78Z9yxyThBM6J3rUa9B6YBiW7WKIT7JBRvoPQZZ3zO9Zw4-m95bxI_fA",
   serviceWorkerRegistration: registration
 });
+
+console.log("FCM TOKEN:", token);
+
 
 
   if (token && currentUserEmail) {
