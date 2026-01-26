@@ -4779,13 +4779,27 @@ console.log("FCM TOKEN:", token);
 
 
 
-  if (token && currentUserEmail) {
-    await setDoc(doc(db, "barbeirosTokens", currentUserEmail), {
+import {
+  collection,
+  addDoc,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
+if (token && currentUserEmail) {
+  await addDoc(
+    collection(
+      db,
+      "barbeirosTokens",
+      currentUserEmail,
+      "tokens"
+    ),
+    {
       token,
-      updatedAt: new Date()
-    });
-  }
+      createdAt: serverTimestamp()
+    }
+  );
 }
+
 
 onAuthStateChanged(auth, user => {
   if (user) {
