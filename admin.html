@@ -1816,8 +1816,8 @@
             </div>
         </main>
         
-        <button class="back-to-top" onclick="backToTop()" aria-label="Voltar ao topo">
-            <i data-lucide="chevron-up"></i>
+        <button id="back-to-top-btn" class="back-to-top" onclick="backToTop()" aria-label="Voltar ao topo">
+            <i data-lucide="chevron-up" id="back-to-top-icon"></i>
         </button>
         
         <div class="toast" id="toast"></div>
@@ -1827,6 +1827,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
         import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc, updateDoc, addDoc, serverTimestamp, getDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+        import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-messaging.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBLBFTLC7sqM9VUhlsypPugQ-LhcX7-0Rw",
@@ -1909,20 +1910,35 @@
         // Função para rolar ao topo respeitando o container com scroll (admin-panel)
         window.backToTop = () => {
             const panel = document.getElementById('admin-panel');
+
+            // Priorizar rolagem do painel quando houver overflow
             try {
-                if (panel) {
-                    // Se o painel tem overflow e está rolando, role ele
+                if (panel && panel.scrollHeight > panel.clientHeight) {
                     panel.scrollTo({ top: 0, behavior: 'smooth' });
-                    // Também garanta que a janela principal role caso ainda haja espaço
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                } else {
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    return;
                 }
             } catch (e) {
-                // Fallback simples
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                // ignore
             }
+
+            // Fallbacks: documentElement e body
+            try { document.documentElement.scrollTo({ top: 0, behavior: 'smooth' }); } catch(e) {}
+            try { document.body.scrollTo({ top: 0, behavior: 'smooth' }); } catch(e) {}
+
+            // Pequeno feedback visual para confirmar que o botão funcionou
+            try { showToast('Rolando ao topo...', 'info'); } catch(e) {}
         };
+
+        // Garantir que botão funciona mesmo sem onclick inline (mais robusto)
+        document.addEventListener('DOMContentLoaded', () => {
+            const btn = document.getElementById('back-to-top-btn');
+            if (btn) {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    backToTop();
+                });
+            }
+        });
 
         // Fechar modal de navegação
         function closeNavModal() {
@@ -3047,13 +3063,47 @@
             let rev = 0; 
             const sMap = {};
 
+            // Função auxiliar: normaliza e contabiliza serviços (suporta múltiplos serviços por registro)
+            function addServiceToMap(rawService) {
+                let txt = (rawService || '').toString().trim();
+                // Tratar vazio
+                if (!txt) {
+                    sMap['Outros'] = (sMap['Outros'] || 0) + 1;
+                    return;
+                }
+                // Remover prefixos e textos desnecessários
+                txt = txt.replace(/^Venda:\s*/i, '').trim();
+
+                // Separadores comuns -> suportar múltiplos serviços em um único campo
+                const parts = txt.split(/[;,\/\|\+]/).map(p => p.trim()).filter(Boolean);
+                parts.forEach(p => {
+                    // Mapeamento de variantes para rótulos canônicos
+                    let key = 'Outros';
+                    if (/combo completo/i.test(p)) key = 'Combo Completo: Cabelo, Barba e Sombrancelha';
+                    else if (/combo.*corte.*barba/i.test(p) || /corte.*barba/i.test(p)) key = 'Combo Corte + Barba';
+                    else if (/^combo/i.test(p)) key = 'Combos';
+                    else if (/corte infantil/i.test(p)) key = 'Corte Infantil';
+                    else if (/corte masculino/i.test(p)) key = 'Corte Masculino';
+                    else if (/barba/i.test(p)) key = 'Barba Completa';
+                    else if (/cortesia/i.test(p)) key = 'Cortesia';
+                    else if (/bloqueio/i.test(p)) key = 'Bloqueio';
+                    else if (/assinatura/i.test(p)) key = 'Assinatura';
+                    else key = p;
+
+                    sMap[key] = (sMap[key] || 0) + 1;
+                });
+            }
+
             // Adicionar serviços concluídos (excluindo assinaturas)
             agendamentosData.forEach(a => { 
-                if(a.status === 'completed' && (a.nome || a.cliente) !== 'BLOQUEADO' && !a.isSubscription) {
-                    const dt = new Date(a.data + 'T00:00:00');
-                    if (dt >= range.start && dt < range.end) {
+                const status = (a.status || '').toString().toLowerCase();
+                const ownerName = (a.nome || a.cliente || '').toString().trim();
+                const isBlocked = ownerName.toUpperCase() === 'BLOQUEADO';
+                if(status === 'completed' && !isBlocked && !a.isSubscription) {
+                    const dt = a.data ? new Date(a.data + 'T00:00:00') : null;
+                    if (dt && dt >= range.start && dt < range.end) {
                         rev += Number(a.preco || 0);
-                        sMap[a.servico] = (sMap[a.servico] || 0) + 1;
+                        addServiceToMap(a.servico);
                     }
                 }
             });
@@ -3068,11 +3118,11 @@
 
             // ADICIONADO: Adicionar assinaturas pagas no período
             subscriptionsData.forEach(sub => {
-                if (sub.paymentStatus === 'paid' && sub.lastPaymentDate) {
+                if ((sub.paymentStatus || '').toString().toLowerCase() === 'paid' && sub.lastPaymentDate) {
                     const dt = new Date(sub.lastPaymentDate + 'T00:00:00');
                     if (dt >= range.start && dt < range.end) {
                         rev += Number(sub.value || 0);
-                        sMap['Assinatura'] = (sMap['Assinatura'] || 0) + 1;
+                        addServiceToMap('Assinatura');
                     }
                 }
             });
@@ -4519,11 +4569,13 @@ window.excluirServico = async (id) => {
                 
                 showToast("✅ Informações da barbearia salvas com sucesso!", "success");
                 
-                // Atualizar nome no header se estiver na aba configurações
-                const headerTitle = document.querySelector('.header-title');
-                if (headerTitle) {
-                    headerTitle.textContent = configData.barberName;
+                // Atualizar apenas o nome da barbearia no header (sem substituir a estrutura)
+                const logoEl = document.querySelector('.header-title .logo');
+                if (logoEl) {
+                    logoEl.textContent = configData.barberName;
                 }
+                // Atualizar variável global usada em mensagens
+                window.barberName = configData.barberName || window.barberName;
                 
             } catch (error) {
                 console.error("Erro ao salvar informações da barbearia:", error);
@@ -4767,11 +4819,13 @@ window.excluirServico = async (id) => {
                     if (enderecoField) enderecoField.value = config.barberAddress || '';
                     if (mapsField) mapsField.value = config.barberMapsLink || '';
                     
-                    // Atualizar nome no header
-                    const headerTitle = document.querySelector('.header-title');
-                    if (headerTitle && config.barberName) {
-                        headerTitle.textContent = config.barberName;
+                    // Atualizar apenas o nome da barbearia no header (sem substituir a estrutura)
+                    const logoEl = document.querySelector('.header-title .logo');
+                    if (logoEl && config.barberName) {
+                        logoEl.textContent = config.barberName;
                     }
+                    // Atualizar variável global usada em mensagens
+                    window.barberName = config.barberName || window.barberName;
                 } else {
                     console.log('Nenhuma configuração no Firebase, usando padrões');
                     setarValoresPadrao();
@@ -5098,7 +5152,7 @@ window.excluirServico = async (id) => {
 }
     
 
-        import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-messaging.js";
+
 
         if ("serviceWorker" in navigator && window.location.protocol !== 'file:') {
           navigator.serviceWorker.register("/service-worker.js").catch(err => {
@@ -5136,16 +5190,12 @@ async function enableNotifications() {
 
     console.log("FCM TOKEN:", token);
 
-    // 🔥 SALVA SEM SOBRESCREVER (SUPORTA VÁRIOS DISPOSITIVOS)
+    // 🔥 Salva sem sobrescrever (suporta vários dispositivos) — registra email+token como pedido
     if (token && currentUserEmail) {
       await addDoc(
-        collection(
-          db,
-          "barbeirosTokens",
-          currentUserEmail,
-          "tokens"
-        ),
+        collection(db, "barbeirosTokens"),
         {
+          email: currentUserEmail,
           token,
           createdAt: serverTimestamp()
         }
