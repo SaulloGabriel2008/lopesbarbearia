@@ -494,6 +494,7 @@
     </div>
 
     <footer>
+        <p id="barbearia-nome-footer" style="font-weight: bold; margin-bottom: 15px;">LOPES BARBEARIA</p>
         <p id="barbearia-endereco-footer">📍 Av. Central, 149-21 - Alto Lagoa Funda, Marataízes - ES, 29345-000</p>
         <a id="barbearia-maps-link" href="https://maps.app.goo.gl/tMqWDAU2Eh14hp9bA" target="_blank" class="map-link">
             🗺️ VER NO GOOGLE MAPS
@@ -695,9 +696,13 @@
                     
                     // Atualizar nome da barbearia
                     const barberName = config.barberName || 'Lopes Barbearia';
-                    document.getElementById('barbearia-nome-header').textContent = barberName;
-                    document.getElementById('page-title').textContent = barberName;
-                    document.getElementById('barbearia-nome-footer').textContent = barberName;
+                    const headerElement = document.getElementById('barbearia-nome-header');
+                    const titleElement = document.getElementById('page-title');
+                    const footerNameElement = document.getElementById('barbearia-nome-footer');
+                    
+                    if (headerElement) headerElement.textContent = barberName;
+                    if (titleElement) titleElement.textContent = barberName;
+                    if (footerNameElement) footerNameElement.textContent = barberName;
                     
                     // Atualizar telefone (usar nas mensagens WhatsApp)
                     if (config.barberPhone) {
@@ -706,12 +711,17 @@
                     
                     // Atualizar endereço e link do maps
                     if (config.barberAddress) {
-                        document.getElementById('barbearia-endereco-footer').textContent = `📍 ${config.barberAddress}`;
+                        const addressElement = document.getElementById('barbearia-endereco-footer');
+                        if (addressElement) {
+                            addressElement.textContent = `📍 ${config.barberAddress}`;
+                        }
                     }
                     
                     if (config.barberMapsLink) {
                         const mapsLink = document.getElementById('barbearia-maps-link');
-                        mapsLink.href = config.barberMapsLink;
+                        if (mapsLink) {
+                            mapsLink.href = config.barberMapsLink;
+                        }
                     }
                     
                     console.log('Configurações da barbearia aplicadas com sucesso');
