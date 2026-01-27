@@ -1432,16 +1432,16 @@
             lista.innerHTML = snap.empty ? "Nenhum agendamento ativo." : "";
             snap.forEach(d => {
                 const dt = d.data();
-                const dadosAgendamento = JSON.stringify({
+                const dadosJson = JSON.stringify({
                     servico: dt.servico,
                     data: dt.data,
                     hora: dt.hora,
                     cliente: dt.cliente
-                }).replace(/"/g, '"');
+                });
 
                 lista.innerHTML += `<div style="border-bottom: 1px solid #222; padding: 10px 0;">
                     <b>${dt.servico}</b><br>${dt.data.split('-').reverse().join('/')} às ${dt.hora}h
-                    <br><button style="background:#e53e3e; color:#fff; border:none; padding:4px 8px; border-radius:4px; margin-top:5px; cursor:pointer;" onclick="cancelMyBooking('${d.id}', '${dadosAgendamento}')">CANCELAR</button>
+                    <br><button style="background:#e53e3e; color:#fff; border:none; padding:4px 8px; border-radius:4px; margin-top:5px; cursor:pointer;" onclick="cancelMyBooking('${d.id}', '${dadosJson.replace(/'/g, "&#39;").replace(/"/g, "&quot;")}')">CANCELAR</button>
                 </div>`;
             });
         }
@@ -1458,7 +1458,19 @@
             const diferencaHoras = diferencaMs / (1000 * 60 * 60);
 
             if (diferencaHoras < 2) {
-                alert("Não é possível cancelar com menos de 2 horas de antecedência. Entre em contato direto com a barbearia.");
+                Toastify({
+                    text: "❌ Não é possível cancelar com menos de 2 horas de antecedência. Entre em contato direto com a barbearia.",
+                    duration: 5000,
+                    gravity: "top",
+                    position: "center",
+                    style: {
+                        background: "#e53e3e",
+                        color: "#fff",
+                        fontSize: "1rem",
+                        borderRadius: "8px",
+                        fontWeight: "600"
+                    }
+                }).showToast();
                 return;
             }
 
