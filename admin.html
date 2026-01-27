@@ -101,6 +101,18 @@
             font-size: 1.2rem;
             font-weight: 600;
             color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Indicador da aba atual (baixo do logo) */
+        .header-title #current-tab {
+            margin-top: 5px;
+            color: var(--primary);
+            font-size: 0.9rem;
+            font-weight: 700;
+            display: block;
+            opacity: 0.95;
         }
         
         .logo {
@@ -207,45 +219,90 @@
         }
 
         .simple-stat-card {
-            background: var(--bg-card);
+            background: linear-gradient(135deg, var(--bg-card) 0%, rgba(255, 255, 255, 0.05) 100%);
             border-radius: 1rem;
-            border: 1px solid var(--border);
+            border: 2px solid var(--border);
             padding: 1.5rem;
             display: flex;
             align-items: center;
             gap: 1rem;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .simple-stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s ease;
         }
 
         .simple-stat-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            border-color: var(--primary);
+        }
+
+        .simple-stat-card:hover::before {
+            left: 100%;
         }
 
         .simple-stat-card.primary {
             border-left: 4px solid var(--primary);
+            box-shadow: -4px 0 20px rgba(30, 144, 255, 0.2);
+        }
+
+        .simple-stat-card.primary:hover {
+            box-shadow: -4px 0 30px rgba(30, 144, 255, 0.4), 0 20px 60px rgba(0, 0, 0, 0.5);
         }
 
         .simple-stat-card.success {
             border-left: 4px solid var(--success);
+            box-shadow: -4px 0 20px rgba(16, 185, 129, 0.2);
+        }
+
+        .simple-stat-card.success:hover {
+            box-shadow: -4px 0 30px rgba(16, 185, 129, 0.4), 0 20px 60px rgba(0, 0, 0, 0.5);
         }
 
         .simple-stat-card.accent {
             border-left: 4px solid var(--accent);
+            box-shadow: -4px 0 20px rgba(59, 130, 246, 0.2);
+        }
+
+        .simple-stat-card.accent:hover {
+            box-shadow: -4px 0 30px rgba(59, 130, 246, 0.4), 0 20px 60px rgba(0, 0, 0, 0.5);
         }
 
         .simple-stat-card.subscription {
             border-left: 4px solid var(--subscription);
+            box-shadow: -4px 0 20px rgba(139, 92, 246, 0.2);
+        }
+
+        .simple-stat-card.subscription:hover {
+            box-shadow: -4px 0 30px rgba(139, 92, 246, 0.4), 0 20px 60px rgba(0, 0, 0, 0.5);
         }
 
         .simple-stat-icon {
-            background: rgba(255, 255, 255, 0.1);
+            background: linear-gradient(135deg, rgba(30, 144, 255, 0.2), rgba(139, 92, 246, 0.1));
             width: 60px;
             height: 60px;
             border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .simple-stat-card:hover .simple-stat-icon {
+            background: linear-gradient(135deg, rgba(30, 144, 255, 0.3), rgba(139, 92, 246, 0.2));
+            transform: scale(1.1) rotate(5deg);
         }
 
         .simple-stat-icon i {
@@ -278,10 +335,17 @@
 
         .simple-upcoming-clients {
             grid-column: span 2;
-            background: var(--bg-card);
+            background: linear-gradient(135deg, var(--bg-card) 0%, rgba(30, 144, 255, 0.05) 100%);
             border-radius: 1rem;
-            border: 1px solid var(--border);
+            border: 2px solid var(--border);
             padding: 1.5rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .simple-upcoming-clients:hover {
+            border-color: var(--primary);
+            box-shadow: 0 8px 30px rgba(30, 144, 255, 0.15);
         }
 
         .simple-upcoming-header {
@@ -290,18 +354,25 @@
             gap: 0.75rem;
             margin-bottom: 1.5rem;
             padding-bottom: 1rem;
-            border-bottom: 1px solid var(--border);
+            border-bottom: 2px solid var(--primary);
         }
 
         .simple-upcoming-header h4 {
             font-size: 1.1rem;
-            color: var(--text-main);
+            color: var(--primary);
+            font-weight: 700;
         }
 
         .simple-upcoming-header i {
             color: var(--primary);
-            width: 20px;
-            height: 20px;
+            width: 24px;
+            height: 24px;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
         }
 
         .simple-upcoming-list {
@@ -315,14 +386,17 @@
             align-items: center;
             justify-content: space-between;
             padding: 1rem;
-            background: rgba(255, 255, 255, 0.05);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(30, 144, 255, 0.05));
             border-radius: 10px;
-            border: 1px solid var(--border);
-            transition: background 0.2s;
+            border: 1px solid rgba(30, 144, 255, 0.2);
+            transition: all 0.3s ease;
         }
 
         .upcoming-client-item:hover {
-            background: rgba(255, 255, 255, 0.08);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(30, 144, 255, 0.1));
+            border-color: var(--primary);
+            box-shadow: 0 4px 15px rgba(30, 144, 255, 0.2);
+            transform: translateX(4px);
         }
 
         .client-info {
@@ -354,21 +428,25 @@
             font-size: 0.75rem;
             font-weight: 600;
             text-transform: uppercase;
+            transition: all 0.3s ease;
         }
 
         .client-status.confirmed {
-            background: rgba(16, 185, 129, 0.2);
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(16, 185, 129, 0.1));
             color: var(--success);
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
         }
 
         .client-status.subscriber {
-            background: rgba(139, 92, 246, 0.2);
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(139, 92, 246, 0.1));
             color: #8b5cf6;
+            box-shadow: 0 2px 8px rgba(139, 92, 246, 0.2);
         }
 
         .client-status.completed {
-            background: rgba(107, 114, 128, 0.2);
+            background: linear-gradient(135deg, rgba(107, 114, 128, 0.3), rgba(107, 114, 128, 0.1));
             color: var(--text-muted);
+            box-shadow: 0 2px 8px rgba(107, 114, 128, 0.2);
         }
 
         .no-upcoming {
@@ -408,10 +486,18 @@
         }
         
         .stat-card { 
-            background: var(--bg-card); 
+            background: linear-gradient(135deg, var(--bg-card) 0%, rgba(30, 144, 255, 0.05) 100%);
             padding: 1.5rem; 
             border-radius: 1rem; 
-            border: 1px solid var(--border); 
+            border: 2px solid var(--border);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .stat-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 8px 25px rgba(30, 144, 255, 0.15);
+            transform: translateY(-4px);
         }
         
         .stat-value { 
@@ -430,11 +516,18 @@
         }
         
         .calendar-card { 
-            background: var(--bg-card); 
+            background: linear-gradient(135deg, var(--bg-card) 0%, rgba(30, 144, 255, 0.05) 100%);
             border-radius: 1rem; 
-            border: 1px solid var(--border); 
+            border: 2px solid var(--border);
             overflow: hidden; 
             width: 100%;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .calendar-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 8px 25px rgba(30, 144, 255, 0.15);
         }
         
         .calendar-header { 
@@ -468,14 +561,21 @@
         .day-number { font-weight: bold; font-size: 0.9rem; margin-bottom: 2px; }
         
         .slots-container { 
-            background: var(--bg-card); 
+            background: linear-gradient(135deg, var(--bg-card) 0%, rgba(30, 144, 255, 0.05) 100%);
             border-radius: 1rem; 
-            border: 1px solid var(--border); 
+            border: 2px solid var(--border);
             padding: 1.5rem; 
             width: 100%;
             height: fit-content;
             position: sticky;
             top: 90px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .slots-container:hover {
+            border-color: var(--primary);
+            box-shadow: 0 8px 25px rgba(30, 144, 255, 0.15);
         }
         
         .slots-grid { 
@@ -510,11 +610,18 @@
 
         /* Form Estilizado */
         .admin-section { 
-            background: var(--bg-card); 
+            background: linear-gradient(135deg, var(--bg-card) 0%, rgba(30, 144, 255, 0.05) 100%);
             padding: 1.5rem; 
             border-radius: 1rem; 
-            border: 1px solid var(--border); 
-            margin-bottom: 1.5rem; 
+            border: 2px solid var(--border);
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .admin-section:hover {
+            border-color: var(--primary);
+            box-shadow: 0 8px 25px rgba(30, 144, 255, 0.15);
         }
         
         .form-row { 
@@ -525,17 +632,22 @@
         }
         
         input, select, textarea { 
-            background: #111111; 
-            border: 1px solid var(--border); 
+            background: linear-gradient(135deg, #111111, rgba(30, 144, 255, 0.05));
+            border: 2px solid var(--border); 
             padding: 0.75rem; 
             color: white; 
             border-radius: 0.5rem; 
             width: 100%; 
             outline: none; 
             font-size: 0.9rem;
+            transition: all 0.3s ease;
         }
         
-        input:focus, select:focus, textarea:focus { border-color: var(--primary); }
+        input:focus, select:focus, textarea:focus { 
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(30, 144, 255, 0.2);
+            background: linear-gradient(135deg, #0a0a0a, rgba(30, 144, 255, 0.08));
+        }
         
         label { 
             font-size: 0.8rem; 
@@ -545,22 +657,28 @@
         }
         
         .btn-action { 
-            background: var(--primary); 
+            background: linear-gradient(135deg, var(--primary), rgba(30, 144, 255, 0.8));
             color: white; 
-            border: none; 
+            border: 2px solid rgba(255, 255, 255, 0.2);
             padding: 0.75rem 1.5rem; 
             border-radius: 0.5rem; 
             font-weight: 600; 
             cursor: pointer; 
-            transition: 0.2s; 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             display: inline-flex; 
             align-items: center; 
             justify-content: center; 
             gap: 6px; 
             font-size: 0.9rem;
+            box-shadow: 0 4px 12px rgba(30, 144, 255, 0.3);
         }
         
-        .btn-action:hover { background: var(--primary-hover); }
+        .btn-action:hover { 
+            background: linear-gradient(135deg, var(--primary-hover), rgba(28, 134, 238, 0.9));
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(30, 144, 255, 0.4);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
 
         .btn-whatsapp { 
             background: var(--whatsapp); 
@@ -581,10 +699,17 @@
         .table-wrapper { 
             width: 100%; 
             overflow-x: auto; 
-            background: var(--bg-card); 
+            background: linear-gradient(135deg, var(--bg-card) 0%, rgba(30, 144, 255, 0.05) 100%);
             border-radius: 1rem; 
-            border: 1px solid var(--border);
+            border: 2px solid var(--border);
             -webkit-overflow-scrolling: touch;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .table-wrapper:hover {
+            border-color: var(--primary);
+            box-shadow: 0 8px 25px rgba(30, 144, 255, 0.15);
         }
         
         table { 
@@ -629,6 +754,17 @@
             position: relative;
             height: 300px;
             width: 100%;
+            background: linear-gradient(135deg, var(--bg-card) 0%, rgba(30, 144, 255, 0.05) 100%);
+            border-radius: 1rem;
+            border: 2px solid var(--border);
+            padding: 1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .chart-box:hover {
+            border-color: var(--primary);
+            box-shadow: 0 8px 25px rgba(30, 144, 255, 0.15);
         }
 
         /* Toggle de Serviços */
@@ -776,7 +912,7 @@
             position: fixed;
             bottom: 20px;
             right: 20px;
-            background: var(--primary);
+            background: linear-gradient(135deg, var(--primary), rgba(30, 144, 255, 0.8));
             color: white;
             width: 50px;
             height: 50px;
@@ -785,15 +921,19 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            opacity: 0.8;
-            transition: opacity 0.3s;
-            z-index: 999;
-            border: none;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            opacity: 0.7;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 10000; /* Mais alto para garantir que fique visível */
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 25px rgba(30, 144, 255, 0.3);
+            font-size: 1.2rem;
         }
         
         .back-to-top:hover {
             opacity: 1;
+            transform: translateY(-5px) scale(1.1);
+            box-shadow: 0 12px 35px rgba(30, 144, 255, 0.5);
+            border-color: rgba(255, 255, 255, 0.5);
         }
         
         /* Scroll suave */
@@ -957,8 +1097,11 @@
                 <i data-lucide="menu"></i>
             </button>
             <div class="header-title">
-                <span class="logo">FLOW BARBER</span>
-                <span id="current-tab" style="margin-left: 10px; color: var(--text-muted); font-size: 0.9rem;">Dashboard</span>
+                <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                    <span class="logo" onclick="switchTab('dashboard')" style="cursor: pointer;">FLOW BARBER</span>
+                    <span id="user-email" style="color: var(--primary); font-weight: 700; font-size: 0.95rem;"></span>
+                </div>
+                <span id="current-tab">Dashboard</span>
             </div>
             <button class="btn-action" onclick="logout()" style="background: var(--danger); padding: 8px 16px; font-size: 0.85rem;">
                 <i data-lucide="log-out"></i> SAIR
@@ -968,22 +1111,22 @@
         <div class="nav-modal-overlay" onclick="toggleNavModal()"></div>
         <div class="nav-modal" id="nav-modal">
             <div class="nav-modal-content">
-                <div class="nav-modal-item active" onclick="switchTab('dashboard'); toggleNavModal();">
+                <div class="nav-modal-item active" onclick="switchTab('dashboard');">
                     <i data-lucide="layout-dashboard"></i> Dashboard
                 </div>
-                <div class="nav-modal-item" onclick="switchTab('agendamentos'); toggleNavModal();">
+                <div class="nav-modal-item" onclick="switchTab('agendamentos');">
                     <i data-lucide="calendar"></i> Agenda
                 </div>
-                <div class="nav-modal-item" onclick="switchTab('clientes'); toggleNavModal();">
+                <div class="nav-modal-item" onclick="switchTab('clientes');">
                     <i data-lucide="users"></i> Clientes
                 </div>
-                <div class="nav-modal-item" id="assinaturas-menu-item" onclick="switchTab('assinaturas'); toggleNavModal();">
+                <div class="nav-modal-item" id="assinaturas-menu-item" onclick="switchTab('assinaturas');">
                     <i data-lucide="credit-card"></i> Assinaturas
                 </div>
-                <div class="nav-modal-item" onclick="switchTab('finanças'); toggleNavModal();">
+                <div class="nav-modal-item" onclick="switchTab('finanças');">
                     <i data-lucide="wallet"></i> Finanças
                 </div>
-                <div class="nav-modal-item" id="configuracoes-menu-item" onclick="switchTab('configurações'); toggleNavModal();">
+                <div class="nav-modal-item" id="configuracoes-menu-item" onclick="switchTab('configurações');">
                     <i data-lucide="settings"></i> Configurações
                 </div>
             </div>
@@ -1673,7 +1816,7 @@
             </div>
         </main>
         
-        <button class="back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+        <button class="back-to-top" onclick="backToTop()" aria-label="Voltar ao topo">
             <i data-lucide="chevron-up"></i>
         </button>
         
@@ -1745,14 +1888,39 @@
             const modal = document.getElementById('nav-modal');
             const overlay = document.querySelector('.nav-modal-overlay');
             
-            modal.classList.toggle('active');
-            overlay.classList.toggle('active');
+            const isActive = modal.classList.contains('active');
+            
+            if (isActive) {
+                modal.classList.remove('active');
+                overlay.classList.remove('active');
+            } else {
+                modal.classList.add('active');
+                overlay.classList.add('active');
+            }
             
             // Atualizar ícones quando modal abre
             if (modal.classList.contains('active')) {
                 setTimeout(() => {
                     lucide.createIcons();
                 }, 10);
+            }
+        };
+
+        // Função para rolar ao topo respeitando o container com scroll (admin-panel)
+        window.backToTop = () => {
+            const panel = document.getElementById('admin-panel');
+            try {
+                if (panel) {
+                    // Se o painel tem overflow e está rolando, role ele
+                    panel.scrollTo({ top: 0, behavior: 'smooth' });
+                    // Também garanta que a janela principal role caso ainda haja espaço
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            } catch (e) {
+                // Fallback simples
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         };
 
@@ -1856,7 +2024,9 @@
         // Atualizar a função switchTab para verificar permissões de configurações
         window.switchTab = (tab) => {
             // Verificar se o usuário pode acessar configurações
-            if (tab === 'configurações' && currentUserEmail !== 'saullinho2008@gmail.com') {
+            // O email principal (saullinho2008@gmail.com) sempre tem acesso
+            const isMainAdmin = currentUserEmail && currentUserEmail.toLowerCase() === 'saullinho2008@gmail.com';
+            if (tab === 'configurações' && !isMainAdmin) {
                 showToast('Acesso negado: apenas o administrador pode acessar configurações.', 'error');
                 return;
             }
@@ -1893,8 +2063,10 @@
                 }
             });
             
-            // Fechar modal de navegação
-            closeNavModal();
+            // Fechar modal de navegação (com delay para garantir fechamento em mobile)
+            setTimeout(() => {
+                closeNavModal();
+            }, 50);
             
             // Executar funções específicas da tab
             if(tab === 'dashboard') {
@@ -2030,6 +2202,12 @@
             if (user) {
                 currentUserEmail = user.email;
                 
+                // Exibir email do usuário no header
+                const userEmailEl = document.getElementById('user-email');
+                if (userEmailEl) {
+                    userEmailEl.textContent = currentUserEmail;
+                }
+                
                 // Carregar emails autorizados e verificar acesso
                 carregarEmailsAutorizados().then(() => {
                     // Verificar se o email está autorizado
@@ -2048,6 +2226,9 @@
                     
                     document.getElementById('login-screen').style.display = 'none';
                     document.getElementById('admin-panel').style.display = 'block';
+                    
+                    // Atualizar a aba atual para dashboard ao logar
+                    try { switchTab('dashboard'); } catch(e) { /* ignore */ }
                     
                     // Esconder item de configurações do menu se não for o email permitido
                     if (currentUserEmail !== 'saullinho2008@gmail.com') {
@@ -2947,16 +3128,20 @@
             const c2 = document.getElementById('pieChart')?.getContext('2d');
             if(c2) {
                 const labels = Object.keys(sMap).sort((a, b) => {
-                    const order = ["Corte Masculino", "Barba Completa", "Combo Corte + Barba", "Corte Infantil", "Cortesia", "Assinatura"];
+                    const order = ["Corte Masculino", "Barba Completa", "Combo Corte + Barba", "Combo Completo: Cabelo, Barba e Sombrancelha", "Combos", "Corte Infantil", "Cortesia", "Bloqueio", "Assinatura", "Outros"];
                     const indexA = order.findIndex(o => a === o);
                     const indexB = order.findIndex(o => b === o);
                     return (indexA === -1 ? 99 : indexA) - (indexB === -1 ? 99 : indexB);
                 });
                 
                 const data = labels.map(label => sMap[label]);
-                const labelsWithValues = labels.map((label, index) => `${label}: ${data[index]}`);
+                // Filtrar serviços com valor > 0 para melhor visualização
+                const filteredIndices = data.map((val, idx) => val > 0 ? idx : -1).filter(idx => idx !== -1);
+                const filteredLabels = filteredIndices.map(idx => labels[idx]);
+                const filteredData = filteredIndices.map(idx => data[idx]);
+                const labelsWithValues = filteredLabels.map((label, index) => `${label}: ${filteredData[index]}`);
 
-                const backgroundColors = labels.map(label => {
+                const backgroundColors = filteredLabels.map(label => {
                     const cleanLabel = label.replace("Venda: ", "");
                     return serviceColors[cleanLabel] || serviceColors["Outros"];
                 });
@@ -2967,7 +3152,7 @@
                     data: { 
                         labels: labelsWithValues, 
                         datasets: [{ 
-                            data: data, 
+                            data: filteredData, 
                             backgroundColor: backgroundColors, 
                             borderWidth: 0 
                         }] 
