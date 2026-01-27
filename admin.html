@@ -1636,6 +1636,40 @@
                         <tbody id="list-services"></tbody>
                     </table>
                 </div>
+
+                <!-- Gerenciamento de Emails Autorizados -->
+                <div class="admin-section">
+                    <h4 style="margin-bottom: 1.5rem;">Emails Autorizados para Acesso ao Admin</h4>
+                    <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">
+                        Adicione emails que possam acessar o painel admin. O email <strong>saullinho2008@gmail.com</strong> tem acesso completo incluindo configurações. Os outros emails só terão acesso ao painel (sem acesso às configurações).
+                    </p>
+
+                    <div class="form-row">
+                        <div style="grid-column: span 2;">
+                            <label>Novo Email</label>
+                            <input type="email" id="novo-email-autorizado" placeholder="exemplo@email.com">
+                        </div>
+                        <div>
+                            <button class="btn-action" onclick="adicionarEmailAutorizado()" style="background: var(--success); margin-top: 1.7rem;">ADICIONAR EMAIL</button>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 2rem;">
+                        <h5 style="margin-bottom: 1rem; font-size: 1rem;">Emails Autorizados:</h5>
+                        <div class="table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Email</th>
+                                        <th>Permissão</th>
+                                        <th>Ação</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="list-emails-autorizados"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
         </main>
         
@@ -1702,6 +1736,7 @@
         let isAssinatura = false;
         let currentUserEmail = null;
         let subscriptionPlansData = []; // Nova variável para armazenar planos de assinatura
+        let emailsAutorizados = ['saullinho2008@gmail.com']; // Lista de emails autorizados
 
         const baseSlots = ["09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00", "18:30"];
 
@@ -1885,6 +1920,7 @@
                 setTimeout(() => {
                     renderServices();
                     renderSubscriptionPlans(); // Nova função para renderizar planos de assinatura
+                    renderTabelaEmailsAutorizados(); // Renderizar tabela de emails autorizados
                 }, 100);
             }
             
@@ -1892,22 +1928,144 @@
             window.scrollTo({top: 0, behavior: 'smooth'});
         };
 
+        // Função para carregar emails autorizados do Firestore
+        window.carregarEmailsAutorizados = async () => {
+            try {
+                const docRef = doc(db, 'configuracoes', 'emailsAutorizados');
+                const docSnap = await getDoc(docRef);
+                
+                if (docSnap.exists()) {
+                    emailsAutorizados = docSnap.data().emails || ['saullinho2008@gmail.com'];
+                } else {
+                    emailsAutorizados = ['saullinho2008@gmail.com'];
+                }
+            } catch (error) {
+                console.error('Erro ao carregar emails autorizados:', error);
+                emailsAutorizados = ['saullinho2008@gmail.com'];
+            }
+        };
+
+        // Função para salvar emails autorizados no Firestore
+        window.salvarEmailsAutorizados = async () => {
+            try {
+                const docRef = doc(db, 'configuracoes', 'emailsAutorizados');
+                await setDoc(docRef, { emails: emailsAutorizados }, { merge: true });
+                renderTabelaEmailsAutorizados();
+                showToast('Emails atualizados com sucesso!', 'success');
+            } catch (error) {
+                console.error('Erro ao salvar emails:', error);
+                showToast('Erro ao salvar emails', 'error');
+            }
+        };
+
+        // Função para adicionar um novo email autorizado
+        window.adicionarEmailAutorizado = async () => {
+            const inputEmail = document.getElementById('novo-email-autorizado');
+            const email = inputEmail.value.trim().toLowerCase();
+
+            if (!email) {
+                showToast('Por favor, preencha o campo de email', 'warning');
+                return;
+            }
+
+            // Validar formato de email
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                showToast('Por favor, insira um email válido', 'warning');
+                return;
+            }
+
+            // Verificar se já existe
+            if (emailsAutorizados.includes(email)) {
+                showToast('Este email já está autorizado', 'warning');
+                return;
+            }
+
+            // Adicionar à lista
+            emailsAutorizados.push(email);
+            await salvarEmailsAutorizados();
+            inputEmail.value = '';
+        };
+
+        // Função para remover um email autorizado
+        window.removerEmailAutorizado = async (email) => {
+            // Não permitir remover o email principal
+            if (email === 'saullinho2008@gmail.com') {
+                showToast('Não é possível remover o email principal', 'warning');
+                return;
+            }
+
+            if (confirm(`Deseja remover o email ${email}?`)) {
+                emailsAutorizados = emailsAutorizados.filter(e => e !== email);
+                await salvarEmailsAutorizados();
+            }
+        };
+
+        // Função para renderizar a tabela de emails autorizados
+        window.renderTabelaEmailsAutorizados = () => {
+            const tbody = document.getElementById('list-emails-autorizados');
+            if (!tbody) return;
+
+            tbody.innerHTML = '';
+
+            emailsAutorizados.forEach(email => {
+                const isMain = email === 'saullinho2008@gmail.com';
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${email}</td>
+                    <td>${isMain ? '<span style="color: var(--warn);">Completo (Admin)</span>' : '<span style="color: var(--success);">Painel (sem Config.)</span>'}</td>
+                    <td>
+                        <button class="btn-action" onclick="removerEmailAutorizado('${email}')" style="background: ${isMain ? '#666; cursor: not-allowed; opacity: 0.5;' : 'var(--danger);'}; padding: 6px 12px; font-size: 0.85rem;" ${isMain ? 'disabled' : ''}>
+                            <i data-lucide="trash-2"></i> REMOVER
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            lucide.createIcons();
+        };
+
         onAuthStateChanged(auth, user => {
             if (user) {
                 currentUserEmail = user.email;
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('admin-panel').style.display = 'block';
                 
-                // Esconder item de configurações do menu se não for o email permitido
-                if (currentUserEmail !== 'saullinho2008@gmail.com') {
-                    const configMenuItem = document.getElementById('configuracoes-menu-item');
-                    if (configMenuItem) {
-                        configMenuItem.style.display = 'none';
+                // Carregar emails autorizados e verificar acesso
+                carregarEmailsAutorizados().then(() => {
+                    // Verificar se o email está autorizado
+                    const emailAutorizado = emailsAutorizados.includes(currentUserEmail.toLowerCase());
+                    
+                    if (!emailAutorizado) {
+                        // Email não está autorizado
+                        signOut(auth);
+                        document.getElementById('login-screen').style.display = 'flex';
+                        document.getElementById('admin-panel').style.display = 'none';
+                        const loginError = document.getElementById('login-error');
+                        loginError.innerText = 'Este email não está autorizado para acessar o admin.';
+                        loginError.style.display = 'block';
+                        return;
                     }
-                }
-                
-                initListeners();
-                showToast('Login realizado com sucesso!', 'success');
+                    
+                    document.getElementById('login-screen').style.display = 'none';
+                    document.getElementById('admin-panel').style.display = 'block';
+                    
+                    // Esconder item de configurações do menu se não for o email permitido
+                    if (currentUserEmail !== 'saullinho2008@gmail.com') {
+                        const configMenuItem = document.getElementById('configuracoes-menu-item');
+                        if (configMenuItem) {
+                            configMenuItem.style.display = 'none';
+                        }
+                    } else {
+                        // Se for o email principal, mostrar o item de configurações
+                        const configMenuItem = document.getElementById('configuracoes-menu-item');
+                        if (configMenuItem) {
+                            configMenuItem.style.display = 'flex';
+                        }
+                    }
+                    
+                    initListeners();
+                    showToast('Login realizado com sucesso!', 'success');
+                });
             } else {
                 currentUserEmail = null;
                 document.getElementById('login-screen').style.display = 'flex';
@@ -1955,6 +2113,9 @@
         };
 
         function initListeners() {
+            // Carregar emails autorizados
+            carregarEmailsAutorizados();
+            
             onSnapshot(collection(db, "agendamentos"), snap => {
                 agendamentosData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
