@@ -1,6 +1,6 @@
 {
-  "name": "Barber Manager",
-  "short_name": "Barber",
+  "name": "Flow Barber",
+  "short_name": "Flow Barber",
   "start_url": "/admin.html",
   "display": "standalone",
   "background_color": "#0f0f0f",
