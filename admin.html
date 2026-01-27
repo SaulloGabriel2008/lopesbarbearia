@@ -1099,7 +1099,6 @@
             <div class="header-title">
                 <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
                     <span class="logo" onclick="switchTab('dashboard')" style="cursor: pointer;">FLOW BARBER</span>
-                    <span id="user-email" style="color: var(--primary); font-weight: 700; font-size: 0.95rem;"></span>
                 </div>
                 <span id="current-tab">Dashboard</span>
             </div>
@@ -2218,11 +2217,7 @@
             if (user) {
                 currentUserEmail = user.email;
                 
-                // Exibir email do usuário no header
-                const userEmailEl = document.getElementById('user-email');
-                if (userEmailEl) {
-                    userEmailEl.textContent = currentUserEmail;
-                }
+
                 
                 // Carregar emails autorizados e verificar acesso
                 carregarEmailsAutorizados().then(() => {
