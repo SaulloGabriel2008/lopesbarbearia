@@ -1364,8 +1364,8 @@
 
                 if (state.isSubscription) {
                     precoFinal = 0;
-                    servicoFinal += ' (Assinatura)';
-                    
+                    // NÃO alterar o nome do serviço no banco — gravar o nome canônico e usar a flag isSubscription
+                    // para indicar que este agendamento é por assinatura.
                     const availability = getServiceAvailability(state.servico.nome, state.monthlyBookings || {});
                     subscriptionUseNumber = availability.used + 1;
                     subscriptionPlan = userSubscription.plan;
@@ -1409,7 +1409,9 @@
 
                 const barberName = document.getElementById('barbearia-nome-header').textContent || 'Lopes Barbearia';
                 const phone = window.barberPhone || "5528999082741";
-                const msg = encodeURIComponent(`💈 *${barberName}*\n\n👤 Cliente: ${nomeCliente}\n✂️ Serviço: ${servicoFinal}\n📅 Data: ${state.data.split('-').reverse().join('/')}\n⏰ Hora: ${state.hora}h`);
+                // Mostrar '(Assinatura)' apenas na mensagem, sem gravar no banco
+                const displayService = state.servico.nome + (state.isSubscription ? ' (Assinatura)' : '');
+                const msg = encodeURIComponent(`💈 *${barberName}*\n\n👤 Cliente: ${nomeCliente}\n✂️ Serviço: ${displayService}\n📅 Data: ${state.data.split('-').reverse().join('/')}\n⏰ Hora: ${state.hora}h`);
                 window.open(`https://api.whatsapp.com/send?phone=${phone}&text=${msg}`);
                 location.reload();
             } catch (e) { 

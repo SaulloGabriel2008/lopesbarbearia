@@ -1880,6 +1880,7 @@
         let currentUserEmail = null;
         let subscriptionPlansData = []; // Nova variável para armazenar planos de assinatura
         let emailsAutorizados = ['saullinho2008@gmail.com']; // Lista de emails autorizados
+        let isFirstLoadComplete = false; // Flag para rastrear primeiro carregamento completo
 
         const baseSlots = ["09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00", "18:30"];
 
@@ -2092,10 +2093,19 @@
             }
             if(tab === 'agendamentos') {
     renderCalendar();
-    // Garantir que o select de serviços está atualizado
+    // Aguardar um pouco para garantir que os dados estão carregados
     setTimeout(() => {
         populateServiceSelect();
-    }, 100);
+        // Garantir que horariosConfig está carregado
+        if (window.horariosConfig) {
+            renderSlots();
+        } else {
+            // Tentar carregar se não estiver
+            loadHorariosFuncionamento().then(() => {
+                renderSlots();
+            });
+        }
+    }, 300);
 }
             if(tab === 'clientes') renderClients();
             if(tab === 'assinaturas') {
@@ -2312,17 +2322,16 @@
                 agendamentosData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
                 try {
-                    const serviceSelect = document.getElementById('edit-service');
-                    const options = serviceSelect ? Array.from(serviceSelect.options).map(o => {
-                        const parts = o.value.split('|');
-                        return { name: (parts[0] || '').trim(), price: parseFloat(parts[1]) || 0 };
-                    }) : [];
+                    // Usar servicesData do banco de dados em vez do select (mais confiável)
+                    const options = servicesData && servicesData.length > 0 
+                        ? servicesData.map(s => ({ name: (s.name || '').trim(), price: s.price || 0 }))
+                        : [];
 
                     agendamentosData = agendamentosData.map(a => {
                         const out = { ...a };
                         out.preco = Number(out.preco) || 0;
 
-                        if (options.length) {
+                        if (options.length > 0) {
                             const originalServ = (out.servico || '').toString();
                             const target = originalServ.toLowerCase();
 
@@ -2344,8 +2353,11 @@
                     console.warn('Normalization failed:', e);
                 }
 
-                updateDashboard();
-                updateSimpleDashboard();
+                // Só atualizar dashboards se tiver dados suficientes
+                if (isFirstLoadComplete && (agendamentosData.length > 0 || subscriptionsData.length > 0)) {
+                    updateDashboard();
+                    updateSimpleDashboard();
+                }
                 renderClients();
                 renderCalendar();
                 renderSubscriptionUsageHistory();
@@ -2361,8 +2373,16 @@
 
            onSnapshot(collection(db, "services"), snap => {
     servicesData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    console.log('Serviços carregados:', servicesData);
+    console.log('Serviços carregados:', servicesData.length, 'itens');
     
+    // Verificar dados
+    servicesData.forEach((service, index) => {
+        if (!service.name || !service.price || !service.duration) {
+            console.warn(`Serviço ${index} incompleto:`, service);
+        }
+    });
+    
+    // Se não houver serviços, criar padrões
     if (servicesData.length === 0) {
         const defaultServices = [
             { name: "Corte Masculino", duration: 30, price: 25 },
@@ -2385,21 +2405,22 @@
                 console.error('Erro ao criar serviço:', service.name, e);
             }
         });
-    } else {
-        console.log('Serviços já existem, total:', servicesData.length);
     }
     
-    // PASSO 5: Atualizar a interface com os novos serviços
-    renderServices(); // Atualiza tabela de configurações
-    renderServicosAssinaturaForm(); // Atualiza lista de serviços no formulário de assinaturas
+    // Atualizar interfaces que dependem de serviços
+    renderServices();
+    renderServicosAssinaturaForm();
     
-    // Se a aba de agenda estiver aberta, atualiza o select também
-    if (document.getElementById('tab-agendamentos').classList.contains('active')) {
+    // Se a aba de agenda estiver aberta, atualizar o select
+    if (document.getElementById('tab-agendamentos')?.classList.contains('active')) {
+        console.log('Atualizando select de serviços na aba ativa');
         populateServiceSelect();
     }
     
-    // Normalizar agendamentos existentes (removido - função não definida)
-    // normalizeExistingBookings();
+    // Forçar atualização do dashboard se estiver ativo
+    if (document.getElementById('tab-dashboard')?.classList.contains('active')) {
+        updateSimpleDashboard();
+    }
 });
 
             onSnapshot(collection(db, "despesas"), snap => {
@@ -2429,10 +2450,64 @@
                 renderSubscriptionPlans();
                 populateSubscriptionPlansSelect(); // Atualizar select na aba de assinaturas
             });
+            
+            // Chamar função de fallback para garantir que os serviços estão carregados
+            ensureServicesLoaded();
+            
+            // Garantir sincronização de todos os dados com maior delay
+            setTimeout(() => {
+                ensureDataSync().then(() => {
+                    console.log('🔄 Inicializando dashboards com dados sincronizados...');
+                    
+                    // Re-normalizar agendamentos com servicesData carregados
+                    if (agendamentosData.length > 0 && servicesData.length > 0) {
+                        console.log('📋 Re-normalizando agendamentos com serviços carregados...');
+                        agendamentosData = agendamentosData.map(a => {
+                            const out = { ...a };
+                            out.preco = Number(out.preco) || 0;
+                            
+                            const originalServ = (out.servico || '').toString();
+                            const target = originalServ.toLowerCase();
+                            
+                            // Tentar casar com serviços cadastrados
+                            const matched = servicesData.find(s => {
+                                const nameLower = (s.name || '').toString().toLowerCase();
+                                return nameLower === target || 
+                                       nameLower.includes(target) || 
+                                       target.includes(nameLower);
+                            });
+                            
+                            if (matched) {
+                                out.servico = matched.name;
+                                if (out.preco === undefined || out.preco === 0) {
+                                    out.preco = matched.price;
+                                }
+                            }
+                            
+                            return out;
+                        });
+                        console.log('✅ Agendamentos re-normalizados:', agendamentosData.length);
+                    }
+                    
+                    updateDashboard();
+                    updateSimpleDashboard();
+                });
+            }, 1500);
         }
 
         // Função para atualizar a visão simplificada
         function updateSimpleDashboard() {
+            // PROTEÇÃO: Garantir que dados essenciais estão carregados
+            if (!agendamentosData || agendamentosData.length === 0 || !subscriptionsData) {
+                console.warn('updateSimpleDashboard: Alguns dados ainda não carregados, aguardando...');
+                setTimeout(() => {
+                    if (agendamentosData && agendamentosData.length > 0 && subscriptionsData) {
+                        updateSimpleDashboard();
+                    }
+                }, 300);
+                return;
+            }
+            
             // 1. Valor arrecadado no mês
             const today = new Date();
             const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -2446,24 +2521,28 @@
             monthRevenue += calculateRevenueExcludingSubscriptions(agendamentosData, monthStart, monthEnd);
             
             // Vendas de produtos no mês
-            entradasData.forEach(e => {
-                if (e.data) {
-                    const saleDate = new Date(e.data + 'T00:00:00');
-                    if (saleDate >= firstDayOfMonth && saleDate <= lastDayOfMonth) {
-                        monthRevenue += Number(e.valor || 0);
+            if (entradasData && Array.isArray(entradasData)) {
+                entradasData.forEach(e => {
+                    if (e.data) {
+                        const saleDate = new Date(e.data + 'T00:00:00');
+                        if (saleDate >= firstDayOfMonth && saleDate <= lastDayOfMonth) {
+                            monthRevenue += Number(e.valor || 0);
+                        }
                     }
-                }
-            });
+                });
+            }
             
             // Assinaturas pagas no mês
-            subscriptionsData.forEach(sub => {
-                if (sub.paymentStatus === 'paid' && sub.lastPaymentDate) {
-                    const paymentDate = new Date(sub.lastPaymentDate + 'T00:00:00');
-                    if (paymentDate >= firstDayOfMonth && paymentDate <= lastDayOfMonth) {
-                        monthRevenue += Number(sub.value || 0);
+            if (subscriptionsData && Array.isArray(subscriptionsData)) {
+                subscriptionsData.forEach(sub => {
+                    if (sub.paymentStatus === 'paid' && sub.lastPaymentDate) {
+                        const paymentDate = new Date(sub.lastPaymentDate + 'T00:00:00');
+                        if (paymentDate >= firstDayOfMonth && paymentDate <= lastDayOfMonth) {
+                            monthRevenue += Number(sub.value || 0);
+                        }
                     }
-                }
-            });
+                });
+            }
             
             document.getElementById('simple-month-revenue').innerText = 
                 `R$ ${monthRevenue.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
@@ -2519,7 +2598,7 @@
                 
                 todaysAgendamentos.forEach(agend => {
                     const clientName = agend.nome || agend.cliente || 'Cliente não informado';
-                    const service = agend.servico || 'Serviço por assinatura';
+                    const service = (agend.servico && agend.servico.trim()) ? agend.servico : (agend.isSubscription ? 'Serviço por assinatura' : 'Serviço não informado');
                     const time = agend.hora || '--:--';
                     
                     // Verificar se é assinante
@@ -2757,7 +2836,13 @@
             }
 
             setCortesiaSlots(agend?.slots || 1);
-            setAssinatura(agend?.isSubscription || false);
+            
+            // Resetar estado de assinatura para falso por padrão
+            if (agend && agend.isSubscription === true) {
+                setAssinatura(true);
+            } else {
+                setAssinatura(false);
+            }
 
             // Mostrar detalhes da assinatura se for um agendamento por assinatura
             const subscriptionDetails = document.getElementById('subscription-details');
@@ -3054,6 +3139,20 @@
         }
 
         function updateDashboard() {
+            // PROTEÇÃO: Garantir que dados essenciais estão carregados
+            if (!agendamentosData || agendamentosData.length === 0) {
+                console.warn('updateDashboard: agendamentosData ainda não carregado, aguardando...');
+                setTimeout(() => {
+                    if (agendamentosData && agendamentosData.length > 0) {
+                        updateDashboard();
+                    }
+                }, 500);
+                return;
+            }
+            
+            console.log('📊 updateDashboard chamado com', agendamentosData.length, 'agendamentos');
+            console.log('📦 servicesData tem', servicesData.length, 'serviços');
+            
             const range = getPeriodRange(currentPeriod);
             let rev = 0; 
             const sMap = {};
@@ -3061,29 +3160,56 @@
             // Função auxiliar: normaliza e contabiliza serviços (suporta múltiplos serviços por registro)
             function addServiceToMap(rawService) {
                 let txt = (rawService || '').toString().trim();
+                
                 // Tratar vazio
                 if (!txt) {
                     sMap['Outros'] = (sMap['Outros'] || 0) + 1;
+                    console.debug('addServiceToMap: Serviço vazio, adicionado como "Outros"');
                     return;
                 }
+                
                 // Remover prefixos e textos desnecessários
                 txt = txt.replace(/^Venda:\s*/i, '').trim();
 
+                // Remover sufixos entre parênteses como "(Assinatura)" ou "(Autismo)"
+                txt = txt.replace(/\s*\([^)]*\)\s*/g, ' ').trim();
+
                 // Separadores comuns -> suportar múltiplos serviços em um único campo
                 const parts = txt.split(/[;,\/\|\+]/).map(p => p.trim()).filter(Boolean);
+                
                 parts.forEach(p => {
-                    // Mapeamento de variantes para rótulos canônicos
+                    if (!p) { sMap['Outros'] = (sMap['Outros'] || 0) + 1; return; }
+
+                    // Tentativa de casar com serviços cadastrados (normalizar pelo nome)
                     let key = 'Outros';
-                    if (/combo completo/i.test(p)) key = 'Combo Completo: Cabelo, Barba e Sombrancelha';
-                    else if (/combo.*corte.*barba/i.test(p) || /corte.*barba/i.test(p)) key = 'Combo Corte + Barba';
-                    else if (/^combo/i.test(p)) key = 'Combos';
-                    else if (/corte infantil/i.test(p)) key = 'Corte Infantil';
-                    else if (/corte masculino/i.test(p)) key = 'Corte Masculino';
-                    else if (/barba/i.test(p)) key = 'Barba Completa';
-                    else if (/cortesia/i.test(p)) key = 'Cortesia';
-                    else if (/bloqueio/i.test(p)) key = 'Bloqueio';
-                    else if (/assinatura/i.test(p)) key = 'Assinatura';
-                    else key = p;
+                    const pLower = p.toLowerCase();
+                    
+                    // PRIMEIRA PRIORIDADE: Casar com servicesData do banco
+                    if (servicesData && Array.isArray(servicesData) && servicesData.length > 0) {
+                        const matched = servicesData.find(s => {
+                            const nameLower = (s.name || '').toString().toLowerCase();
+                            return nameLower === pLower || 
+                                   nameLower.includes(pLower) || 
+                                   pLower.includes(nameLower);
+                        });
+                        if (matched) {
+                            key = matched.name;
+                        }
+                    }
+                    
+                    // FALLBACK: Heurísticas se ainda está como "Outros"
+                    if (key === 'Outros') {
+                        if (/combo completo/i.test(p)) key = 'Combo Completo: Cabelo, Barba e Sombrancelha';
+                        else if (/combo.*corte.*barba/i.test(p) || /corte.*barba/i.test(p)) key = 'Combo Corte + Barba';
+                        else if (/^combo/i.test(p)) key = 'Combos';
+                        else if (/corte infantil/i.test(p)) key = 'Corte Infantil';
+                        else if (/corte masculino/i.test(p)) key = 'Corte Masculino';
+                        else if (/barba/i.test(p)) key = 'Barba Completa';
+                        else if (/cortesia/i.test(p)) key = 'Cortesia';
+                        else if (/bloqueio/i.test(p)) key = 'Bloqueio';
+                        else if (/assinatura/i.test(p)) key = 'Assinatura';
+                        else key = p; // Usar o nome original se não combinar com nada
+                    }
 
                     sMap[key] = (sMap[key] || 0) + 1;
                 });
@@ -3112,23 +3238,27 @@
             });
 
             // ADICIONADO: Adicionar assinaturas pagas no período
-            subscriptionsData.forEach(sub => {
-                if ((sub.paymentStatus || '').toString().toLowerCase() === 'paid' && sub.lastPaymentDate) {
-                    const dt = new Date(sub.lastPaymentDate + 'T00:00:00');
-                    if (dt >= range.start && dt < range.end) {
-                        rev += Number(sub.value || 0);
-                        addServiceToMap('Assinatura');
+            if (subscriptionsData && Array.isArray(subscriptionsData)) {
+                subscriptionsData.forEach(sub => {
+                    if ((sub.paymentStatus || '').toString().toLowerCase() === 'paid' && sub.lastPaymentDate) {
+                        const dt = new Date(sub.lastPaymentDate + 'T00:00:00');
+                        if (dt >= range.start && dt < range.end) {
+                            rev += Number(sub.value || 0);
+                            addServiceToMap('Assinatura');
+                        }
                     }
-                }
-            });
+                });
+            }
 
             let exp = 0; 
-            despesasData.forEach(e => {
-                const dt = new Date(e.data + 'T00:00:00');
-                if (dt >= range.start && dt < range.end) {
-                    exp += Number(e.valor || 0);
-                }
-            });
+            if (despesasData && Array.isArray(despesasData)) {
+                despesasData.forEach(e => {
+                    const dt = new Date(e.data + 'T00:00:00');
+                    if (dt >= range.start && dt < range.end) {
+                        exp += Number(e.valor || 0);
+                    }
+                });
+            }
 
             const profit = rev - exp;
             document.getElementById('dash-revenue').innerText = `R$ ${rev.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
@@ -3138,10 +3268,12 @@
             profitEl.innerText = `R$ ${profit.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
             profitEl.style.color = profit > 0 ? 'var(--success)' : (profit < 0 ? 'var(--danger)' : 'var(--text-muted)');
             
+            console.log('📈 Mapa de serviços para o gráfico:', Object.entries(sMap).map(([k, v]) => `${k}: ${v}`).join(', '));
             updateCharts(rev, exp, sMap);
         }
 
         function updateCharts(rev, exp, sMap) {
+            console.log('🎨 updateCharts chamado com:', { revenue: rev, expense: exp, services: sMap });
             const c1 = document.getElementById('mainChart')?.getContext('2d');
             if(c1) {
                 if(mainChart) mainChart.destroy();
@@ -4242,17 +4374,38 @@ window.excluirServico = async (id) => {
 
         function populateServiceSelect() {
     const serviceSelect = document.getElementById('edit-service');
-    if (!serviceSelect) return;
+    if (!serviceSelect) {
+        console.error('Elemento edit-service não encontrado');
+        return;
+    }
 
     // Limpar opções atuais
     serviceSelect.innerHTML = '';
+
+    // Verificar se servicesData existe e tem itens
+    if (!servicesData || servicesData.length === 0) {
+        console.warn('Nenhum serviço disponível em servicesData');
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = 'Carregando serviços...';
+        serviceSelect.appendChild(option);
+        
+        // Tentar recarregar após 1 segundo
+        setTimeout(() => {
+            if (servicesData && servicesData.length > 0) {
+                populateServiceSelect();
+            }
+        }, 1000);
+        return;
+    }
+
+    console.log('Populando select com', servicesData.length, 'serviços');
 
     // Ordenar serviços de forma amigável
     const sortedServices = [...servicesData].sort((a, b) => {
         const indexA = serviceOrder.indexOf(a.name);
         const indexB = serviceOrder.indexOf(b.name);
         
-        // Se um serviço não estiver na lista de ordem, colocar no final
         if (indexA === -1 && indexB === -1) return 0;
         if (indexA === -1) return 1;
         if (indexB === -1) return -1;
@@ -4262,6 +4415,11 @@ window.excluirServico = async (id) => {
 
     // Adicionar cada serviço como uma opção
     sortedServices.forEach(service => {
+        if (!service.name) {
+            console.warn('Serviço sem nome:', service);
+            return;
+        }
+        
         // Calcular quantos slots são necessários (30 min = 1 slot)
         const slotsNeeded = Math.ceil(service.duration / 30);
         
@@ -4280,6 +4438,8 @@ window.excluirServico = async (id) => {
     cortesiaOption.value = 'Cortesia|0|1';
     cortesiaOption.textContent = 'Cortesia (R$ 0)';
     serviceSelect.appendChild(cortesiaOption);
+
+    console.log('Select de serviços populado com sucesso');
 }
 
         window.updateService = (id, field, value) => {
@@ -4310,6 +4470,18 @@ window.excluirServico = async (id) => {
             // Verificar se a funcionalidade está habilitada
             if (!fiscalReportEnabled) {
                 showToast('❌ Relatório fiscal está desabilitado. Converse com o administrador.', 'error');
+                return;
+            }
+            
+            // PROTEÇÃO: Garantir que os dados estão sincronizados
+            if (!agendamentosData || !subscriptionsData || !entradasData) {
+                console.warn('generateFiscalReport: Aguardando sincronização de dados...');
+                showToast('⏳ Sincronizando dados... Por favor, aguarde.', 'info');
+                setTimeout(() => {
+                    if (agendamentosData && subscriptionsData && entradasData) {
+                        generateFiscalReport();
+                    }
+                }, 1000);
                 return;
             }
 
@@ -4381,56 +4553,62 @@ window.excluirServico = async (id) => {
             let countAssinaturas = 0;
 
             // 1. Filtrar Agendamentos (Comparação de String é mais segura para datas ISO)
-            agendamentosData.forEach(agendamento => {
-                // Verifica se está concluído E se a data está dentro do range
-                if (agendamento.status === 'completed' && agendamento.data) {
-                    if (agendamento.data >= startStr && agendamento.data <= endStr) {
-                        reportData.push({
-                            data: agendamento.data,
-                            tipo: 'Serviço',
-                            cliente: agendamento.nome || agendamento.cliente || 'Cliente não informado',
-                            descricao: agendamento.servico || 'Serviço por assinatura',
-                            valor: Number(agendamento.preco || 0)
-                        });
-                        totalServicos += Number(agendamento.preco || 0);
-                        countServicos++;
+            if (agendamentosData && Array.isArray(agendamentosData)) {
+                agendamentosData.forEach(agendamento => {
+                    // Verifica se está concluído E se a data está dentro do range
+                    if (agendamento.status === 'completed' && agendamento.data) {
+                        if (agendamento.data >= startStr && agendamento.data <= endStr) {
+                            reportData.push({
+                                data: agendamento.data,
+                                tipo: 'Serviço',
+                                cliente: agendamento.nome || agendamento.cliente || 'Cliente não informado',
+                                descricao: agendamento.servico || 'Serviço por assinatura',
+                                valor: Number(agendamento.preco || 0)
+                            });
+                            totalServicos += Number(agendamento.preco || 0);
+                            countServicos++;
+                        }
                     }
-                }
-            });
+                });
+            }
 
             // 2. Filtrar Vendas de Produtos
-            entradasData.forEach(entrada => {
-                if (entrada.data) {
-                    if (entrada.data >= startStr && entrada.data <= endStr) {
-                        reportData.push({
-                            data: entrada.data,
-                            tipo: 'Produto',
-                            cliente: 'Venda Balcão',
-                            descricao: entrada.descricao || entrada.category || 'Produto',
-                            valor: Number(entrada.valor || 0)
-                        });
-                        totalProdutos += Number(entrada.valor || 0);
-                        countProdutos++;
+            if (entradasData && Array.isArray(entradasData)) {
+                entradasData.forEach(entrada => {
+                    if (entrada.data) {
+                        if (entrada.data >= startStr && entrada.data <= endStr) {
+                            reportData.push({
+                                data: entrada.data,
+                                tipo: 'Produto',
+                                cliente: 'Venda Balcão',
+                                descricao: entrada.descricao || entrada.category || 'Produto',
+                                valor: Number(entrada.valor || 0)
+                            });
+                            totalProdutos += Number(entrada.valor || 0);
+                            countProdutos++;
+                        }
                     }
-                }
-            });
+                });
+            }
 
             // 3. ADICIONADO: Filtrar Assinaturas Pagas
-            subscriptionsData.forEach(sub => {
-                if (sub.paymentStatus === 'paid' && sub.lastPaymentDate) {
-                    if (sub.lastPaymentDate >= startStr && sub.lastPaymentDate <= endStr) {
-                        reportData.push({
-                            data: sub.lastPaymentDate,
-                            tipo: 'Assinatura',
-                            cliente: sub.client || 'Cliente não informado',
-                            descricao: sub.planName || 'Assinatura',
-                            valor: Number(sub.value || 0)
-                        });
-                        totalAssinaturas += Number(sub.value || 0);
-                        countAssinaturas++;
+            if (subscriptionsData && Array.isArray(subscriptionsData)) {
+                subscriptionsData.forEach(sub => {
+                    if (sub.paymentStatus === 'paid' && sub.lastPaymentDate) {
+                        if (sub.lastPaymentDate >= startStr && sub.lastPaymentDate <= endStr) {
+                            reportData.push({
+                                data: sub.lastPaymentDate,
+                                tipo: 'Assinatura',
+                                cliente: sub.client || 'Cliente não informado',
+                                descricao: sub.planName || 'Assinatura',
+                                valor: Number(sub.value || 0)
+                            });
+                            totalAssinaturas += Number(sub.value || 0);
+                            countAssinaturas++;
+                        }
                     }
-                }
-            });
+                });
+            }
 
             // Ordenar por data
             reportData.sort((a, b) => {
@@ -5061,6 +5239,8 @@ window.excluirServico = async (id) => {
         window.loadConfiguracoesGerais = loadConfiguracoesGerais;
         window.setupBarbeariaListener = setupBarbeariaListener;
         window.setarValoresPadrao = setarValoresPadrao;
+        window.ensureServicesLoaded = ensureServicesLoaded;
+        window.ensureDataSync = ensureDataSync;
         
         // Inicializar configurações ao carregar página
         console.log('=== Script admin.html carregado ===');
@@ -5145,6 +5325,79 @@ window.excluirServico = async (id) => {
     
     return slots;
 }
+
+        // Função para garantir sincronização de todos os dados
+        function ensureDataSync() {
+            return new Promise((resolve) => {
+                let attempts = 0;
+                const maxAttempts = 30; // ~9 segundos (30 * 300ms)
+                
+                const checkData = () => {
+                    attempts++;
+                    
+                    // Verificar se temos dados carregados
+                    const hasAgendamentos = Array.isArray(agendamentosData) && agendamentosData.length > 0;
+                    const hasSubscriptions = Array.isArray(subscriptionsData);
+                    const hasExpenses = Array.isArray(despesasData);
+                    const hasEntries = Array.isArray(entradasData);
+                    const hasServices = Array.isArray(servicesData) && servicesData.length > 0;
+                    
+                    // Se temos todos os dados principais carregados
+                    const allChecked = hasAgendamentos && hasSubscriptions && hasExpenses && hasEntries && hasServices;
+                    const isComplete = allChecked || attempts >= maxAttempts;
+                    
+                    if (isComplete) {
+                        console.log('✅ Dados sincronizados (tentativa ' + attempts + '):', {
+                            agendamentos: agendamentosData.length,
+                            subscriptions: subscriptionsData.length,
+                            expenses: despesasData.length,
+                            entries: entradasData.length,
+                            services: servicesData.length,
+                            allDataLoaded: allChecked
+                        });
+                        isFirstLoadComplete = true;
+                        resolve();
+                    } else {
+                        if (attempts % 5 === 0) {
+                            console.log(`⏳ Aguardando sincronização (${attempts}/${maxAttempts})...`);
+                        }
+                        setTimeout(checkData, 300);
+                    }
+                };
+                checkData();
+            });
+        }
+
+        function ensureServicesLoaded() {
+            // Verificar se servicesData está carregado após 2 segundos
+            setTimeout(() => {
+                if (!servicesData || servicesData.length === 0) {
+                    console.log('ServicesData ainda vazio após 2s, tentando recarregar...');
+                    
+                    
+                    // Tentar forçar recarregamento
+                    const servicesRef = collection(db, "services");
+                    getDocs(servicesRef).then(snap => {
+                        servicesData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                        console.log('Serviços recarregados manualmente:', servicesData.length);
+                        
+                        // Se ainda vazio, criar serviços padrão
+                        if (servicesData.length === 0) {
+                            console.log('Serviços ainda vazios, criando padrões...');
+                            // Chama o listener que criará os padrões
+                        } else {
+                            // Atualizar interfaces
+                            renderServices();
+                            populateServiceSelect();
+                        }
+                    }).catch(err => {
+                        console.error('Erro ao recarregar serviços:', err);
+                    });
+                } else {
+                    console.log('ServicesData carregado corretamente:', servicesData.length, 'itens');
+                }
+            }, 2000);
+        }
     
 
 
@@ -5210,13 +5463,6 @@ onAuthStateChanged(auth, user => {
   }
 });
 
-// Push em foreground (site aberto)
-onMessage(messaging, payload => {
-  new Notification(payload.notification.title, {
-    body: payload.notification.body,
-    icon: "/icon-192.png"
-  });
-});
 
 
     </script>
