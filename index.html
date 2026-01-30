@@ -1126,7 +1126,7 @@
                 isDayOpen = dayConfig.abre !== false;
                 
                 if (isDayOpen) {
-                    // Gerar horários específicos do dia
+                    // Gerar horários específicos do dia (incluindo horários de almoço como bloqueados)
                     horariosDoDia = [];
                     const [startH, startM] = dayConfig.abertura.split(':').map(Number);
                     const [endH, endM] = dayConfig.fechamento.split(':').map(Number);
@@ -1137,13 +1137,7 @@
                     let currentM = startM;
                     
                     while (currentH < endH || (currentH === endH && currentM < endM)) {
-                        const lunchStart = lunchStartH * 60 + lunchStartM;
-                        const lunchEnd = lunchEndH * 60 + lunchEndM;
-                        const current = currentH * 60 + currentM;
-                        
-                        if (current < lunchStart || current >= lunchEnd) {
-                            horariosDoDia.push(`${String(currentH).padStart(2, '0')}:${String(currentM).padStart(2, '0')}`);
-                        }
+                        horariosDoDia.push(`${String(currentH).padStart(2, '0')}:${String(currentM).padStart(2, '0')}`);
                         
                         currentM += 30;
                         if (currentM >= 60) {
@@ -1191,12 +1185,41 @@
                 const availability = getServiceAvailability(state.servico?.nome, state.monthlyBookings || {});
                 const subscriptionLimitReached = availability && availability.available <= 0;
 
+                // Calcular o horário anterior ao almoço para serviços de múltiplos slots
+                let slotBeforeLunch = null;
+                if (horariosConfig && horariosConfig[dayName]) {
+                    const dayConfig = horariosConfig[dayName];
+                    const [lunchStartH, lunchStartM] = dayConfig.almocoInicio.split(':').map(Number);
+                    const lunchStart = lunchStartH * 60 + lunchStartM;
+                    
+                    for (let i = horariosDoDia.length - 1; i >= 0; i--) {
+                        const [h, m] = horariosDoDia[i].split(':').map(Number);
+                        const currentTime = h * 60 + m;
+                        if (currentTime < lunchStart) {
+                            slotBeforeLunch = i;
+                            break;
+                        }
+                    }
+                }
+
                 horariosDoDia.forEach((h, index) => {
                     const btn = document.createElement('button');
                     btn.className = 'time-btn';
                     btn.innerText = h;
                     
                     const [hH, hM] = h.split(':').map(Number);
+                    
+                    // Verificar se o horário está no período de almoço
+                    let isLunchTime = false;
+                    if (horariosConfig && horariosConfig[dayName]) {
+                        const dayConfig = horariosConfig[dayName];
+                        const [lunchStartH, lunchStartM] = dayConfig.almocoInicio.split(':').map(Number);
+                        const [lunchEndH, lunchEndM] = dayConfig.almocoFim.split(':').map(Number);
+                        const lunchStart = lunchStartH * 60 + lunchStartM;
+                        const lunchEnd = lunchEndH * 60 + lunchEndM;
+                        const currentTime = hH * 60 + hM;
+                        isLunchTime = currentTime >= lunchStart && currentTime < lunchEnd;
+                    }
                     
                     let isPast = false;
                     if (state.data === dataHojeStr) {
@@ -1214,9 +1237,16 @@
                         }
                     }
 
-                    if (isPast || !canFit) {
+                    // Verificar se o serviço tem múltiplos slots e está no slot anterior ao almoço
+                    let isBeforeLunchMultiSlot = false;
+                    if ((state.servico?.slots || 1) > 1 && index === slotBeforeLunch) {
+                        isBeforeLunchMultiSlot = true;
+                    }
+
+                    if (isLunchTime || isPast || !canFit || isBeforeLunchMultiSlot) {
                         btn.classList.add('blocked');
                         btn.disabled = true;
+                        if (isLunchTime) btn.innerText = h + ' (Almoço)';
                     } else if (subscriptionLimitReached) {
                         btn.classList.add('blocked');
                         btn.disabled = true;
@@ -1372,21 +1402,39 @@
                 }
 
                 if (slotsNeeded > 1) {
-                    const index = horariosBase.indexOf(state.hora);
-                    const nextTime = horariosBase[index + 1];
-                    if (!nextTime) { alert("Não há horário seguinte disponível."); btn.innerText = "CONFIRMAR AGENDAMENTO"; btn.disabled = false; return; }
+                    const startIdx = horariosBase.indexOf(state.hora);
+                    if (startIdx === -1) { alert("Horário inválido."); btn.innerText = "CONFIRMAR AGENDAMENTO"; btn.disabled = false; return; }
 
                     const q = query(collection(db, "agendamentos"), where("data", "==", state.data));
                     const snap = await getDocs(q);
-                    const occupied = [];
+                    const occupiedSlots = [];
                     snap.forEach(d => {
                         const data = d.data();
                         const idx = horariosBase.indexOf(data.hora);
-                        for (let s = 0; s < (data.slots || 1); s++) {
-                            if (horariosBase[idx + s]) occupied.push(horariosBase[idx + s]);
+                        if (idx !== -1) {
+                            for (let s = 0; s < (data.slots || 1); s++) {
+                                if (horariosBase[idx + s]) occupiedSlots.push(horariosBase[idx + s]);
+                            }
                         }
                     });
-                    if (occupied.includes(nextTime)) { alert("O próximo horário está ocupado."); btn.innerText = "CONFIRMAR AGENDAMENTO"; btn.disabled = false; return; }
+                    
+                    // Verificar se todos os slots necessários estão livres
+                    let allSlotsAvailable = true;
+                    for (let i = 0; i < slotsNeeded; i++) {
+                        const slotToCheck = horariosBase[startIdx + i];
+                        if (!slotToCheck) {
+                            alert(`Este serviço requer ${slotsNeeded} slots consecutivos, mas não há horários suficientes disponíveis.`);
+                            allSlotsAvailable = false;
+                            break;
+                        }
+                        if (occupiedSlots.includes(slotToCheck)) {
+                            alert(`Este serviço requer ${slotsNeeded} slots consecutivos, mas não há espaço disponível. Um ou mais dos próximos horários estão ocupados.`);
+                            allSlotsAvailable = false;
+                            break;
+                        }
+                    }
+                    
+                    if (!allSlotsAvailable) { btn.innerText = "CONFIRMAR AGENDAMENTO"; btn.disabled = false; return; }
                 }
 
                 await addDoc(collection(db, "agendamentos"), {
