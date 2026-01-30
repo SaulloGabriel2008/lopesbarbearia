@@ -1227,8 +1227,7 @@
                         
                         <div style="padding: 1.5rem; background: #111111; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px;">
                             <div style="display: flex; gap: 10px;">
-                                <button class="btn-action" style="background: var(--danger); color: white; font-size: 0.9rem;" onclick="toggleDayStatus('closed')">FECHAR DIA</button>
-                                <button class="btn-action" style="background: var(--success); color: white; font-size: 0.9rem;" onclick="toggleDayStatus('open')">ABRIR DIA</button>
+                                <!-- Opções de abrir/fechar dia removidas nesta interface (controle via calendário automático) -->
                             </div>
                             <button class="btn-action" style="background: var(--primary); color: white; font-size: 0.9rem;" onclick="addExtraSlot()">+ HORÁRIO EXTRA</button>
                         </div>
@@ -2826,7 +2825,20 @@
     
     console.log(`Fechado por horários: ${isClosedBySchedule}, Fechado por config: ${isClosedByConfig}`);
     
-    if (isClosedBySchedule || isClosedByConfig) {
+    // O status específico do dia (config_dias) tem prioridade sobre as configurações gerais
+    // Se há um status específico, use-o. Se não, use o status das configurações gerais.
+    let isDayClosedFinal = false;
+    if (config.status) {
+        // Se há status específico, use ele (open ou closed)
+        isDayClosedFinal = (config.status === 'closed');
+    } else {
+        // Se não há status específico, use o das configurações gerais
+        isDayClosedFinal = isClosedBySchedule;
+    }
+    
+    console.log(`Dia fechado final: ${isDayClosedFinal}`);
+    
+    if (isDayClosedFinal) {
         grid.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-muted);">Dia Fechado</div>';
         return;
     }
@@ -3431,33 +3443,90 @@
         };
 
         window.toggleDayStatus = async (status) => {
+            // Verificar se o usuário tem permissão
+            if (currentUserEmail !== 'saullinho2008@gmail.com') {
+                showToast('Acesso negado: apenas o administrador pode modificar o status do dia.', 'error');
+                return;
+            }
+            
             try {
-                await setDoc(doc(db, "config_dias", selectedDateISO), { status, updatedAt: new Date() }, { merge: true });
+                // Salvar o status do dia específico
+                const docRef = doc(db, "config_dias", selectedDateISO);
+                await setDoc(docRef, { 
+                    status: status,
+                    updatedAt: new Date(),
+                    updatedBy: auth.currentUser?.uid || 'admin'
+                }, { merge: true });
+                
+                // Atualizar o configDiasData localmente
+                if (!configDiasData[selectedDateISO]) {
+                    configDiasData[selectedDateISO] = {};
+                }
+                configDiasData[selectedDateISO].status = status;
+                
+                // Re-renderizar os slots
                 renderSlots();
-                showToast(`Dia ${selectedDateISO} atualizado para: ${status === 'closed' ? 'FECHADO' : 'ABERTO'}`, 'success');
+                
+                showToast(`Dia ${selectedDateISO.split('-').reverse().join('/')} ${status === 'closed' ? 'FECHADO' : 'ABERTO'} com sucesso!`, 'success');
             } catch (e) { 
+                console.error('Erro ao atualizar status do dia:', e);
                 showToast('Erro ao atualizar status do dia: ' + e.message, 'error');
             }
         };
 
         window.addExtraSlot = async () => {
-            const configRef = doc(db, "config_dias", selectedDateISO);
-            const snap = await getDoc(configRef);
-            const config = snap.exists() ? snap.data() : {};
-            const currentSlots = config.extraSlots ? [...baseSlots, ...config.extraSlots].sort() : [...baseSlots].sort();
-            
-            const lastTime = currentSlots[currentSlots.length - 1];
-            const [h, m] = lastTime.split(':').map(Number);
-            let nextM = m + 40;
-            let nextH = h;
-            if(nextM >= 60) { nextH++; nextM -= 60; }
-            const newTime = `${String(nextH).padStart(2,'0')}:${String(nextM).padStart(2,'0')}`;
-            
-            const extras = config.extraSlots || [];
-            extras.push(newTime);
-            await setDoc(configRef, { extraSlots: extras }, { merge: true });
-            showToast('Horário extra adicionado com sucesso!', 'success');
-            renderSlots();
+            try {
+                const configRef = doc(db, "config_dias", selectedDateISO);
+                const snap = await getDoc(configRef);
+                const config = snap.exists() ? snap.data() : {};
+                // união entre baseSlots e extras existentes
+                const currentSlots = config.extraSlots ? [...baseSlots, ...config.extraSlots].sort() : [...baseSlots].sort();
+
+                // calcular duração do slot em minutos baseada na diferença entre os últimos dois horários disponíveis
+                let slotLength = 30; // fallback
+                if (currentSlots.length >= 2) {
+                    const lastIdx = currentSlots.length - 1;
+                    const prev = currentSlots[lastIdx - 1];
+                    const last = currentSlots[lastIdx];
+                    const [ph, pm] = prev.split(':').map(Number);
+                    const [lh, lm] = last.split(':').map(Number);
+                    const prevMins = ph * 60 + pm;
+                    const lastMins = lh * 60 + lm;
+                    const diff = lastMins - prevMins;
+                    if (diff > 0) slotLength = diff;
+                }
+
+                // calcular próximo horário adicionando slotLength ao último horário atual
+                const last = currentSlots[currentSlots.length - 1];
+                const [lh, lm] = last.split(':').map(Number);
+                const lastMins = lh * 60 + lm;
+                const nextMins = lastMins + slotLength;
+                const nextH = Math.floor(nextMins / 60) % 24;
+                const nextM = nextMins % 60;
+                const newTime = `${String(nextH).padStart(2,'0')}:${String(nextM).padStart(2,'0')}`;
+
+                // verificar duplicata
+                const extras = config.extraSlots ? [...config.extraSlots] : [];
+                if (extras.includes(newTime) || baseSlots.includes(newTime)) {
+                    showToast('O horário já existe.', 'warning');
+                    return;
+                }
+
+                extras.push(newTime);
+                // ordenar times corretamente por minuto
+                extras.sort((a, b) => {
+                    const [ah, am] = a.split(':').map(Number);
+                    const [bh, bm] = b.split(':').map(Number);
+                    return (ah * 60 + am) - (bh * 60 + bm);
+                });
+
+                await setDoc(configRef, { extraSlots: extras }, { merge: true });
+                showToast('Horário extra adicionado com sucesso!', 'success');
+                renderSlots();
+            } catch (e) {
+                console.error('Erro ao adicionar horário extra:', e);
+                showToast('Erro ao adicionar horário extra: ' + e.message, 'error');
+            }
         };
 
         let currentPeriod = 'month';
