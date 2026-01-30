@@ -601,6 +601,8 @@
         .slot-btn.occupied { border-color: var(--primary); color: var(--primary); font-weight: bold; }
         .slot-btn.blocked { background: #2a1010; color: var(--danger); border-color: var(--danger); opacity: 0.7; }
         .slot-btn.part-of-long { border-style: dashed; opacity: 0.9; }
+        /* Multi-select visual (barbeiro) */
+        .slot-btn.multi-selected { box-shadow: 0 0 0 3px rgba(30,144,255,0.12); transform: scale(1.03); border-color: var(--primary); }
         
         .slot-btn.active-editing {
             border: 2px solid var(--primary);
@@ -1158,27 +1160,7 @@
                             </div>
                         </div>
                         
-                        <div class="simple-stat-card accent">
-                            <div class="simple-stat-icon">
-                                <i data-lucide="users"></i>
-                            </div>
-                            <div class="simple-stat-content">
-                                <div class="simple-stat-label">Assinantes</div>
-                                <div class="simple-stat-value" id="simple-subscribers">0</div>
-                                <div class="simple-stat-period">ativos</div>
-                            </div>
-                        </div>
-                        
-                        <div class="simple-stat-card subscription">
-                            <div class="simple-stat-icon">
-                                <i data-lucide="star"></i>
-                            </div>
-                            <div class="simple-stat-content">
-                                <div class="simple-stat-label">Agendamentos por</div>
-                                <div class="simple-stat-value" id="simple-subscription-bookings">0</div>
-                                <div class="simple-stat-period">assinatura</div>
-                            </div>
-                        </div>
+
                         
                         <div class="simple-upcoming-clients">
                             <div class="simple-upcoming-header">
@@ -1254,7 +1236,16 @@
 
                     <div class="slots-container">
                         <h4 id="selected-date-label" style="font-size: 1.1rem; margin-bottom: 1rem;">Data</h4>
-                        <div class="slots-grid" id="slots-grid"></div>
+
+                        <!-- Multi-select controls for barber -->
+                        <div id="multi-actions" style="display:flex; gap:8px; align-items:center; margin-bottom:10px;">
+                            <button id="btn-toggle-multi-select" class="btn-action" style="background: #333; color: white; padding:6px 10px; font-size:0.85rem;" onclick="toggleMultiSelectMode()">Selecionar Vários</button>
+                            <button id="btn-block-selected" class="btn-action" style="background: var(--danger); color: white; font-size:0.85rem; display:none;" onclick="bulkBlockSelected()">BLOQUEAR SELECIONADOS</button>
+                            <button id="btn-unblock-selected" class="btn-action" style="background: var(--success); color: white; font-size:0.85rem; display:none;" onclick="bulkUnblockSelected()">LIBERAR SELECIONADOS</button>
+                            <button id="btn-clear-selection" class="btn-action" style="background:#666; color:white; font-size:0.85rem; display:none;" onclick="clearMultiSelection()">Limpar Seleção</button>
+                        </div>
+
+                        <div class="slots-grid" id="slots-grid"></div> 
                         
                         <div id="slot-editor" style="display: none; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
@@ -1287,21 +1278,37 @@
                                         <button id="cortesia-2" class="toggle-btn" onclick="setCortesiaSlots(2)">2 Horários</button>
                                     </div>
                                 </div>
-                                <div id="assinatura-container" style="display: none;">
-                                    <label>É por Assinatura?</label>
-                                    <div class="autismo-toggle">
-                                        <button id="assinatura-yes" class="toggle-btn" onclick="setAssinatura(true)">Sim</button>
-                                        <button id="assinatura-no" class="toggle-btn" onclick="setAssinatura(false)">Não</button>
-                                    </div>
-                                </div>
+
                                 <div id="subscription-details" style="display: none;"></div>
                                 <div id="observations-container" style="display: block;">
                                     <label>Observações e Preferências</label>
                                     <textarea id="edit-observations" placeholder="Preferências, notas especiais, necessidades do cliente..." style="width:100%; height:80px; margin-top:8px; padding:12px; background:#111111; color:#fff; border:1px solid var(--border); border-radius:8px; font-size: 0.9rem;"></textarea>
                                 </div>
+
+                                <!-- Extra services (barbeiro) -->
+                                <div id="extra-services-section" style="display:none; margin-top:12px;">
+                                    <label style="display:block; margin-bottom:6px;">Serviços Extras (adicionados ao agendamento)</label>
+                                    <div id="extra-services-list" style="margin-bottom:8px; font-size:0.9rem; color:var(--text-muted);"></div>
+                                    <div id="extra-services-total" style="margin-bottom:12px; padding:10px; background:rgba(30,144,255,0.1); border-left:3px solid var(--primary); border-radius:4px; display:none;">
+                                        <strong style="color:var(--primary);">Total de Extras: </strong>
+                                        <span id="total-extras-value" style="color:#fff; font-weight:bold;">R$ 0.00</span>
+                                    </div>
+                                    <div style="display:flex; gap:8px; align-items:center;">
+                                        <select id="extra-service-select" style="flex:1; background:#111; color:#fff; border:1px solid var(--border); padding:8px; border-radius:6px;"></select>
+                                        <button class="btn-action" style="background:var(--primary); color:#000; padding:8px 10px;" onclick="addExtraService()">Adicionar Serviço</button>
+                                    </div>
+                                </div>
+
+                                <div id="booking-total-section" style="margin-top:12px; padding:12px; background:linear-gradient(135deg, rgba(30,144,255,0.15), rgba(16,185,129,0.15)); border-left:3px solid var(--primary); border-radius:4px; display:none;">
+                                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                                        <strong style="color:var(--text-muted);">Total do Agendamento:</strong>
+                                        <span id="booking-total-value" style="color:#fff; font-weight:bold; font-size:1.2rem;">R$ 0.00</span>
+                                    </div>
+                                </div>
+
                                 <div id="warning-double" style="display:none; color: var(--danger); font-size: 0.8rem; font-weight: bold;">
                                     ⚠️ Este serviço requer 2 horários seguidos.
-                                </div>
+                                </div> 
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                                     <button class="btn-action" onclick="saveBooking()">SALVAR</button>
                                     <button class="btn-action" style="background: #333; color: white;" onclick="toggleBlockSlot()">BLOQUEAR</button>
@@ -1834,7 +1841,7 @@
             projectId: "barbearia-do-rei",
             storageBucket: "barbearia-do-rei.firebasestorage.app",
             messagingSenderId: "546744214164",
-            appId: "1:546744214164:web:5bd367381afbef253d0a81"
+            appId: "1:546744214164:web:5bd367381afbef253d0a81",
         };
 
         const app = initializeApp(firebaseConfig);
@@ -1843,16 +1850,16 @@
 
         // Mapeamento de cores por serviço
         const serviceColors = {
-            "Corte Masculino": "#0800ff",
-            "Barba Completa": "#d0ff00",
-            "Combos": "#3cff00",
-            "Combo Corte + Barba": "#3cff00",
-            "Combo Completo: Cabelo, Barba e Sombrancelha": "#ff6b00",
-            "Corte Infantil": "#10b981",
-            "Cortesia": "#a0a0a0",
-            "Bloqueio": "#ef4444",
-            "Outros": "#3b82f6",
-            "Assinatura": "#8b5cf6"
+            "Corte Masculino": "#00d4ff",
+            "Barba Completa": "#ffb700",
+            "Combos": "#00ff88",
+            "Combo Corte + Barba": "#ff6b9d",
+            "Combo Completo: Cabelo, Barba e Sombrancelha": "#c650ff",
+            "Corte Infantil": "#00f5ff",
+            "Cortesia": "#9ca3af",
+            "Bloqueio": "#ff4757",
+            "Outros": "#00bfff",
+            "Assinatura": "#ffd700"
         };
 
         let agendamentosData = [];
@@ -1876,10 +1883,104 @@
         let financeSort = { column: 'data', direction: 'desc' };
         let subscriptionsData = [];
         let servicesData = [];
-        let isAssinatura = false;
+        // NOTE: 'isAssinatura' removed — assinatura não pode ser marcada no editor.
         let currentUserEmail = null;
+        let multiSelectActive = false; // Modo seleção múltipla ativado pelo barbeiro
+        let multiSelectedSlots = []; // Array de horários selecionados (strings "HH:MM")
         let subscriptionPlansData = []; // Nova variável para armazenar planos de assinatura
         let emailsAutorizados = ['saullinho2008@gmail.com']; // Lista de emails autorizados
+
+        // Funções de seleção múltipla
+        window.toggleMultiSelectMode = () => {
+            const btn = document.getElementById('btn-toggle-multi-select');
+            if (!currentUserEmail || !emailsAutorizados.includes(currentUserEmail.toLowerCase())) {
+                showToast('Apenas o barbeiro pode usar a seleção múltipla.', 'error');
+                return;
+            }
+            multiSelectActive = !multiSelectActive;
+            multiSelectedSlots = [];
+            btn.textContent = multiSelectActive ? 'Cancelar Seleção' : 'Selecionar Vários';
+            document.getElementById('btn-block-selected').style.display = multiSelectActive ? 'inline-block' : 'none';
+            document.getElementById('btn-unblock-selected').style.display = multiSelectActive ? 'inline-block' : 'none';
+            document.getElementById('btn-clear-selection').style.display = multiSelectActive ? 'inline-block' : 'none';
+            renderSlots();
+        }
+
+        window.clearMultiSelection = () => {
+            multiSelectedSlots = [];
+            renderSlots();
+        }
+
+        function isBarber() {
+            return currentUserEmail && emailsAutorizados.includes(currentUserEmail.toLowerCase());
+        }
+
+        function toggleMultiSelectSlot(time) {
+            const idx = multiSelectedSlots.indexOf(time);
+            if (idx === -1) multiSelectedSlots.push(time);
+            else multiSelectedSlots.splice(idx, 1);
+            renderSlots();
+        }
+
+        // Block multiple selected slots (exposed globally)
+        window.bulkBlockSelected = async () => {
+            if (!isBarber()) { showToast('Apenas o barbeiro pode bloquear horários.', 'error'); return; }
+            if (!multiSelectedSlots.length) { showToast('Nenhum horário selecionado.', 'warning'); return; }
+
+            const skipped = [];
+            const created = [];
+            for (const time of [...multiSelectedSlots]) {
+                const existing = agendamentosData.find(a => a.data === selectedDateISO && a.hora === time);
+                if (existing) {
+                    // Se já estiver bloqueado, pular
+                    if (existing.status === 'blocked') continue;
+                    skipped.push(time);
+                    continue;
+                }
+                const data = { nome: 'BLOQUEADO', cliente: 'BLOQUEADO', data: selectedDateISO, hora: time, servico: 'Bloqueio', preco: 0, status: 'blocked', slots: 1, timestamp: new Date() };
+                try {
+                    await addDoc(collection(db, 'agendamentos'), data);
+                    created.push(time);
+                } catch (e) {
+                    console.error('Erro ao bloquear horário', time, e);
+                    skipped.push(time);
+                }
+            }
+            showToast(`Bloqueados: ${created.length}. Pulados: ${skipped.length}.`, 'success');
+            multiSelectActive = false; multiSelectedSlots = [];
+            document.getElementById('btn-toggle-multi-select').textContent = 'Selecionar Vários';
+            document.getElementById('btn-block-selected').style.display = 'none';
+            document.getElementById('btn-unblock-selected').style.display = 'none';
+            document.getElementById('btn-clear-selection').style.display = 'none';
+            renderSlots();
+        }
+
+        // Unblock multiple selected slots (exposed globally)
+        window.bulkUnblockSelected = async () => {
+            if (!isBarber()) { showToast('Apenas o barbeiro pode liberar horários.', 'error'); return; }
+            if (!multiSelectedSlots.length) { showToast('Nenhum horário selecionado.', 'warning'); return; }
+
+            const removed = [];
+            const skipped = [];
+            for (const time of [...multiSelectedSlots]) {
+                const existing = agendamentosData.find(a => a.data === selectedDateISO && a.hora === time && a.status === 'blocked');
+                if (!existing) { skipped.push(time); continue; }
+                try {
+                    await deleteDoc(doc(db, 'agendamentos', existing.id));
+                    removed.push(time);
+                } catch (e) {
+                    console.error('Erro ao liberar horário', time, e);
+                    skipped.push(time);
+                }
+            }
+            showToast(`Liberados: ${removed.length}. Pulados: ${skipped.length}.`, 'success');
+            multiSelectActive = false; multiSelectedSlots = [];
+            document.getElementById('btn-toggle-multi-select').textContent = 'Selecionar Vários';
+            document.getElementById('btn-block-selected').style.display = 'none';
+            document.getElementById('btn-unblock-selected').style.display = 'none';
+            document.getElementById('btn-clear-selection').style.display = 'none';
+            renderSlots();
+        }
         let isFirstLoadComplete = false; // Flag para rastrear primeiro carregamento completo
 
         const baseSlots = ["09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00", "18:30"];
@@ -1974,23 +2075,6 @@
         }
 
 
-        // Função Global para o Toggle de Assinatura
-        window.setAssinatura = (val) => {
-            isAssinatura = val;
-            const btnYes = document.getElementById('assinatura-yes');
-            const btnNo = document.getElementById('assinatura-no');
-            
-            if(btnYes && btnNo) {
-                if(val) {
-                    btnYes.classList.add('active-primary');
-                    btnNo.classList.remove('active-primary');
-                } else {
-                    btnNo.classList.add('active-primary');
-                    btnYes.classList.remove('active-primary');
-                }
-            }
-            updateWarning();
-        };
 
         // Função Global para os Slots da Cortesia
         window.setCortesiaSlots = (num) => {
@@ -2451,6 +2535,23 @@
                 populateSubscriptionPlansSelect(); // Atualizar select na aba de assinaturas
             });
             
+            // NOVO LISTENER PARA HORÁRIOS DE FUNCIONAMENTO
+            onSnapshot(doc(db, "configuracoes_gerais", "horarios"), snap => {
+                if (snap.exists()) {
+                    const horarios = snap.data();
+                    console.log('=== HORÁRIOS ATUALIZADOS EM TEMPO REAL ===', horarios);
+                    window.horariosConfig = { ...horarios };
+                    
+                    // Se estiver na aba de agendamentos, atualizar renderização
+                    if (document.getElementById('tab-agendamentos')?.classList.contains('active')) {
+                        console.log('Atualizando slots devido a mudança de horários');
+                        renderSlots();
+                    }
+                } else {
+                    console.log('Nenhum horário configurado no Firebase');
+                }
+            });
+            
             // Chamar função de fallback para garantir que os serviços estão carregados
             ensureServicesLoaded();
             
@@ -2558,22 +2659,8 @@
             
             document.getElementById('simple-today-bookings').innerText = todayBookings;
             
-            // 3. Quantidade de assinantes ativos
-            const activeSubscribers = subscriptionsData.filter(sub => 
-                sub.status === 'active'
-            ).length;
-            
-            document.getElementById('simple-subscribers').innerText = activeSubscribers;
-            
-            // 4. Agendamentos por assinatura hoje
-            const subscriptionBookingsToday = agendamentosData.filter(a => 
-                a.data === todayStr && 
-                a.status !== 'blocked' && 
-                a.nome !== 'BLOQUEADO' &&
-                a.isSubscription === true
-            ).length;
-            
-            document.getElementById('simple-subscription-bookings').innerText = subscriptionBookingsToday;
+            // Assinaturas removidas do dashboard (valores exibidos na aba de Assinaturas)
+
             
             // 5. Agendamentos de hoje (apenas futuros)
             const upcomingList = document.getElementById('simple-upcoming-list');
@@ -2600,6 +2687,7 @@
                     const clientName = agend.nome || agend.cliente || 'Cliente não informado';
                     const service = (agend.servico && agend.servico.trim()) ? agend.servico : (agend.isSubscription ? 'Serviço por assinatura' : 'Serviço não informado');
                     const time = agend.hora || '--:--';
+                    const totalPrice = agend.preco || 0;
                     
                     // Verificar se é assinante
                     const isSubscriber = agend.isSubscription === true;
@@ -2618,7 +2706,10 @@
                                 <div class="client-service">${service}</div>
                                 <div class="client-time">${time}</div>
                             </div>
-                            <div class="client-status ${statusClass}">${statusText}</div>
+                            <div style="text-align:right;">
+                                <div class="client-status ${statusClass}" style="margin-bottom:6px;">${statusText}</div>
+                                <div style="color:var(--primary); font-weight:bold; font-size:1rem;">R$ ${totalPrice.toFixed(2)}</div>
+                            </div>
                         </div>
                     `;
                 });
@@ -2758,23 +2849,28 @@
     
     // Adicionar slots extras se existirem
     if (config.extraSlots) {
-        slots = [...slots, ...config.extraSlots].sort();
+        const extras = config.extraSlots.map(s => ({ time: s, isLunch: false }));
+        slots = [...slots, ...extras].sort((a, b) => (a.time || a).toString().localeCompare((b.time || b).toString()));
     }
 
-    // RENDERIZAR OS SLOTS (o resto da função permanece igual)
-    slots.forEach((time, index) => {
+    // RENDERIZAR OS SLOTS (suporta objetos {time, isLunch} ou strings como fallback)
+    slots.forEach((slotItem, index) => {
+        const time = (typeof slotItem === 'string') ? slotItem : slotItem.time;
+        const isLunch = (typeof slotItem === 'object') ? !!slotItem.isLunch : false;
         const agend = agendamentosData.find(a => a.data === selectedDateISO && a.hora === time);
         const btn = document.createElement('div');
         
         let isPartOfLong = false;
         if (index > 0) {
-            const prevTime = slots[index - 1];
+            const prevItem = slots[index - 1];
+            const prevTime = (typeof prevItem === 'string') ? prevItem : prevItem.time;
             const prevAgend = agendamentosData.find(a => a.data === selectedDateISO && a.hora === prevTime);
             if (prevAgend && prevAgend.slots === 2) isPartOfLong = true;
         }
 
         const isEditing = selectedSlot && selectedSlot.time === time;
-        btn.className = `slot-btn ${agend ? (agend.status === 'blocked' ? 'blocked' : 'occupied') : ''} ${isPartOfLong ? 'part-of-long' : ''} ${isEditing ? 'active-editing' : ''}`;
+        const isMultiSelected = multiSelectedSlots.includes(time);
+        btn.className = `slot-btn ${agend ? (agend.status === 'blocked' ? 'blocked' : 'occupied') : (isLunch ? 'blocked' : '')} ${isPartOfLong ? 'part-of-long' : ''} ${isEditing ? 'active-editing' : ''} ${isMultiSelected ? 'multi-selected' : ''}`;
         
         if (agend) {
             let displayName = agend.nome || agend.cliente || '...';
@@ -2796,18 +2892,30 @@
             
             btn.style.borderLeft = `3px solid ${sColor}`;
         } else if (isPartOfLong) {
-            const owner = agendamentosData.find(a => a.data === selectedDateISO && a.hora === slots[index-1]);
+            const owner = agendamentosData.find(a => a.data === selectedDateISO && a.hora === ((slots[index-1].time) || slots[index-1]));
             const ownerName = owner ? (owner.nome || owner.cliente || '...') : '...';
             btn.innerText = `${time} - (${ownerName})`;
             btn.style.opacity = "0.5";
         } else {
-            btn.innerText = time;
+            // Slot livre
+            btn.innerText = isLunch ? `${time} - ALMOÇO (BLOQUEADO)` : time;
+            if (isLunch) btn.title = 'Somente o barbeiro pode agendar neste horário.';
         }
 
         btn.onclick = () => {
             if (isPartOfLong) return;
+            // Modo seleção múltipla: alternar seleção
+            if (multiSelectActive) {
+                toggleMultiSelectSlot(time);
+                return;
+            }
+            // Bloquear abertura do editor para horários de almoço para usuários não-admin
+            if (isLunch && (!currentUserEmail || !emailsAutorizados.includes(currentUserEmail.toLowerCase()))) {
+                showToast('Apenas o barbeiro pode agendar neste horário.', 'error');
+                return;
+            }
             openSlotEditor(time, agend, slots, index);
-        };
+        }; 
         grid.appendChild(btn);
     });
     lucide.createIcons();
@@ -2838,11 +2946,8 @@
             setCortesiaSlots(agend?.slots || 1);
             
             // Resetar estado de assinatura para falso por padrão
-            if (agend && agend.isSubscription === true) {
-                setAssinatura(true);
-            } else {
-                setAssinatura(false);
-            }
+            // Não alteramos marcação de assinatura aqui: o editor não permite marcar/remover assinaturas.
+            // A assinatura, quando existir, permanece registrada em `agend.isSubscription` e seus detalhes são exibidos acima.
 
             // Mostrar detalhes da assinatura se for um agendamento por assinatura
             const subscriptionDetails = document.getElementById('subscription-details');
@@ -2904,7 +3009,49 @@
             } else {
                 btnWhatsapp.style.display = 'none';
             }
+
+            // Preparar seção de serviços extras para este agendamento (apenas se houver um agendamento criado)
+            const extraSection = document.getElementById('extra-services-section');
+            if (agend && agend.id) {
+                extraSection.style.display = 'block';
+                populateExtraServiceSelect();
+                renderExtraServicesList(agend);
+            } else {
+                extraSection.style.display = 'none';
+            }
+
             updateWarning();
+
+            // Adicionar listener para atualizar o total quando o serviço é selecionado
+            if (serviceSelect) {
+                serviceSelect.onchange = () => {
+                    updateBookingTotal();
+                };
+            }
+
+            // Funções para gerenciar serviços extras (implementadas globalmente)
+            // populateExtraServiceSelect(), addExtraService(), removeExtraService(), renderExtraServicesList() estão definidas no escopo global para serem chamadas pelos botões do editor.
+        }
+
+        // Função para atualizar o total do agendamento em tempo real
+        function updateBookingTotal() {
+            const selElement = document.getElementById('edit-service');
+            if (!selElement || !selElement.value) return;
+
+            const servRaw = selElement.value.split('|');
+            const servicePrice = parseFloat(servRaw[1]) || 0;
+            
+            // Calcular total de extras se existir agendamento
+            let extrasTotal = 0;
+            if (selectedSlot && selectedSlot.agend && selectedSlot.agend.extraServices) {
+                extrasTotal = selectedSlot.agend.extraServices.reduce((sum, extra) => sum + (Number(extra.price) || 0), 0);
+            }
+            
+            const totalPrice = servicePrice + extrasTotal;
+            
+            // Atualizar a exibição do total
+            document.getElementById('booking-total-value').textContent = `R$ ${totalPrice.toFixed(2)}`;
+            document.getElementById('booking-total-section').style.display = 'block';
         }
 
         function updateWarning() {
@@ -2918,28 +3065,22 @@
     const isBloqueio = servName.includes("Bloqueio");
     
     const cortesiaContainer = document.getElementById('cortesia-slots-container');
-    const assinaturaContainer = document.getElementById('assinatura-container');
     const observationsContainer = document.getElementById('observations-container');
     
     cortesiaContainer.style.display = isCortesia ? 'block' : 'none';
     observationsContainer.style.display = isInfantil ? 'block' : 'block'; // Sempre mostrar observações
     
-    // Mostrar container de assinatura para todos os serviços EXCETO Cortesia e Bloqueio
-    if (isCortesia || isBloqueio) {
-        assinaturaContainer.style.display = 'none';
-        // Se for cortesia ou bloqueio, forçar assinatura como false
-        if (isAssinatura) {
-            setAssinatura(false);
-        }
-    } else {
-        assinaturaContainer.style.display = 'block';
-    }
+    // Nota: removida a pergunta de assinatura do editor (assinaturas são gerenciadas na aba de assinaturas)
+
 
     let slotsNeeded = parseInt(servRaw[2]);
     if (isCortesia) slotsNeeded = cortesiaSlots;
 
     const warning = document.getElementById('warning-double');
     if(warning) warning.style.display = (slotsNeeded > 1) ? 'block' : 'none';
+    
+    // Atualizar o total do agendamento
+    updateBookingTotal();
 }
 
         window.completeUpcomingBooking = async (bookingId) => {
@@ -2991,6 +3132,45 @@
             }
         };
 
+        // Função para verificar disponibilidade de slots consecutivos
+        async function checkConsecutiveSlotsAvailability(date, startTime, slotsNeeded) {
+            if (slotsNeeded <= 1) return true; // Sem problema se é apenas 1 slot
+            
+            try {
+                const q = query(collection(db, "agendamentos"), where("data", "==", date));
+                const snap = await getDocs(q);
+                const occupiedSlots = [];
+                
+                snap.forEach(d => {
+                    const data = d.data();
+                    const idx = horariosBase.indexOf(data.hora);
+                    if (idx !== -1) {
+                        for (let s = 0; s < (data.slots || 1); s++) {
+                            if (horariosBase[idx + s]) {
+                                occupiedSlots.push(horariosBase[idx + s]);
+                            }
+                        }
+                    }
+                });
+                
+                const startIdx = horariosBase.indexOf(startTime);
+                if (startIdx === -1) return false;
+                
+                // Verificar se todos os slots necessários estão livres
+                for (let i = 0; i < slotsNeeded; i++) {
+                    const slotToCheck = horariosBase[startIdx + i];
+                    if (!slotToCheck || occupiedSlots.includes(slotToCheck)) {
+                        return false;
+                    }
+                }
+                
+                return true;
+            } catch (e) {
+                console.error('Erro ao verificar slots:', e);
+                return false;
+            }
+        }
+        
         window.saveBooking = async () => {
             const clientName = document.getElementById('edit-client').value.trim();
             const phone = document.getElementById('edit-phone').value.trim();
@@ -3011,8 +3191,18 @@
                 return;
             }
 
-            // Se for por assinatura, o preço deve ser 0
-            const finalPrice = isAssinatura ? 0 : servicePrice;
+            // Verificar disponibilidade de slots consecutivos
+            if (serviceSlots > 1) {
+                const slotsAvailable = await checkConsecutiveSlotsAvailability(selectedDateISO, selectedSlot.time, serviceSlots);
+                if (!slotsAvailable) {
+                    showToast(`Este serviço requer ${serviceSlots} slots consecutivos, mas não há espaço disponível. Um ou mais dos próximos horários estão ocupados.`, 'error');
+                    return;
+                }
+            }
+
+            // Determinar se este agendamento já é por assinatura (não é possível marcar como assinatura aqui)
+            const wasSubscription = selectedSlot && selectedSlot.agend && selectedSlot.agend.isSubscription === true;
+            const finalPrice = wasSubscription ? 0 : servicePrice;
 
             // Preparar dados do agendamento
             const bookingData = {
@@ -3029,35 +3219,22 @@
                 timestamp: new Date()
             };
 
-            // Adicionar campos específicos para assinatura
-            if (isAssinatura) {
+            // Preservar campos de assinatura apenas se este agendamento JÁ for por assinatura
+            if (wasSubscription) {
                 bookingData.isSubscription = true;
-                
-                // Só incrementar uso se for um NOVO agendamento (não atualização)
-                if (!selectedSlot.agend) {
-                    // Encontrar a assinatura do cliente para determinar o uso atual
-                    const clientSubscription = subscriptionsData.find(sub => 
-                        sub.client === clientName && sub.status === 'active'
-                    );
-                    
-                    if (clientSubscription) {
-                        const currentUsage = clientSubscription.usedServices || 0;
-                        bookingData.subscriptionUseNumber = currentUsage + 1;
-                        
-                        // Atualizar contador de uso da assinatura
-                        await updateDoc(doc(db, "assinaturas", clientSubscription.id), {
-                            usedServices: currentUsage + 1,
-                            lastUseDate: selectedDateISO
-                        });
-                    }
-                } else {
-                    // Se for atualização, manter o número de uso existente
-                    bookingData.subscriptionUseNumber = selectedSlot.agend.subscriptionUseNumber || 1;
-                }
+                bookingData.subscriptionUseNumber = selectedSlot.agend ? (selectedSlot.agend.subscriptionUseNumber || 1) : 1;
             }
+
+            // Somar preço de serviços extras já adicionados (se houver)
+            const extrasTotal = (selectedSlot && selectedSlot.agend && Array.isArray(selectedSlot.agend.extraServices)) ? selectedSlot.agend.extraServices.reduce((s,e)=>s+(e.price||0),0) : 0;
+            bookingData.preco = (bookingData.preco || 0) + extrasTotal;
 
             try {
                 if (selectedSlot.agend) {
+                    // Preservar serviços extras se existirem
+                    if (selectedSlot.agend.extraServices && !bookingData.extraServices) {
+                        bookingData.extraServices = selectedSlot.agend.extraServices;
+                    }
                     // Atualizar agendamento existente
                     await updateDoc(doc(db, "agendamentos", selectedSlot.agend.id), bookingData);
                     showToast('Agendamento atualizado com sucesso!', 'success');
@@ -3072,6 +3249,184 @@
                 renderSlots();
             } catch(e) {
                 showToast('Erro ao salvar agendamento: ' + e.message, 'error');
+            }
+        };
+
+        // --- Função para sincronizar serviços extras com gráficos e relatórios ---
+        window.syncExtraServicesToGraphs = () => {
+            // Esta função é chamada após adicionar/remover um serviço extra
+            // para garantir que o gráfico e o relatório fiscal refletem as mudanças
+            console.log('🔄 Sincronizando serviços extras com gráficos e relatórios...');
+            
+            // Se o dashboard está visível, atualizar os gráficos
+            if (document.getElementById('dash-revenue')) {
+                updateDashboard();
+                console.log('✅ Dashboard atualizado com serviços extras');
+            }
+        };
+
+        // --- Função para sugerir aumento de slot extra ao adicionar serviço ---
+        window.suggestExtraSlot = async () => {
+            if (!selectedSlot || !selectedSlot.agend) return;
+            
+            const currentSlots = selectedSlot.agend.slots || 1;
+            const hasExtras = Array.isArray(selectedSlot.agend.extraServices) && selectedSlot.agend.extraServices.length > 0;
+            
+            // Se tem serviços extras e não é de 2 slots, perguntar se quer adicionar
+            if (hasExtras && currentSlots < 2) {
+                const extraCount = selectedSlot.agend.extraServices.length;
+                if (confirm(`Este agendamento tem ${extraCount} serviço(s) extra(s). Deseja adicionar 1 horário extra (total de 2 slots = 1 hora) para ter tempo suficiente?`)) {
+                    try {
+                        const bookingRef = doc(db, 'agendamentos', selectedSlot.agend.id);
+                        await updateDoc(bookingRef, { slots: 2 });
+                        selectedSlot.agend.slots = 2;
+                        agendamentosData = agendamentosData.map(a => a.id === selectedSlot.agend.id ? {...a, slots: 2} : a);
+                        renderSlots();
+                        showToast('Horário extra adicionado! O agendamento agora usa 2 slots (1 hora).', 'success');
+                    } catch (e) {
+                        console.error('Erro ao adicionar slot extra:', e);
+                        showToast('Erro ao adicionar horário extra: ' + e.message, 'error');
+                    }
+                }
+            }
+        };
+
+        // --- Funções globais para serviços extras e conclusão de agendamento ---
+        window.populateExtraServiceSelect = () => {
+            const sel = document.getElementById('extra-service-select');
+            sel.innerHTML = '';
+            if (!servicesData || servicesData.length === 0) return;
+            servicesData.forEach(s => {
+                const name = s.name || s.title || s;
+                if (name.toLowerCase().includes('bloqueio')) return;
+                const opt = document.createElement('option');
+                opt.value = `${name}|${s.price || 0}`;
+                opt.textContent = `${name} (R$ ${Number(s.price || 0).toFixed(2)})`;
+                sel.appendChild(opt);
+            });
+        };
+
+        window.addExtraService = async () => {
+            if (!isBarber()) { showToast('Apenas o barbeiro pode adicionar serviços extras.', 'error'); return; }
+            if (!selectedSlot || !selectedSlot.agend) { showToast('Selecione um agendamento para adicionar serviço extra.', 'warning'); return; }
+            const sel = document.getElementById('extra-service-select');
+            if (!sel.value) { showToast('Selecione um serviço para adicionar.', 'warning'); return; }
+            const [name, priceRaw] = sel.value.split('|');
+            const price = parseFloat(priceRaw || '0');
+            const bookingRef = doc(db, 'agendamentos', selectedSlot.agend.id);
+
+            const currentExtras = selectedSlot.agend.extraServices ? [...selectedSlot.agend.extraServices] : [];
+            currentExtras.push({ name, price });
+            const newPrice = (selectedSlot.agend.preco || 0) + price;
+
+            try {
+                await updateDoc(bookingRef, { extraServices: currentExtras, preco: newPrice });
+                selectedSlot.agend.extraServices = currentExtras;
+                selectedSlot.agend.preco = newPrice;
+                agendamentosData = agendamentosData.map(a => a.id === selectedSlot.agend.id ? {...a, extraServices: currentExtras, preco: newPrice} : a);
+                window.renderExtraServicesList(selectedSlot.agend);
+                sel.value = ''; // Limpar o select para adicionar outro serviço
+                updateBookingTotal(); // Atualizar o total em tempo real
+                // Atualizar dashboard, gráficos e relatório fiscal para refletir o novo serviço extra
+                if (window.syncExtraServicesToGraphs) window.syncExtraServicesToGraphs();
+                // Sugerir adicionar horário extra se necessário
+                if (window.suggestExtraSlot) window.suggestExtraSlot();
+                showToast('Serviço extra adicionado com sucesso!', 'success');
+            } catch (e) {
+                console.error(e);
+                showToast('Erro ao adicionar serviço extra: ' + e.message, 'error');
+            }
+        };
+
+        window.removeExtraService = async (index) => {
+            if (!isBarber()) { showToast('Apenas o barbeiro pode remover serviços extras.', 'error'); return; }
+            if (!selectedSlot || !selectedSlot.agend) { showToast('Selecione um agendamento válido.', 'warning'); return; }
+            const bookingRef = doc(db, 'agendamentos', selectedSlot.agend.id);
+            const currentExtras = selectedSlot.agend.extraServices ? [...selectedSlot.agend.extraServices] : [];
+            if (index < 0 || index >= currentExtras.length) return;
+            const removed = currentExtras.splice(index, 1)[0];
+            const newPrice = (selectedSlot.agend.preco || 0) - (removed.price || 0);
+            try {
+                await updateDoc(bookingRef, { extraServices: currentExtras, preco: newPrice });
+                selectedSlot.agend.extraServices = currentExtras;
+                selectedSlot.agend.preco = newPrice;
+                agendamentosData = agendamentosData.map(a => a.id === selectedSlot.agend.id ? {...a, extraServices: currentExtras, preco: newPrice} : a);
+                window.renderExtraServicesList(selectedSlot.agend);
+                renderSlots();
+                updateBookingTotal(); // Atualizar o total em tempo real
+                // Atualizar dashboard, gráficos e relatório fiscal para refletir a remoção do serviço extra
+                if (window.syncExtraServicesToGraphs) window.syncExtraServicesToGraphs();
+                // Sugerir reduzir horário se não houver mais extras
+                const remainingExtras = currentExtras.length > 0;
+                if (!remainingExtras && selectedSlot.agend.slots === 2) {
+                    if (confirm('Não há mais serviços extras. Deseja remover o horário extra adicionado?')) {
+                        try {
+                            const bookingRef = doc(db, 'agendamentos', selectedSlot.agend.id);
+                            await updateDoc(bookingRef, { slots: 1 });
+                            selectedSlot.agend.slots = 1;
+                            agendamentosData = agendamentosData.map(a => a.id === selectedSlot.agend.id ? {...a, slots: 1} : a);
+                            renderSlots();
+                            showToast('Horário extra removido.', 'info');
+                        } catch (e) {
+                            console.error(e);
+                        }
+                    }
+                }
+                showToast('Serviço extra removido.', 'info');
+            } catch (e) {
+                console.error(e);
+                showToast('Erro ao remover serviço extra: ' + e.message, 'error');
+            }
+        };
+
+        window.renderExtraServicesList = (ag) => {
+            const list = document.getElementById('extra-services-list');
+            const totalDiv = document.getElementById('extra-services-total');
+            const bookingTotalSection = document.getElementById('booking-total-section');
+            list.innerHTML = '';
+            const extras = (ag && ag.extraServices) ? ag.extraServices : [];
+            if (!extras || extras.length === 0) {
+                list.innerHTML = '<div style="color:var(--text-muted)">Nenhum serviço extra adicionado.</div>';
+                totalDiv.style.display = 'none';
+            } else {
+                let totalExtras = 0;
+                extras.forEach((e, i) => {
+                    totalExtras += Number(e.price || 0);
+                    const div = document.createElement('div');
+                    div.style.display = 'flex'; div.style.justifyContent = 'space-between'; div.style.alignItems = 'center'; div.style.marginBottom = '6px';
+                    div.innerHTML = `<span>${e.name} <small style=\"color:var(--text-muted);\">R$ ${Number(e.price||0).toFixed(2)}</small></span>`;
+                    const btn = document.createElement('button'); btn.className = 'btn-action'; btn.style.background = '#333'; btn.style.color = '#fff'; btn.style.padding = '6px 8px'; btn.style.fontSize='0.8rem'; btn.textContent = 'Remover';
+                    btn.onclick = () => { if(confirm('Remover este serviço extra?')) window.removeExtraService(i); };
+                    div.appendChild(btn);
+                    list.appendChild(div);
+                });
+                
+                // Mostrar total dos extras
+                document.getElementById('total-extras-value').textContent = `R$ ${totalExtras.toFixed(2)}`;
+                totalDiv.style.display = 'block';
+            }
+            
+            // Atualizar total do agendamento (serviço principal + extras)
+            if (ag) {
+                const servicePrice = ag.preco || 0;
+                document.getElementById('booking-total-value').textContent = `R$ ${servicePrice.toFixed(2)}`;
+                bookingTotalSection.style.display = 'block';
+            }
+        };
+
+        // Função para concluir atendimento diretamente do editor
+        window.completeBooking = async () => {
+            if (!selectedSlot || !selectedSlot.agend) return;
+            if (!confirm('Confirmar que o cliente compareceu e finalizar atendimento? (O valor entrará na receita bruta)')) return;
+            try {
+                await updateDoc(doc(db, 'agendamentos', selectedSlot.agend.id), { status: 'completed' });
+                showToast('Atendimento concluído com sucesso!', 'success');
+                document.getElementById('slot-editor').style.display = 'none';
+                selectedSlot = null;
+                renderSlots();
+                updateSimpleDashboard();
+            } catch (e) {
+                showToast('Erro ao finalizar: ' + e.message, 'error');
             }
         };
 
@@ -3224,7 +3579,14 @@
                     const dt = a.data ? new Date(a.data + 'T00:00:00') : null;
                     if (dt && dt >= range.start && dt < range.end) {
                         rev += Number(a.preco || 0);
+                        // Contabilizar serviço principal
                         addServiceToMap(a.servico);
+                        // Contabilizar serviços extras adicionados ao agendamento (se houver)
+                        if (Array.isArray(a.extraServices) && a.extraServices.length > 0) {
+                            a.extraServices.forEach(es => {
+                                try { addServiceToMap(es.name || es.nome || 'Serviço Extra'); } catch(e) { console.warn('Erro ao processar serviço extra:', e); }
+                            });
+                        }
                     }
                 }
             });
@@ -4558,15 +4920,51 @@ window.excluirServico = async (id) => {
                     // Verifica se está concluído E se a data está dentro do range
                     if (agendamento.status === 'completed' && agendamento.data) {
                         if (agendamento.data >= startStr && agendamento.data <= endStr) {
-                            reportData.push({
-                                data: agendamento.data,
-                                tipo: 'Serviço',
-                                cliente: agendamento.nome || agendamento.cliente || 'Cliente não informado',
-                                descricao: agendamento.servico || 'Serviço por assinatura',
-                                valor: Number(agendamento.preco || 0)
-                            });
-                            totalServicos += Number(agendamento.preco || 0);
-                            countServicos++;
+                            const bookingTotal = Number(agendamento.preco || 0);
+                            const extras = Array.isArray(agendamento.extraServices) ? agendamento.extraServices : [];
+                            const extrasTotal = extras.reduce((s, ex) => s + Number(ex.price || ex.valor || 0), 0);
+                            const basePrice = Math.max(0, bookingTotal - extrasTotal);
+
+                            // Adicionar serviço principal (valor-base)
+                            const mainDesc = agendamento.servico || 'Serviço';
+                            if (basePrice > 0) {
+                                reportData.push({
+                                    data: agendamento.data,
+                                    tipo: 'Serviço',
+                                    cliente: agendamento.nome || agendamento.cliente || 'Cliente não informado',
+                                    descricao: mainDesc,
+                                    valor: basePrice
+                                });
+                                totalServicos += basePrice;
+                                countServicos++;
+                            }
+
+                            // Adicionar cada serviço extra separadamente no relatório
+                            if (extras.length > 0) {
+                                extras.forEach(ex => {
+                                    reportData.push({
+                                        data: agendamento.data,
+                                        tipo: 'Serviço',
+                                        cliente: agendamento.nome || agendamento.cliente || 'Cliente não informado',
+                                        descricao: ex.name || ex.nome || 'Serviço Extra',
+                                        valor: Number(ex.price || ex.valor || 0)
+                                    });
+                                    totalServicos += Number(ex.price || ex.valor || 0);
+                                    countServicos++;
+                                });
+                            }
+
+                            // Caso não haja valor (ex: cortes gratuitos), garantir que ainda registre algo
+                            if (basePrice === 0 && extras.length === 0) {
+                                reportData.push({
+                                    data: agendamento.data,
+                                    tipo: 'Serviço',
+                                    cliente: agendamento.nome || agendamento.cliente || 'Cliente não informado',
+                                    descricao: mainDesc,
+                                    valor: 0
+                                });
+                                countServicos++;
+                            }
                         }
                     }
                 });
@@ -4850,22 +5248,30 @@ window.excluirServico = async (id) => {
         const diasSemana = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
         
         diasSemana.forEach(dia => {
-            const abre = document.getElementById(`abre-${dia}`)?.checked;
-            const abertura = document.getElementById(`abertura-${dia}`)?.value;
-            const fechamento = document.getElementById(`fechamento-${dia}`)?.value;
-            const almocoInicio = document.getElementById(`almoco-inicio-${dia}`)?.value;
-            const almocoFim = document.getElementById(`almoco-fim-${dia}`)?.value;
+            const abre = document.getElementById(`abre-${dia}`)?.checked ?? false;
+            const abertura = document.getElementById(`abertura-${dia}`)?.value || '09:00';
+            const fechamento = document.getElementById(`fechamento-${dia}`)?.value || '18:00';
+            const almocoInicio = document.getElementById(`almoco-inicio-${dia}`)?.value || '12:00';
+            const almocoFim = document.getElementById(`almoco-fim-${dia}`)?.value || '13:00';
+            
+            // Validar formato HH:MM
+            const validateTime = (time) => {
+                const match = time.match(/^(\d{2}):(\d{2})$/);
+                return match ? time : '00:00';
+            };
             
             horariosData[dia] = {
                 abre: abre,
-                abertura: abertura,
-                fechamento: fechamento,
-                almocoInicio: almocoInicio,
-                almocoFim: almocoFim
+                abertura: validateTime(abertura),
+                fechamento: validateTime(fechamento),
+                almocoInicio: validateTime(almocoInicio),
+                almocoFim: validateTime(almocoFim)
             };
+            
+            console.log(`Dia ${dia}: `, horariosData[dia]);
         });
         
-        console.log('Salvando horários:', horariosData);
+        console.log('=== SALVANDO HORÁRIOS ===', horariosData);
         await setDoc(doc(db, "configuracoes_gerais", "horarios"), {
             ...horariosData,
             updatedAt: new Date(),
@@ -4873,7 +5279,8 @@ window.excluirServico = async (id) => {
         });
         
         // Salvar globalmente e atualizar slots
-        window.horariosConfig = horariosData;
+        window.horariosConfig = { ...horariosData };
+        console.log('=== HORÁRIOS SALVOS GLOBALMENTE ===', window.horariosConfig);
         
         // Mostrar status de salvo no dia específico
         if (diaParaMostrarStatus) {
@@ -4916,14 +5323,15 @@ window.excluirServico = async (id) => {
             console.log(horarios);
             
             // Salvar globalmente para usar em renderSlots
-            window.horariosConfig = horarios;
+            window.horariosConfig = { ...horarios };
+            console.log('=== HORÁRIOS SALVOS EM window.horariosConfig ===', window.horariosConfig);
             
             const diasSemana = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
             
             diasSemana.forEach(dia => {
                 const diaData = horarios[dia];
                 if (diaData) {
-                    console.log(`${dia}: abre=${diaData.abre}, abertura=${diaData.abertura}, fechamento=${diaData.fechamento}`);
+                    console.log(`${dia}: abre=${diaData.abre}, abertura=${diaData.abertura}, fechamento=${diaData.fechamento}, almocoInicio=${diaData.almocoInicio}, almocoFim=${diaData.almocoFim}`);
                     
                     const checkbox = document.getElementById(`abre-${dia}`);
                     const abertura = document.getElementById(`abertura-${dia}`);
@@ -5313,14 +5721,11 @@ window.excluirServico = async (id) => {
     // Duração de cada slot (30 minutos por padrão)
     const slotDuration = window.duracaoAgendamento || 30;
     
-    // Gerar slots
+    // Gerar slots (agora retornamos objetos com flag isLunch)
     for (let time = startMinutes; time < endMinutes; time += slotDuration) {
-        // Pular horário de almoço
-        if (time >= lunchStartMinutes && time < lunchEndMinutes) {
-            continue;
-        }
-        
-        slots.push(minutesToTime(time));
+        const t = minutesToTime(time);
+        const isLunch = (time >= lunchStartMinutes && time < lunchEndMinutes);
+        slots.push({ time: t, isLunch });
     }
     
     return slots;
@@ -5432,7 +5837,7 @@ async function enableNotifications() {
 
     // Gera o token FCM
     const token = await getToken(messaging, {
-      vapidKey: "BLD963N5YjeyOePsC9_V-lLBqL50e7G78Z9yxyThBM6J3rUa9B6YBiW7WKIT7JBRvoPQZZ3zO9Zw4-m95bxI_fA",
+      vapidKey: "BFCyx38SAwPFbLIIErfFmaJlk1TksQ_6MAxwBfSAyyQ4-DmH5btXX5RZ0bjO_RmhcWzcYWnD7rsjBaFd1QjL1no",
       serviceWorkerRegistration: registration
     });
 
